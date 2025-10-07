@@ -50,6 +50,9 @@ importers:
       '@unovis/vue':
         specifier: ^1.6.1
         version: 1.6.1(@unovis/ts@1.6.1)(vue@3.5.22(typescript@5.9.2))
+      '@vue-pdf-viewer/viewer':
+        specifier: ^3.1.0
+        version: 3.1.0(pdfjs-dist@5.4.54)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))
       '@vueuse/nuxt':
         specifier: ^13.9.0
         version: 13.9.0(magicast@0.3.5)(nuxt@4.1.2(@parcel/watcher@2.5.1)(@types/node@24.6.2)(@vue/compiler-sfc@3.5.22)(db0@0.3.2)(eslint@9.36.0(jiti@2.6.0))(ioredis@5.8.0)(lightningcss@1.30.1)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.52.3)(terser@5.44.0)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue-tsc@3.1.0(typescript@5.9.2))(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))
@@ -65,12 +68,15 @@ importers:
       nuxt:
         specifier: ^4.1.2
         version: 4.1.2(@parcel/watcher@2.5.1)(@types/node@24.6.2)(@vue/compiler-sfc@3.5.22)(db0@0.3.2)(eslint@9.36.0(jiti@2.6.0))(ioredis@5.8.0)(lightningcss@1.30.1)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.52.3)(terser@5.44.0)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue-tsc@3.1.0(typescript@5.9.2))(yaml@2.8.1)
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
       pdf-parse:
         specifier: ^2.1.7
         version: 2.1.7
       pdfjs-dist:
-        specifier: ^5.4.296
-        version: 5.4.296
+        specifier: ^5.4.54
+        version: 5.4.54
       typeorm:
         specifier: ^0.3.25
         version: 0.3.27(babel-plugin-macros@3.1.0)(ioredis@5.8.0)(reflect-metadata@0.2.2)
@@ -1727,6 +1733,12 @@ packages:
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
 
+  '@pdf-lib/standard-fonts@1.0.0':
+    resolution: {integrity: sha512-hU30BK9IUN/su0Mn9VdlVKsWBS6GyhVfqjwl1FjZN4TxP6cCw0jP2w7V3Hf5uX7M0AZJ16vey9yE0ny7Sa59ZA==}
+
+  '@pdf-lib/upng@1.0.1':
+    resolution: {integrity: sha512-dQK2FUMQtowVP00mtIksrlZhdFXQZPC+taih1q4CvPZ5vqdxR/LKBaFg0oAfzd1GlHZXXSPdQfzQnt+ViGvEIQ==}
+
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -2540,6 +2552,18 @@ packages:
     peerDependenciesMeta:
       vue:
         optional: true
+
+  '@vue-pdf-viewer/shared@1.0.0':
+    resolution: {integrity: sha512-ffrt/qGhgx0vu+uFS+Gvtz3ZaxyxTLicde65X2YyD2qFDYj/BxzQj9MTadosvO5dQnzJz2NTAvHBd23MSChKZQ==}
+    peerDependencies:
+      vue: ^3.2.37
+
+  '@vue-pdf-viewer/viewer@3.1.0':
+    resolution: {integrity: sha512-NpYMPf/lTDbqFnp/jZE+V9rAcwqBXfIAVIc0EMoqbU4U7xxT5YlxtRmTHznCPtGb9GhDMuxBwfIEQSMrZ8CZ1A==}
+    engines: {bun: '>=1.0.4', node: '>=18.20.3', npm: '>=9.5.1', pnpm: '>=8.8.0', yarn: '>=1.20.0'}
+    peerDependencies:
+      pdfjs-dist: ^4.10.38
+      vue: ^3.2.37
 
   '@vue/babel-helper-vue-transform-on@1.5.0':
     resolution: {integrity: sha512-0dAYkerNhhHutHZ34JtTl2czVQHUNWv6xEbkdF5W+Yrv5pCWsqjeORdOgbtW2I9gWlt+wBmVn+ttqN9ZxR5tzA==}
@@ -4966,6 +4990,9 @@ packages:
   pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
 
+  pako@1.0.11:
+    resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -5038,12 +5065,19 @@ packages:
     resolution: {integrity: sha512-XDF38WCH3z5OV/OVa8GKUNtLAyneuzbCisx7QUCF8Q6Nutx0WnJrQe5O+kOtBlLfRNUws98Y58Lblp+NJG5T4Q==}
     hasBin: true
 
+  pdf-lib@1.17.1:
+    resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
+
   pdf-parse@2.1.7:
     resolution: {integrity: sha512-bO9yT+xiQu73i1Anp1TQHqqKdL7zkhbGeMEiSBL3XBTDk1LZUySsHjMyxhpevAi4h78zbpM/c0HACdf6TQLj/Q==}
     engines: {node: '>=16'}
 
   pdfjs-dist@5.4.296:
     resolution: {integrity: sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q==}
+    engines: {node: '>=20.16.0 || >=22.3.0'}
+
+  pdfjs-dist@5.4.54:
+    resolution: {integrity: sha512-TBAiTfQw89gU/Z4LW98Vahzd2/LoCFprVGvGbTgFt+QCB1F+woyOPmNNVgLa6djX9Z9GGTnj7qE1UzpOVJiINw==}
     engines: {node: '>=20.16.0 || >=22.3.0'}
 
   peek-readable@4.1.0:
@@ -5803,6 +5837,9 @@ packages:
   ts-error@1.0.6:
     resolution: {integrity: sha512-tLJxacIQUM82IR7JO1UUkKlYuUTmoY9HBJAmNWFzheSlDS5SPMcNIepejHJa4BpPQLAcbRhRf3GDJzyj6rbKvA==}
 
+  tslib@1.14.1:
+    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -6141,6 +6178,11 @@ packages:
         optional: true
       vue-tsc:
         optional: true
+
+  vite-plugin-css-injected-by-js@3.5.2:
+    resolution: {integrity: sha512-2MpU/Y+SCZyWUB6ua3HbJCrgnF0KACAsmzOQt1UvRVJCGF6S8xdA3ZUhWcWdM9ivG4I5az8PnQmwwrkC2CAQrQ==}
+    peerDependencies:
+      vite: '>2.0.0-0'
 
   vite-plugin-inspect@11.3.3:
     resolution: {integrity: sha512-u2eV5La99oHoYPHE6UvbwgEqKKOQGz86wMg40CCosP6q8BkB6e5xPneZfYagK4ojPJSj5anHCrnvC20DpwVdRA==}
@@ -7989,6 +8031,14 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
 
+  '@pdf-lib/standard-fonts@1.0.0':
+    dependencies:
+      pako: 1.0.11
+
+  '@pdf-lib/upng@1.0.1':
+    dependencies:
+      pako: 1.0.11
+
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
@@ -8828,6 +8878,23 @@ snapshots:
       unplugin-utils: 0.2.5
     optionalDependencies:
       vue: 3.5.22(typescript@5.9.2)
+
+  '@vue-pdf-viewer/shared@1.0.0(vue@3.5.22(typescript@5.9.2))':
+    dependencies:
+      vue: 3.5.22(typescript@5.9.2)
+
+  '@vue-pdf-viewer/viewer@3.1.0(pdfjs-dist@5.4.54)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))':
+    dependencies:
+      '@vue-pdf-viewer/shared': 1.0.0(vue@3.5.22(typescript@5.9.2))
+      '@vueuse/core': 13.9.0(vue@3.5.22(typescript@5.9.2))
+      pdfjs-dist: 5.4.54
+      reka-ui: 2.5.0(typescript@5.9.2)(vue@3.5.22(typescript@5.9.2))
+      vite-plugin-css-injected-by-js: 3.5.2(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))
+      vue: 3.5.22(typescript@5.9.2)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - typescript
+      - vite
 
   '@vue/babel-helper-vue-transform-on@1.5.0': {}
 
@@ -11538,6 +11605,8 @@ snapshots:
 
   pako@0.2.9: {}
 
+  pako@1.0.11: {}
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -11598,11 +11667,22 @@ snapshots:
       ieee754: 1.2.1
       resolve-protobuf-schema: 2.1.0
 
+  pdf-lib@1.17.1:
+    dependencies:
+      '@pdf-lib/standard-fonts': 1.0.0
+      '@pdf-lib/upng': 1.0.1
+      pako: 1.0.11
+      tslib: 1.14.1
+
   pdf-parse@2.1.7:
     dependencies:
       pdfjs-dist: 5.4.296
 
   pdfjs-dist@5.4.296:
+    optionalDependencies:
+      '@napi-rs/canvas': 0.1.80
+
+  pdfjs-dist@5.4.54:
     optionalDependencies:
       '@napi-rs/canvas': 0.1.80
 
@@ -12356,6 +12436,8 @@ snapshots:
 
   ts-error@1.0.6: {}
 
+  tslib@1.14.1: {}
+
   tslib@2.8.1: {}
 
   type-check@0.4.0:
@@ -12679,6 +12761,10 @@ snapshots:
       optionator: 0.9.4
       typescript: 5.9.2
       vue-tsc: 3.1.0(typescript@5.9.2)
+
+  vite-plugin-css-injected-by-js@3.5.2(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)):
+    dependencies:
+      vite: 7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)
 
   vite-plugin-inspect@11.3.3(@nuxt/kit@3.19.2(magicast@0.3.5))(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)):
     dependencies:

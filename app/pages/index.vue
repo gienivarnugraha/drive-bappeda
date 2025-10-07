@@ -33,6 +33,9 @@ const selected = ref()
 
 const infraCat = ref(['Air Minum', 'Sanitasi', 'Persampahan'])
 
+onMounted(() => {
+  getDocuments({ category: 'Semua' })
+})
 
 watch(
   () => selected.value,
