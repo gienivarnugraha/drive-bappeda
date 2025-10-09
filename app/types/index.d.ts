@@ -12,36 +12,27 @@ export interface User {
   location: string
 }
 
-export interface Mail {
+export interface Category {
   id: number
-  unread?: boolean
-  from: User
-  subject: string
-  body: string
-  date: string
+  category: string
 }
 
-export interface Member {
-  name: string
-  username: string
-  role: 'member' | 'owner'
-  avatar: AvatarProps
+export interface Document {
+  id: number
+  uuid: string
+  filename: string
+  string: string
+  metadata: DocumentMetadata
 }
 
-export interface Stat {
-  title: string
-  icon: string
-  value: number | string
-  variation: number
-  formatter?: (value: number) => string
+export interface DocumentMetadata {
+  filename: string
+  filesize: number
 }
 
-export interface Sale {
-  id: string
-  date: string
-  status: SaleStatus
-  email: string
-  amount: number
+export interface ChartData {
+  id: number
+  category: string
 }
 
 export interface Notification {

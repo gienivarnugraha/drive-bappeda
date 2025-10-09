@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui'
+
+const { isNotificationsSlideoverOpen } = useDashboard()
+
+const items = [
+  [{
+    label: 'New file',
+    icon: 'i-lucide-file',
+    to: '/add-file'
+  },
+  ]] satisfies DropdownMenuItem[][]
+
 
 const route = useRoute()
 const toast = useToast()
@@ -71,29 +83,58 @@ onMounted(async () => {
 
 <template>
   <UDashboardGroup unit="rem">
-    <UDashboardSidebar id="default" v-model:open="open" collapsible resizable class="bg-elevated/25"
-      :ui="{ footer: 'lg:border-t lg:border-default' }">
+    <UDashboardSidebar id="default" v-model:open="open" collapsible class="bg-elevated/25 max-w-[18rem]" :ui="{
+      header: 'lg:border-b lg:border-default',
+      footer: 'lg:border-t lg:border-default'
+    }">
       <template #header="{ collapsed }">
-        <UserMenu :collapsed="collapsed" />
+        <Logo :collapsed="collapsed" />
       </template>
 
       <template #default="{ collapsed }">
-        <UDashboardSearchButton :collapsed="collapsed" class="bg-transparent ring-default" />
-
-        <UNavigationMenu :collapsed="collapsed" :items="links[0]" orientation="vertical" tooltip popover />
-
-        <UNavigationMenu :collapsed="collapsed" :items="links[1]" orientation="vertical" tooltip class="mt-auto" />
+        <Chat :collapsed="collapsed" class="flex-1" />
       </template>
 
-      <template #footer="{ collapsed }">
-
+      <template #footer>
+        <span class="text-xs">copyright © 2024</span>
       </template>
     </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+    <UDashboardPanel id="main">
+      <template #header>
+        <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
+          <template #leading>
+            <UDashboardSidebarCollapse />
+          </template>
 
-    <slot />
+          <template #right>
+            <UTooltip text="Notifications" :shortcuts="['N']">
+              <UButton color="neutral" variant="ghost" square @click="isNotificationsSlideoverOpen = true">
+                <UChip color="error" inset>
+                  <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
+                </UChip>
+              </UButton>
+            </UTooltip>
+
+            <UColorModeButton />
+
+            <UButton color="neutral" variant="ghost" icon="i-lucide-settings" to="/settings" />
+
+            <UserMenu />
+          </template>
+        </UDashboardNavbar>
+
+      </template>
+
+      <template #body>
+
+        <slot />
+      </template>
+
+    </UDashboardPanel>
+
 
     <NotificationsSlideover />
+
   </UDashboardGroup>
 </template>
