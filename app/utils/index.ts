@@ -8,6 +8,9 @@ export function randomFrom<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]!
 }
 
+export function dateToLocale(date: string) {
+  return new Date(date).toLocaleDateString()
+}
 
 /**
  * Converts a number of bytes into a human-readable file size string.

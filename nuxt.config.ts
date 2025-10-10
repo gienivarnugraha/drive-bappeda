@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
+    '@nuxtjs/mdc',
     '@nuxt/ui',
     '@vueuse/nuxt'
   ],

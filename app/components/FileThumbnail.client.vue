@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import * as pdfjsLib from 'pdfjs-dist';
-import { formatBytes } from '#imports';
+import { formatBytes, dateToLocale } from '#imports';
 
 export interface Document {
     id: number;
@@ -72,9 +72,14 @@ onMounted(async () => {
 
 <template>
     <ClientOnly>
-        <UCard :id="document.metadata.fileId">
+        <UCard :id="document.metadata.fileId" variant="subtle" :ui="{
+            root: 'rounded-lg overflow-hidden',
+            header: 'p-2 sm:px-4',
+            body: 'p-2 sm:p-4',
+            footer: 'p-2 sm:px-4 h-full'
+        }">
             <template #header>
-                <div class="flex justify-between align-center">
+                <div class="flex justify-between items-center">
                     <p class="text-gray text-xs"> {{ document.filename }} </p>
                     <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
                 </div>
@@ -83,10 +88,14 @@ onMounted(async () => {
             <canvas ref="canvas"></canvas>
 
             <template #footer>
-                <ul>
-                    <li class="text-primary text-xs font-bold"> {{ document.title }} </li>
-                    <li class="text-gray text-xs"> {{ formatBytes(document.metadata.filesize) }} </li>
-                </ul>
+                <div class="flex flex-col justify-between gap-2">
+                    <div class="flex justify-between">
+                        <p class="text-gray text-xs"> {{ formatBytes(document.metadata.filesize) }} </p>
+                        <p class="text-gray text-xs"> {{ dateToLocale(document.metadata.createdAt) }} </p>
+
+                    </div>
+                    <p class="text-primary text-xs font-bold "> {{ document.title }} </p>
+                </div>
             </template>
         </UCard>
     </ClientOnly>

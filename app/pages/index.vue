@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 
+
 const { isFileDetailsSlideoverOpen } = useDashboard()
+
 
 const documents: any = ref([])
 const getDocuments = async function (query: any) {
@@ -23,9 +25,10 @@ const getDocuments = async function (query: any) {
 const categories = ref(['Semua', 'Pemerintahan', 'Pemb-Manusia', 'Kes-Mas', 'Ekonomi', 'SDA', 'Infrastruktur', 'Kewilayahan', 'PPE'])
 const selected = ref()
 const selectedDocument = ref()
+// const isFileDetailsSlideoverOpen = ref(false)
 
 const selectDocument = (document: any) => {
-  isFileDetailsSlideoverOpen.value = true
+  isFileDetailsSlideoverOpen.value = document ? true : false
   selectedDocument.value = document
 }
 
@@ -42,7 +45,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-row gap-4">
+  <div class="flex flex-row">
     <div class="flex flex-col gap-4">
       <UDashboardToolbar>
         <div class="my-2 flex flex-wrap">
@@ -58,9 +61,14 @@ watch(
 
 
       <div class="flex px-4 sm:px-6 ">
-        <div v-if="documents" class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6">
-          <FileThumbnail v-for="document in documents" :key="document.id" :document="document"
-            @click="selectDocument(document)" />
+        <div v-if="documents" class="relative " @click="selectDocument">
+          <div class="absolute inset-0 z-5 pointer-events-auto bg-red-200/50"> </div>
+
+          <div class="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 ">
+
+            <FileThumbnail v-for="document in documents" :key="document.id" :document="document" class="z-20"
+              @click="selectDocument(document)" />
+          </div>
         </div>
         <div v-else> Tidak ada file </div>
 

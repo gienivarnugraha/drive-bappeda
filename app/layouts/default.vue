@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
+
+const isSidebarSlideoverOpen = ref(true)
+
+defineShortcuts({
+  o: () => isSidebarSlideoverOpen.value = !isSidebarSlideoverOpen.value
+})
 
 const items = [
   [{
@@ -16,44 +21,6 @@ const items = [
 const route = useRoute()
 const toast = useToast()
 
-const open = ref(false)
-
-const links = [[{
-  label: 'Home',
-  icon: 'i-lucide-house',
-  to: '/',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
-  label: 'Settings',
-  to: '/settings',
-  icon: 'i-lucide-settings',
-  onSelect: () => {
-    open.value = false
-  }
-}], [{
-  label: 'Feedback',
-  icon: 'i-lucide-message-circle',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
-},]] satisfies NavigationMenuItem[][]
-
-const groups = computed(() => [{
-  id: 'links',
-  label: 'Go to',
-  items: links.flat()
-}, {
-  id: 'code',
-  label: 'Code',
-  items: [{
-    id: 'source',
-    label: 'View page source',
-    icon: 'i-simple-icons-github',
-    to: `https://github.com/nuxt-ui-templates/dashboard/blob/main/app/pages${route.path === '/' ? '/index' : route.path}.vue`,
-    target: '_blank'
-  }]
-}])
 
 onMounted(async () => {
   const cookie = useCookie('cookie-consent')
@@ -83,8 +50,9 @@ onMounted(async () => {
 
 <template>
   <UDashboardGroup unit="rem">
-    <UDashboardSidebar id="default" v-model:open="open" collapsible class="bg-elevated/25 max-w-[18rem]" :ui="{
-      header: 'lg:border-b lg:border-default',
+    <UDashboardSidebar id="default" v-model:open="isSidebarSlideoverOpen" collapsible class="bg-elevated/25 min-h-full "
+      :collapsed-size="0" :default-size="40" :ui="{
+      header: 'lg:border-b lg:border-default h-auto',
       footer: 'lg:border-t lg:border-default'
     }">
       <template #header="{ collapsed }">
@@ -92,11 +60,15 @@ onMounted(async () => {
       </template>
 
       <template #default="{ collapsed }">
-        <Chat :collapsed="collapsed" class="flex-1" />
+        <Chat v-if="!collapsed" :collapsed="collapsed" class="flex-1" />
+        <div v-else class=" flex flex-col justify-center gap-2">
+
+          <UDashboardSidebarCollapse icon="i-lucide-message-circle" />
+        </div>
       </template>
 
-      <template #footer>
-        <span class="text-xs">copyright © 2024</span>
+      <template #footer="{ collapsed }">
+        <span class="text-xs text-center">{{ collapsed ? '' : 'copyright' }} © 2024</span>
       </template>
     </UDashboardSidebar>
 
@@ -105,6 +77,7 @@ onMounted(async () => {
         <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
           <template #leading>
             <UDashboardSidebarCollapse />
+            <UButton variant="ghost" color="neutral" icon="i-lucide-home" to="/" />
           </template>
 
           <template #right>
@@ -117,8 +90,6 @@ onMounted(async () => {
             </UTooltip>
 
             <UColorModeButton />
-
-            <UButton color="neutral" variant="ghost" icon="i-lucide-settings" to="/settings" />
 
             <UserMenu />
           </template>
