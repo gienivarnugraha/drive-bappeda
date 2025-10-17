@@ -7,8 +7,9 @@ export default defineNuxtConfig({
   ],
 
   devtools: {
-    enabled: false
+    enabled: true
   },
+  debug: true,
 
   css: ['~/assets/css/main.css'],
 

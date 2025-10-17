@@ -1,33 +1,15 @@
 <script lang="ts" setup>
 import * as pdfjsLib from 'pdfjs-dist';
 import { formatBytes } from '#imports';
-
-export interface Document {
-    id: number;
-    filename: string;
-    title: string;
-    metadata: Metadata;
-    created_at: string;
-    uuid: string;
-}
-
-export interface Metadata {
-    docIds: string[];
-    fileId: string;
-    summary: string;
-    filePath: string;
-    filename: string;
-    filesize: number;
-    createdAt: string;
-    extension: string;
-    modifiedAt: string;
-}
-
+import type { FilteredData } from '~/types'
 
 const props = defineProps({
-    document: {
-        type: Object as PropType<Document>,
+    data: {
+        type: Object as PropType<FilteredData>,
         required: true
+    },
+    isSelected: {
+        type: Boolean,
     }
 })
 
@@ -62,7 +44,7 @@ onMounted(async () => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
 
     try {
-        await renderThumbnails(props.document.metadata.filePath)
+        await renderThumbnails(props.data.documents.metadata.filePath)
     } catch (error) {
         console.error('ERROR LOADING DOCUMENT', error)
     }
@@ -72,10 +54,11 @@ onMounted(async () => {
 
 <template>
     <ClientOnly>
-        <UCard :id="document.metadata.fileId">
+        <UCard :id="data.documents.metadata.fileId" :class="[isSelected ? 'ring-2 ring-primary' : '']"
+            class="cursor-pointer">
             <template #header>
                 <div class="flex justify-between align-center">
-                    <p class="text-gray text-xs"> {{ document.filename }} </p>
+                    <p class="text-gray text-xs"> {{ data.documents.filename }} </p>
                     <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
                 </div>
             </template>
@@ -84,8 +67,8 @@ onMounted(async () => {
 
             <template #footer>
                 <ul>
-                    <li class="text-primary text-xs font-bold"> {{ document.title }} </li>
-                    <li class="text-gray text-xs"> {{ formatBytes(document.metadata.filesize) }} </li>
+                    <li class="text-primary text-xs font-bold"> {{ data.documents.title }} </li>
+                    <li class="text-gray text-xs"> {{ formatBytes(data.documents.metadata.filesize) }} </li>
                 </ul>
             </template>
         </UCard>

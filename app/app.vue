@@ -17,8 +17,8 @@ useHead({
   }
 })
 
-const title = 'Nuxt Dashboard Template'
-const description = 'A professional dashboard template built with Nuxt UI, featuring multiple pages, data visualization, and comprehensive management capabilities for creating powerful admin interfaces.'
+const title = 'Drive Bappeda'
+const description = 'Drive Bappeda adalah aplikasi manajemen dokumen yang memudahkan pengelolaan dokumen penting di lingkungan Bappeda dengan menggunakan bantuan Artificial Intelligence.'
 
 useSeoMeta({
   title,
@@ -26,8 +26,8 @@ useSeoMeta({
   ogTitle: title,
   ogDescription: description,
   ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterCard: 'summary_large_image'
+  // twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
+  // twitterCard: 'summary_large_image'
 })
 </script>
 

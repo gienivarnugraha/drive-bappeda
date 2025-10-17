@@ -8,6 +8,15 @@ export function randomFrom<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]!
 }
 
+export function toTitleCase(str: string): string {
+  return str.replace(/\w\S*/g, (txt) => {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  })
+}
+
+export function toUpperCase(str: string): string {
+  return str.toUpperCase();
+}
 
 /**
  * Converts a number of bytes into a human-readable file size string.

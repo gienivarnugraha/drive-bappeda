@@ -14,25 +14,39 @@ export interface User {
 
 export interface Category {
   id: number
-  category: string
+  name: string
+}
+
+export interface Division {
+  id: number
+  name: string
 }
 
 export interface Document {
   id: number
   uuid: string
   filename: string
-  string: string
+  type: string
+  title: string
+  category_id: number
+  category: Category
+  division_id: number
+  division: Division
+  created_at: string
   metadata: DocumentMetadata
 }
 
 export interface DocumentMetadata {
   filename: string
   filesize: number
+  filePath: string
+  fileId: string
 }
 
-export interface ChartData {
-  id: number
-  category: string
+export interface FilteredData {
+  documents: Document,
+  categories: Category,
+  divisions: Division
 }
 
 export interface Notification {

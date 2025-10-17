@@ -1,66 +1,72 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
+import type { Category, Division, FilteredData } from '~/types'
 
 const { isFileDetailsSlideoverOpen } = useDashboard()
 
-const documents: any = ref([])
-const getDocuments = async function (query: any) {
-  try {
-    console.log(query)
+const selectedCategory = ref<number[]>([])
 
-    const data = await $fetch('/api/documents', { query })
+const selectedDivision = ref<number[]>([])
 
-    console.log(data)
+const selected = ref<FilteredData | null>(null)
 
-    documents.value = data
-
-
-  } catch (error) {
-    console.log(error)
+const { data, status } = await useAsyncData<FilteredData[]>('documents',
+  () =>
+    $fetch<FilteredData[]>('/api/documents', {
+      params: {
+        category: selectedCategory.value,
+        division: selectedDivision.value
+      }
+    }
+    ),
+  {
+    watch: [selectedCategory, selectedDivision],
+    immediate: false
   }
-}
+)
 
-const categories = ref(['Semua', 'Pemerintahan', 'Pemb-Manusia', 'Kes-Mas', 'Ekonomi', 'SDA', 'Infrastruktur', 'Kewilayahan', 'PPE'])
-const selected = ref()
-const selectedDocument = ref()
+const { data: categories, status: categoriesStatus } = await useFetch<Category[]>('/api/categories', {
+  transform: (data) => {
+    data.unshift({ id: 0, name: 'Semua Kategori' })
+    return data.map((category) => ({ id: category.id, name: toTitleCase(category.name) }))
 
-const selectDocument = (document: any) => {
-  isFileDetailsSlideoverOpen.value = true
-  selectedDocument.value = document
-}
-
-const infraCat = ref(['Air Minum', 'Sanitasi', 'Persampahan'])
-
-onMounted(() => {
-  getDocuments({ category: 'Semua' })
+  }
 })
 
-watch(
-  () => selected.value,
-  (val) => getDocuments({ category: val })
-)
+const { data: divisions, status: divisionsStatus } = await useFetch<Division[]>('/api/divisions', {
+  transform: (data) => {
+    data.unshift({ id: 0, name: 'Semua Bidang' })
+    return data.map((division) => ({ id: division.id, name: toTitleCase(division.name) }))
+  }
+})
+
+
+const selectDocument = (data: FilteredData) => {
+  isFileDetailsSlideoverOpen.value = true
+  selected.value = data
+}
+
 </script>
 
 <template>
   <div class="flex flex-row gap-4">
     <div class="flex flex-col gap-4">
-      <UDashboardToolbar>
-        <div class="my-2 flex flex-wrap">
-          <URadioGroup indicator="hidden" size="sm" variant="card" default-value="Semua" legend="Kategori"
-            :items="categories" orientation="horizontal" v-model="selected" />
+      <div class="my-2 flex flex-wrap" v-if="divisionsStatus === 'success'">
+        <UCheckboxGroup indicator="hidden" size="sm" variant="card" legend="Bidang" :items="divisions" value-key="id"
+          label-key="name" orientation="horizontal" v-model="selectedDivision" />
 
-          <div v-if="selected === 'Infrastruktur'" class="flex flex-row flex-wrap gap-4 smw-full lg:max-w-2xl my-2">
-            <UCheckbox v-for="infra in infraCat" color="primary" variant="card" size="xs" indicator="hidden"
-              :label="infra" />
-          </div>
-        </div>
-      </UDashboardToolbar>
+      </div>
+
+      <div class="my-2 flex flex-wrap" v-if="categoriesStatus === 'success'">
+        <UCheckboxGroup indicator="hidden" size="sm" variant="card" legend="Kategori" :items="categories" value-key="id"
+          label-key="name" orientation="horizontal" v-model="selectedCategory" />
+      </div>
 
 
-      <div class="flex px-4 sm:px-6 ">
-        <div v-if="documents" class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6">
-          <FileThumbnail v-for="document in documents" :key="document.id" :document="document"
-            @click="selectDocument(document)" />
+      <div class="flex flex-col gap-4">
+        <p class="text-xs">Dokumen</p>
+        <div v-if="status === 'success'" class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6">
+          <FileThumbnail v-for="item in data" :key="item.documents.id" :data="item"
+            :is-selected="item.documents.id === selected?.documents.id" @click="selectDocument(item)" />
         </div>
         <div v-else> Tidak ada file </div>
 
@@ -68,7 +74,8 @@ watch(
 
 
     </div>
-    <FileDetailsSlideOver :document="selectedDocument" />
+
+    <FileDetailsSlideOver :document="selected" />
 
   </div>
 </template>

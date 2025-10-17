@@ -12,7 +12,7 @@ defineProps<{
 <template>
   <UCollapsible v-model:open="isFileDetailsSlideoverOpen" title="File Details"
     :class="isFileDetailsSlideoverOpen ? 'min-w-96' : ''">
-    <UButton color="neutral" variant="ghost" icon="i-lucide-panel-right-close" :ui="{
+    <UButton v-if="document" color="neutral" variant="ghost" icon="i-lucide-panel-right-close" :ui="{
       trailingIcon: 'group-data-[state=open]:rotateY(180deg) transition-transform duration-200'
     }" />
 
