@@ -12,6 +12,12 @@ export function dateToLocale(date: string) {
   return new Date(date).toLocaleDateString()
 }
 
+export function toTitleCase(str: string) {
+  return str.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  })
+}
+
 /**
  * Converts a number of bytes into a human-readable file size string.
  * @param {number} bytes The file size in bytes.

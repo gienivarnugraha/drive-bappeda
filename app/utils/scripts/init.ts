@@ -1,4 +1,4 @@
-import 'dotenv/config'
+//import 'dotenv/config'
 import { join, resolve, extname, basename } from 'node:path';
 import { readdir, readFile, statSync, writeFile, existsSync, readFileSync } from 'node:fs';
 import { PDFLoader } from "./pdfLoader";
@@ -335,6 +335,7 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
     return summaries.map((summaryMap, i) => {
         const { summary, loc, title, attachment } = summaryMap
 
+        // @ts-ignore
         const content = docs[i].pageContent
 
         return new Document({
@@ -422,6 +423,7 @@ async function renderThumbnails(file: string, outputPath: string): Promise<strin
     const canvas = createCanvas(viewport.width, viewport.height)
     const context = canvas.getContext('2d');
 
+    // @ts-ignore
     await page.render({ canvasContext: context, viewport: viewport }).promise
 
     const buffer = canvas.toBuffer('image/png'); // or 'image/jpeg'

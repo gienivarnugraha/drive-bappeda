@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Category, Division, FilteredData } from '~/types'
-
+import { toTitleCase } from '#imports'
 
 const { isFileDetailsSlideoverOpen } = useDashboard()
 
