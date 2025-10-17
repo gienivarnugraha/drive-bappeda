@@ -76,7 +76,7 @@ const selectDocument = (data: FilteredData) => {
 
     </div>
 
-    <FileDetailsSlideOver :document="selected" />
+    <FileDetailsSlideOver :document="selected?.documents" />
 
   </div>
 </template>
