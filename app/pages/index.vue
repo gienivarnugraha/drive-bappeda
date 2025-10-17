@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Category, Division, FilteredData } from '~/types'
 
+
 const { isFileDetailsSlideoverOpen } = useDashboard()
 
 const selectedCategory = ref<number[]>([])
@@ -48,7 +49,7 @@ const selectDocument = (data: FilteredData) => {
 </script>
 
 <template>
-  <div class="flex flex-row gap-4">
+  <div class="flex flex-row">
     <div class="flex flex-col gap-4">
       <div class="my-2 flex flex-wrap" v-if="divisionsStatus === 'success'">
         <UCheckboxGroup indicator="hidden" size="sm" variant="card" legend="Bidang" :items="divisions" value-key="id"

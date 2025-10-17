@@ -1,7 +1,28 @@
 <script lang="ts" setup>
 import * as pdfjsLib from 'pdfjs-dist';
-import { formatBytes } from '#imports';
-import type { FilteredData } from '~/types'
+import { formatBytes, dateToLocale } from '#imports';
+
+export interface Document {
+    id: number;
+    filename: string;
+    title: string;
+    metadata: Metadata;
+    created_at: string;
+    uuid: string;
+}
+
+export interface Metadata {
+    docIds: string[];
+    fileId: string;
+    summary: string;
+    filePath: string;
+    filename: string;
+    filesize: number;
+    createdAt: string;
+    extension: string;
+    modifiedAt: string;
+}
+
 
 const props = defineProps({
     data: {
