@@ -1,22 +1,11 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
-
 const { isNotificationsSlideoverOpen } = useDashboard()
 
-const isSidebarSlideoverOpen = ref(true)
+const isSidebarSlideoverOpen = ref(false)
 
 defineShortcuts({
   o: () => isSidebarSlideoverOpen.value = !isSidebarSlideoverOpen.value
 })
-
-const items = [
-  [{
-    label: 'New file',
-    icon: 'i-lucide-file',
-    to: '/add-file'
-  },
-  ]] satisfies DropdownMenuItem[][]
-
 
 const route = useRoute()
 const toast = useToast()
@@ -51,7 +40,7 @@ onMounted(async () => {
 <template>
   <UDashboardGroup unit="rem">
     <UDashboardSidebar id="default" v-model:open="isSidebarSlideoverOpen" collapsible class="bg-elevated/25 min-h-full "
-      :collapsed-size="0" :default-size="40" :ui="{
+      :collapsed-size="0" :default-size="25" :ui="{
       header: 'lg:border-b lg:border-default h-auto',
       footer: 'lg:border-t lg:border-default'
     }">
@@ -90,6 +79,10 @@ onMounted(async () => {
             </UTooltip>
 
             <UColorModeButton />
+
+            <UTooltip text="Add Document" :shortcuts="['N']">
+              <FileAddModal />
+            </UTooltip>
 
             <UserMenu />
           </template>

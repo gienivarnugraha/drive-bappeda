@@ -2,7 +2,7 @@
 import { join, resolve, extname, basename } from 'node:path';
 import { readdir, readFile, statSync, writeFile, existsSync, readFileSync } from 'node:fs';
 import { PDFLoader } from "./pdfLoader";
-import postgres from 'postgres';
+//import postgres from 'postgres';
 import { MultiFileLoader } from 'langchain/document_loaders/fs/multi_file';
 import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Document, type DocumentInput } from "@langchain/core/documents";
@@ -23,13 +23,19 @@ import { spawn } from 'node:child_process';
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import supabase from '../../../server/utils/supabase';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
+import { DocxLoader, } from '@langchain/community/document_loaders/fs/docx';
+import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import * as pdfjsLib from 'pdfjs-dist';
 import { createCanvas } from 'canvas';
+import { type DocumentMetadata } from '~/types';
 
 const model = getModel('google')
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
 
+const documentPath = process.env.DOCUMENT_PATH as string
+
+const documentWhiteList = ['.md', '.docx', '.csv', '.txt', '.pdf']
 
 const idKey = 'doc_id'
 
@@ -62,11 +68,11 @@ const convertToMarkdown = async (command: string) => {
 
 const createTable = async () => {
 
-    const sql = postgres(process.env.SUPABASE_PG_URL as string, {
-        ssl: {
-            rejectUnauthorized: false
-        }
-    });
+    // const sql = postgres(process.env.SUPABASE_PG_URL as string, {
+    //     ssl: {
+    //         rejectUnauthorized: false
+    //     }
+    // });
 
     const createQuery = `
         -- First, ensure the 'pgvector' extension is installed and enabled.
@@ -121,9 +127,9 @@ const createTable = async () => {
         `
 
     try {
-        const query = await sql`${createQuery}`
+        // const query = await sql`${createQuery}`
 
-        console.log(query)
+        // console.log(query)
 
     } catch (error) {
         console.log(error)
@@ -142,7 +148,9 @@ const listDocuments = (folderPath: string): Promise<string[]> => {
             }
 
             files
-                .filter(file => extname(file).toLowerCase() === ".md")
+                .filter(file =>
+                    documentWhiteList.includes(extname(file).toLowerCase())
+                )
                 .map(file => join(folderPath, file))
                 .forEach(file => result.push(file))
 
@@ -195,16 +203,33 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
             case '.md':
                 loader = new TextLoader(file);
                 break;
-            // case '.docx':
-            //     loader = new TextLoader(file);
-            //     break;
-            // case '.csv':
-            //     loader = new TextLoader(file);
-            //     break;
+            case '.txt':
+                loader = new TextLoader(file);
+                break;
+            case '.csv':
+                loader = new CSVLoader(file);
+                break;
+            case '.doc':
+                loader = new DocxLoader(file, { type: 'doc' });
+                break;
+            case '.docx':
+                loader = new DocxLoader(file);
+                break;
             default:
                 throw new Error(`Unsupported file extension: ${extension}`);
         }
     }
+
+    // const loader = new MultiFileLoader(files, {
+    //     ".pdf":(path)=> new PDFLoader(path, {
+    //         parsedItemSeparator: ' ',
+    //     }),
+    //     ".md":(path)=> new TextLoader(path),
+    //     ".txt":(path)=> new TextLoader(path),
+    //     ".csv":(path)=> new CSVLoader(path),
+    //     ".doc":(path)=> new DocxLoader(path, { type: 'doc' }),
+    //     ".docx":(path)=> new DocxLoader(path)
+    // })
 
     return await loader.load();
 }
@@ -236,6 +261,54 @@ export const documentSplitter = (file: string) => {
     }
 
     return splitter
+}
+
+const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filepath: string) => {
+
+    const fileSummary = `${basename(filepath, extname(filepath))}_summary.json`
+
+    const pathSummary = join(documentPath, fileSummary)
+
+    let summaries: Document[]
+
+    if (existsSync(pathSummary)) {
+        console.log('file json exists...', pathSummary)
+
+        let json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
+
+        if (docs.length !== json.length) {
+            console.log('file json exists but document length is different...', pathSummary)
+            summaries = await getDocumentSummary(docs, ids)
+
+            const content = JSON.stringify(summaries)
+
+            writeFile(pathSummary, content, err => {
+                console.log('rewriting file...', pathSummary)
+                if (err) {
+                    console.log(err, content)
+                }
+            })
+        } else {
+            console.log('retrieve exisiting file...', pathSummary)
+            summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
+        }
+
+    } else {
+        console.log('file doesnt exists', pathSummary)
+        summaries = await getDocumentSummary(docs, ids)
+
+        const content = JSON.stringify(summaries)
+
+        writeFile(pathSummary, content, err => {
+            console.log('writing new file', pathSummary)
+            if (err) {
+                console.log(err, content)
+            }
+        })
+
+    }
+
+    return summaries
 }
 
 /**
@@ -354,73 +427,20 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
 
 }
 
-const checkFromFile = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filepath: string) => {
-    const dir = process.env.DOCUMENT_PATH as string
 
-    const filename = `${basename(filepath, extname(filepath))}_summary.json`
-
-    const path = join(dir, filename)
-
-    let summaries: Document[]
-
-    if (existsSync(path)) {
-        console.log('file json exists...', path)
-
-        let json = JSON.parse(readFileSync(path, 'utf-8'))
-
-        if (docs.length !== json.length) {
-            console.log('file json exists but document length is different...', path)
-            summaries = await getDocumentSummary(docs, ids)
-
-            const content = JSON.stringify(summaries)
-
-            writeFile(path, content, err => {
-                console.log('rewriting file...', path)
-                if (err) {
-                    console.log(err, content)
-                }
-            })
-        } else {
-            console.log('retrieve exisiting file...', path)
-            summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
-        }
-
-    } else {
-        console.log('file doesnt exists', path)
-        summaries = await getDocumentSummary(docs, ids)
-
-        const content = JSON.stringify(summaries)
-
-        writeFile(path, content, err => {
-            console.log('writing new file', path)
-            if (err) {
-                console.log(err, content)
-            }
-        })
-
-    }
-
-    return summaries
-}
-
-
-async function renderThumbnails(file: string, outputPath: string): Promise<string> {
+async function getFileThumbnail(file: string, outputPath: string): Promise<string> {
     const worker = new pdfjsLib.PDFWorker()
-    let pdfPath = ''
 
-    const regex = /^.*(documents\/.*)\.md$/;
-    const replacement = '/$1.pdf';
-    pdfPath = file.replace(regex, replacement);
-
-    let load = pdfjsLib.getDocument({ url: pdfPath, worker })
+    let load = pdfjsLib.getDocument({ url: file, worker })
 
     let pdf = await load.promise
 
     const page = await pdf.getPage(1)
 
-    let viewport = page.getViewport({ scale: 0.25 })
+    let viewport = page.getViewport({ scale: 0.5 })
 
     const canvas = createCanvas(viewport.width, viewport.height)
+
     const context = canvas.getContext('2d');
 
     // @ts-ignore
@@ -437,6 +457,7 @@ async function renderThumbnails(file: string, outputPath: string): Promise<strin
     });
 
     return outputPath
+
 }
 
 /**
@@ -446,23 +467,25 @@ async function renderThumbnails(file: string, outputPath: string): Promise<strin
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const setVectorStore = async (file: string) => {
+export const setVectorStore = async (filepath: string) => {
     const vectorstore = getVectorStore()
 
-    const documents = await loadDocument(file)
+    const documents = await loadDocument(filepath)
 
-    const splitter = documentSplitter(file)
+    const splitter = documentSplitter(filepath)
 
     const docs = await splitter.splitDocuments(documents)
 
-    const filename = basename(file, extname(file))
+    const extension = extname(filepath)
+
+    const filename = basename(filepath, extension)
 
     console.log('getting ids from database...', filename)
 
     const { data, error } = await supabase
         .from('documents')
         .select()
-        .ilike('filename', `%${filename}%`)
+        .ilike('uuid', `%${filename}%`)
 
     if (error) {
         console.error('Failed to get documents from database', error)
@@ -473,20 +496,31 @@ export const setVectorStore = async (file: string) => {
     } else {
         console.log('file not exists in database...')
 
+        const fileId = `${filename}_${uuid()}`
+
         const ids = {
             docIds: docs.map((_, i) => `${filename}_${i}`),
-            fileId: `${filename}_${uuid()}`
+            fileId
         }
 
-        const summaries = await checkFromFile(docs, ids, file)
+        const metadata = getBasicMetadata(filepath)
 
-        const metadata = getBasicMetadata(file)
+        const data = {
+            ...ids,
+            ...metadata,
+        }
+
+        if (extension === '.pdf') {
+            const thumbnailPath = await getFileThumbnail(filepath, `${documentPath}/${fileId}.png`)
+
+            Object.assign(data, { thumbnailPath })
+        }
+
+        const summaries = await generateSummaries(docs, ids, filepath)
 
         console.log('insert new data to database...', filename)
-        await storeToDB(docs.slice(0, 5), {
-            ...ids,
-            ...metadata
-        })
+
+        await storeToDB(docs.slice(0, 5), data)
 
         console.log('adding data to vector store...', filename)
 
@@ -514,13 +548,20 @@ const getBasicMetadata = (filePath: string) => {
 };
 
 
-const storeToDB = async (data: Document[], metadata: any) => {
+/**
+ * Stores the given documents to the database with the given metadata.
+ * @param doc The documents to be stored.
+ * @param data The metadata of the documents, including the fileId, filename, and docIds.
+ * @returns A promise that resolves when the data has been successfully stored to the database.
+ */
+
+const storeToDB = async (doc: Document[], data: DocumentMetadata) => {
     const queryOutput = z.object({
         title: z.string().describe("Title of the document"),
         summary: z.string().describe("Summary of the document"),
     });
 
-    const { fileId, filename, docIds } = metadata
+    const { fileId, filename } = data
 
 
     console.log('generating file summary ...', filename)
@@ -536,7 +577,7 @@ const storeToDB = async (data: Document[], metadata: any) => {
             {content}
             `)
 
-    const content = formatDocumentsAsString(data)
+    const content = formatDocumentsAsString(doc)
 
     const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
@@ -547,9 +588,8 @@ const storeToDB = async (data: Document[], metadata: any) => {
             title,
             filename,
             metadata: {
-                docIds,
                 summary,
-                ...metadata
+                ...data
             }
         })
 
@@ -564,7 +604,7 @@ async function run() {
     try {
         // await createTable()
 
-        const folderpath = resolve(process.env.DOCUMENT_PATH as string);
+        const folderpath = resolve(documentPath);
 
         const docs = await listDocuments(folderpath)
 

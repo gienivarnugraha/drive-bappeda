@@ -26,7 +26,6 @@ export interface Document {
   id: number
   uuid: string
   filename: string
-  type: string
   title: string
   category_id: number
   category: Category
@@ -37,6 +36,8 @@ export interface Document {
 }
 
 export interface DocumentMetadata {
+  thumbnailPath?: string
+  extension: string
   filename: string
   filesize: number
   filePath: string
