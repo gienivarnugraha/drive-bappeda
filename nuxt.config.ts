@@ -4,13 +4,22 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxtjs/mdc',
     '@nuxt/ui',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
   ],
 
   devtools: {
     enabled: false
   },
   debug: false,
+
+  nitro: {
+    storage: {
+      documents: {
+        driver: "fs",
+        base: process.env.DOCUMENT_PATH,
+      },
+    },
+  },
 
   css: ['~/assets/css/main.css'],
 

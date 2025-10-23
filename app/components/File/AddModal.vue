@@ -2,131 +2,158 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
+import { getFilenameWithoutExtension } from '../../utils/index';
 
-const schema = z.object({
-  category_id: z.array(z.number()),
-  division_id: z.array(z.number()),
-  file: z.array(z.string()),
-})
-
-const fileRef = ref<HTMLInputElement>()
-
-const open = ref(false)
-
-const isDragging = ref(false)
-
-const filename = ref<string[]>([])
-
-const addedFiles = computed(() => filename.value.join(','))
-
-type Schema = z.output<typeof schema>
-
+const openModal = ref(false)
 
 const { data: categories, status: categoriesStatus } = await useFetch<Category[]>('/api/categories')
 
 const { data: divisions, status: divisionsStatus } = await useFetch<Division[]>('/api/divisions')
 
+const fileUploading = ref(false)
+
+const isSubmitting = ref(false)
+
+const schema = z.object({
+  files: z.instanceof(File).array(),
+  category_id: z.number().array(),
+  division_id: z.number().array(),
+})
+
+type Schema = z.infer<typeof schema>
+
 const state = reactive<Partial<Schema>>({
-  file: undefined,
+  files: undefined,
   category_id: undefined,
   division_id: undefined,
 })
 
-function processFile(files: File[]) {
-  let filenames: string[] = []
-  let fileurls: string[] = []
+async function upload(files: File[]) {
+  fileUploading.value = true
 
-  files.forEach(file => {
+  const formData = new FormData();
 
-    filenames.push(file.name)
+  for (const file of files) {
+    //@ts-ignore
+    formData.append('file', file);
 
-    fileurls.push(URL.createObjectURL(file!))
+  }
+
+  for (const thumbnail of thumbnails.value) {
+    //@ts-ignore
+    formData.append('thumbnail', thumbnail.blob, `${thumbnail.filename}.png`);
+
+  }
+
+  try {
+    const { message, filenames } = await $fetch('/api/upload', {
+      method: 'post',
+      body: formData
+    })
+
+    console.log('filenames', filenames)
+
+    toast.add({ title: 'Success', description: `${message}`, color: 'success' })
+
+    return filenames
+  } catch (error) {
+    console.log(error)
+  } finally {
+    fileUploading.value = false
+  }
+}
+
+async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | undefined }) {
+  isSubmitting.value = true
+
+  try {
+    const { message } = await $fetch('/api/documents', {
+      method: 'post',
+      body: data
+    })
+
+    console.log('submit')
+
+    toast.add({ title: 'Success', description: `${message} `, color: 'success' })
+
+    openModal.value = false
+
+  } catch (error) {
+    console.log(error)
+    toast.add({ title: 'Success', description: `Error Submitting : ${error} `, color: 'error' })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const thumbnails = ref<{ filename: string, blob: Blob }[]>([])
+
+const onChange = async () => {
+  const shouldGenerateThumbnails = ['application/pdf']
+
+  state.files?.forEach(file => {
+
+    if (shouldGenerateThumbnails.includes(file.type)) {
+
+      file.arrayBuffer().then(async (buff) => {
+
+        const thumbnail = await generateThumbnail(new Uint8Array(buff))
+
+        thumbnail?.toBlob(function (blob) {
+          thumbnails.value.push({
+            filename: getFilenameWithoutExtension(file.name),
+            blob
+          })
+        }, 'image/png', 1)
+
+      })
+
+    }
   })
-
-  filename.value = filenames
-  state.file = fileurls
-}
-
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-
-  if (!input.files?.length) {
-    return
-  }
-
-  processFile(Array.from(input.files))
-
-}
-
-function onFileClick() {
-  fileRef.value?.click()
-}
-
-function onDrop(e: DragEvent) {
-  if (e.dataTransfer?.files.length) {
-    processFile(Array.from(e.dataTransfer.files))
-  }
-
-  isDragging.value = false
-}
-
-function onDragOver(e: Event) {
-  isDragging.value = true
-}
-
-function onDragLeave(e: Event) {
-  isDragging.value = false
 }
 
 
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  console.log(event.data)
+  const { files, ...data } = event.data
 
-  const formData = new FormData();
+  const filenames = await upload(files)
 
-  for (const value of event.data.file) {
-    console.log(value)
-    //@ts-ignore
-    formData.append('file', value);
-  }
-
-  //@ts-ignore
-  formData.append('category_id', JSON.stringify(event.data.category_id));
-  //@ts-ignore
-  formData.append('division_id', JSON.stringify(event.data.division_id));
-
-  try {
-    const { message } = await $fetch('/api/documents', {
-      method: 'post',
-      body: formData
-    })
-
-    toast.add({ title: 'Success', description: `${message} `, color: 'success' })
-  } catch (error) {
-    console.log(error)
-  }
-
-  // toast.add({ title: 'Success', description: `New customer ${event.data.file} added`, color: 'success' })
-  // open.value = false
+  await submit({
+    filenames,
+    ...data
+  })
 }
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
+  <UModal v-model:open="openModal" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
     <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
 
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-        <UFormField name="file" label="Dokumen" :description="state.file ? addedFiles : 'Click or drop file here'"
-          @drop.prevent="onDrop" class="flex max-sm:flex-col justify-between sm:items-center gap-4 py-2"
-          @dragover.prevent="onDragOver" @dragleave.prevent="onDragLeave"
-          :class="{ 'border-dashed border-2 border-gray-600 dark:border-gray-500 bg-gray-50/25 rounded-md': isDragging }">
-          <div class="flex flex-wrap items-center gap-3">
-            <UButton label="Choose" color="neutral" @click="onFileClick" />
-            <input ref="fileRef" type="file" class="hidden" accept=".pdf," @change="onFileChange">
-          </div>
+
+        <UFormField>
+          <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop your images here"
+            @change="onChange" description="SVG, PNG, JPG or GIF (max. 2MB)" layout="list" multiple
+            class="w-full min-h-48">
+
+            <template #actions="{ open }">
+              <UButton label="Select images" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
+            </template>
+
+            <template #files-top="{ open, files }">
+              <div v-if="files?.length" class="mb-2 flex items-center justify-between">
+                <p class="font-bold">Files ({{ files?.length }})</p>
+
+                <UButton icon="i-lucide-plus" label="Add more" color="neutral" variant="outline" class="-my-2"
+                  @click="open()" />
+              </div>
+            </template>
+
+          </UFileUpload>
         </UFormField>
+
 
         <UFormField name="division_id" label="division"
           description="Your unique division for logging in and your profile URL." v-if="divisionsStatus === 'success'">
@@ -142,7 +169,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
+          <UButton label="Cancel" color="neutral" variant="subtle" @click="openModal = false" />
           <UButton label="Create" color="primary" variant="solid" type="submit" />
         </div>
       </UForm>

@@ -18,6 +18,31 @@ export function toTitleCase(str: string) {
   })
 }
 
+export function base64ToArrayBuffer(data: string) {
+  var input = data.substring(data.indexOf(',') + 1);
+  var binaryString = window.atob(input);
+  var binaryLen = binaryString.length;
+  var bytes = new Uint8Array(binaryLen);
+  for (var i = 0; i < binaryLen; i++) {
+    var ascii = binaryString.charCodeAt(i);
+    bytes[i] = ascii;
+  }
+  return bytes;
+};
+
+export function getFilenameWithoutExtension(file: string) {
+  const lastDotIndex = file.lastIndexOf('.');
+  let fileNameWithoutExtension;
+
+  if (lastDotIndex !== -1) {
+    fileNameWithoutExtension = file.substring(0, lastDotIndex);
+  } else {
+    fileNameWithoutExtension = file; // No extension found
+  }
+
+  return fileNameWithoutExtension
+}
+
 /**
  * Converts a number of bytes into a human-readable file size string.
  * @param {number} bytes The file size in bytes.

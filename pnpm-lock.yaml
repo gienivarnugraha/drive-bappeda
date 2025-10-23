@@ -44,9 +44,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.57.0
         version: 2.58.0
-      '@vue-pdf-viewer/viewer':
-        specifier: ^3.1.0
-        version: 3.2.2(pdfjs-dist@4.10.38)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))
       '@vueuse/nuxt':
         specifier: ^13.9.0
         version: 13.9.0(magicast@0.3.5)(nuxt@4.1.2(@parcel/watcher@2.5.1)(@types/node@24.6.2)(@vue/compiler-sfc@3.5.22)(db0@0.3.2)(eslint@9.36.0(jiti@2.6.0))(ioredis@5.8.0)(lightningcss@1.30.1)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.52.3)(terser@5.44.0)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue-tsc@3.1.0(typescript@5.9.2))(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))
@@ -81,8 +78,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       pdfjs-dist:
-        specifier: ^4.10.38
-        version: 4.10.38
+        specifier: ^5.4.296
+        version: 5.4.296
       typeorm:
         specifier: ^0.3.25
         version: 0.3.27(babel-plugin-macros@3.1.0)(ioredis@5.8.0)(reflect-metadata@0.2.2)
@@ -2389,18 +2386,6 @@ packages:
     peerDependenciesMeta:
       vue:
         optional: true
-
-  '@vue-pdf-viewer/shared@1.1.0-rc.1':
-    resolution: {integrity: sha512-aKQlwJiBxJ5Vix3BaI9VdCsTrvHbPdBo2PPnblS1kbTDkaH/v1O5AJnSNgaytdKJlMtVXlWbpI7ewYxul3AjfQ==}
-    peerDependencies:
-      vue: ^3.2.37
-
-  '@vue-pdf-viewer/viewer@3.2.2':
-    resolution: {integrity: sha512-AJrLhsW+/3dKFymD2v73Yg227Pgd5MabXwAANB8QL25ZbfdEEE1PHMRWNg12PfvvKFBJf9Ly0XhFxWhdEYAZiA==}
-    engines: {bun: '>=1.0.4', node: '>=18.20.3', npm: '>=9.5.1', pnpm: '>=8.8.0', yarn: '>=1.20.0'}
-    peerDependencies:
-      pdfjs-dist: ^4.10.38
-      vue: ^3.2.37
 
   '@vue/babel-helper-vue-transform-on@1.5.0':
     resolution: {integrity: sha512-0dAYkerNhhHutHZ34JtTl2czVQHUNWv6xEbkdF5W+Yrv5pCWsqjeORdOgbtW2I9gWlt+wBmVn+ttqN9ZxR5tzA==}
@@ -5083,9 +5068,9 @@ packages:
     resolution: {integrity: sha512-v6ZJ/efsBpGrGGknjtq9J/oC8tZWq0KWL5vQrk2GlzLEQPUDB1ex+13Rmidl1neNN358Jn9EHZw5y07FFtaC7A==}
     engines: {node: '>=6.8.1'}
 
-  pdfjs-dist@4.10.38:
-    resolution: {integrity: sha512-/Y3fcFrXEAsMjJXeL9J8+ZG9U01LbuWaYypvDW2ycW1jL269L3js3DVBjDJ0Up9Np1uqDXsDrRihHANhZOlwdQ==}
-    engines: {node: '>=20'}
+  pdfjs-dist@5.4.296:
+    resolution: {integrity: sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q==}
+    engines: {node: '>=20.16.0 || >=22.3.0'}
 
   peek-readable@4.1.0:
     resolution: {integrity: sha512-ZI3LnwUv5nOGbQzD9c2iDG6toheuXSZP5esSHBjopsXH4dg19soufvpUGA3uohi5anFtGb2lhAVdHzH6R/Evvg==}
@@ -6306,11 +6291,6 @@ packages:
         optional: true
       vue-tsc:
         optional: true
-
-  vite-plugin-css-injected-by-js@3.5.2:
-    resolution: {integrity: sha512-2MpU/Y+SCZyWUB6ua3HbJCrgnF0KACAsmzOQt1UvRVJCGF6S8xdA3ZUhWcWdM9ivG4I5az8PnQmwwrkC2CAQrQ==}
-    peerDependencies:
-      vite: '>2.0.0-0'
 
   vite-plugin-inspect@11.3.3:
     resolution: {integrity: sha512-u2eV5La99oHoYPHE6UvbwgEqKKOQGz86wMg40CCosP6q8BkB6e5xPneZfYagK4ojPJSj5anHCrnvC20DpwVdRA==}
@@ -8846,23 +8826,6 @@ snapshots:
       unplugin-utils: 0.2.5
     optionalDependencies:
       vue: 3.5.22(typescript@5.9.2)
-
-  '@vue-pdf-viewer/shared@1.1.0-rc.1(vue@3.5.22(typescript@5.9.2))':
-    dependencies:
-      vue: 3.5.22(typescript@5.9.2)
-
-  '@vue-pdf-viewer/viewer@3.2.2(pdfjs-dist@4.10.38)(typescript@5.9.2)(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(vue@3.5.22(typescript@5.9.2))':
-    dependencies:
-      '@vue-pdf-viewer/shared': 1.1.0-rc.1(vue@3.5.22(typescript@5.9.2))
-      '@vueuse/core': 13.9.0(vue@3.5.22(typescript@5.9.2))
-      pdfjs-dist: 4.10.38
-      reka-ui: 2.5.0(typescript@5.9.2)(vue@3.5.22(typescript@5.9.2))
-      vite-plugin-css-injected-by-js: 3.5.2(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))
-      vue: 3.5.22(typescript@5.9.2)
-    transitivePeerDependencies:
-      - '@vue/composition-api'
-      - typescript
-      - vite
 
   '@vue/babel-helper-vue-transform-on@1.5.0': {}
 
@@ -12069,7 +12032,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  pdfjs-dist@4.10.38:
+  pdfjs-dist@5.4.296:
     optionalDependencies:
       '@napi-rs/canvas': 0.1.80
 
@@ -13399,10 +13362,6 @@ snapshots:
       optionator: 0.9.4
       typescript: 5.9.2
       vue-tsc: 3.1.0(typescript@5.9.2)
-
-  vite-plugin-css-injected-by-js@3.5.2(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)):
-    dependencies:
-      vite: 7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)
 
   vite-plugin-inspect@11.3.3(@nuxt/kit@3.19.2(magicast@0.3.5))(vite@7.1.7(@types/node@24.6.2)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)):
     dependencies:

@@ -2,30 +2,31 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { v4 as uuid } from 'uuid'
 
+
+type Schema = {
+    filenames: string[],
+    category_id: number[],
+    division_id: number[],
+}
+
 export default eventHandler(async (event) => {
-    const formData = await readMultipartFormData(event);
+    const data = await readBody<Schema>(event);
 
-    if (!formData || formData.length === 0) {
-        throw new Error('No files uploaded.');
-    }
+    console.log(data)
 
-    const file = formData.forEach(async (file) => {
-        if (file.name === 'file') {
-            // const storage = useStorage('documents'); // 'uploads' is a bucket defined in nuxt.config.ts
+    const storage = useStorage('documents');
 
-            //   const filePath = `fs:${uploadedFile.filename}`;
+    data.filenames.forEach(async (filename) => {
+        console.log('hasItem:', filename, await storage.hasItem(filename))
 
-            //   await storage.setItemRaw(filePath, uploadedFile.data);
+        // 1. get summary
+        // create thumbnail 
 
-            const uploadDir = join(process.cwd(), 'public', 'documents'); // Store in public/uploads
-            await mkdir(uploadDir, { recursive: true });
+        // 2. get metadata
 
-            const filePath = join(uploadDir, uuid());
-            await writeFile(filePath, file.data);
+        // 3. add to database
 
-        }
-    });
+    })
 
-
-    return { message: 'File uploaded successfully', path: `/uploads` };
+    return { message: 'File added successfully' };
 })

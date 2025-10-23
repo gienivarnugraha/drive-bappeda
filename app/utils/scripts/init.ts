@@ -25,14 +25,9 @@ import supabase from '../../../server/utils/supabase';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { DocxLoader, } from '@langchain/community/document_loaders/fs/docx';
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
-import * as pdfjsLib from 'pdfjs-dist';
-import { createCanvas } from 'canvas';
 import { type DocumentMetadata } from '~/types';
 
 const model = getModel('google')
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
-
 const documentPath = process.env.DOCUMENT_PATH as string
 
 const documentWhiteList = ['.md', '.docx', '.csv', '.txt', '.pdf']
@@ -428,38 +423,6 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
 }
 
 
-async function getFileThumbnail(file: string, outputPath: string): Promise<string> {
-    const worker = new pdfjsLib.PDFWorker()
-
-    let load = pdfjsLib.getDocument({ url: file, worker })
-
-    let pdf = await load.promise
-
-    const page = await pdf.getPage(1)
-
-    let viewport = page.getViewport({ scale: 0.5 })
-
-    const canvas = createCanvas(viewport.width, viewport.height)
-
-    const context = canvas.getContext('2d');
-
-    // @ts-ignore
-    await page.render({ canvasContext: context, viewport: viewport }).promise
-
-    const buffer = canvas.toBuffer('image/png'); // or 'image/jpeg'
-
-    writeFile(outputPath, buffer, (err) => {
-        if (err) {
-            console.error('Error writing thumbnail:', err);
-        } else {
-            console.log('Thumbnail saved to', outputPath);
-        }
-    });
-
-    return outputPath
-
-}
-
 /**
  * Sets the vector store with the given file.
  * If the file exists in the database, it will use the existing data.
@@ -510,11 +473,11 @@ export const setVectorStore = async (filepath: string) => {
             ...metadata,
         }
 
-        if (extension === '.pdf') {
-            const thumbnailPath = await getFileThumbnail(filepath, `${documentPath}/${fileId}.png`)
+        // if (extension === '.pdf') {
+        //     const thumbnailPath = await getFileThumbnail(filepath, `${documentPath}/${fileId}.png`)
 
-            Object.assign(data, { thumbnailPath })
-        }
+        //     Object.assign(data, { thumbnailPath })
+        // }
 
         const summaries = await generateSummaries(docs, ids, filepath)
 
@@ -643,5 +606,3 @@ async function run() {
         console.error('error database', error)
     }
 }
-
-run()
