@@ -18,6 +18,27 @@ export function toTitleCase(str: string) {
   })
 }
 
+/**
+ * Extracts the first standard UUID (Universally Unique Identifier) found in a string (like a filename).
+ *
+ * @param {string} filename The string to search within.
+ * @returns {string } The extracted UUID string, or null if no UUID is found.
+ */
+export function getUuidFromFilename(filename: string): string {
+  // Regex explanation:
+  // [0-9a-fA-F]: Matches any hex character (0-9, a-f, A-F).
+  // {8}-{4}-{4}-{4}-{12}: Defines the 8-4-4-4-12 pattern of a standard UUID.
+  const uuidRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
+
+  // The .match() method returns an array of results or null if no match is found.
+  const match = filename.match(uuidRegex);
+
+  // If a match is found, the full matched string (the UUID) is at index 1
+  // because we used capturing parentheses () around the entire pattern.
+  // If no match is found, match is null.
+  return match ? match[1] as string : filename;
+}
+
 export function base64ToArrayBuffer(data: string) {
   var input = data.substring(data.indexOf(',') + 1);
   var binaryString = window.atob(input);
@@ -43,6 +64,17 @@ export function getFilenameWithoutExtension(file: string) {
   return fileNameWithoutExtension
 }
 
+export function getFileExtension(filename: string) {
+  const lastDot = filename.lastIndexOf('.');
+
+  // Check for edge cases: no dot found, or filename starts with a dot (like ".gitignore")
+  if (lastDot === -1 || lastDot === 0) {
+    return ""; // Return empty string for no extension or hidden files
+  }
+
+  // Extracts the substring starting from the character after the last dot
+  return filename.substring(lastDot + 1);
+}
 /**
  * Converts a number of bytes into a human-readable file size string.
  * @param {number} bytes The file size in bytes.

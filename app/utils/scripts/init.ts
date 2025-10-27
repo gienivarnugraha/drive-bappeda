@@ -26,6 +26,8 @@ import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/
 import { DocxLoader, } from '@langchain/community/document_loaders/fs/docx';
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { type DocumentMetadata } from '~/types';
+import { getUuidFromFilename } from '~/utils';
+import { sseSend } from '../../../server/utils/sse';
 
 const model = getModel('google')
 const documentPath = process.env.DOCUMENT_PATH as string
@@ -44,7 +46,7 @@ const convertToMarkdown = async (command: string) => {
     const pythonProcess = spawn('python', [scriptPath, sourceDirectory]);
 
     pythonProcess.stdout.on('data', (data) => {
-        console.log(`Python stdout: ${data}`);
+        sseSend("push:notif", { message: `Python stdout: ${data}` });
     });
 
     pythonProcess.stderr.on('data', (data) => {
@@ -52,11 +54,11 @@ const convertToMarkdown = async (command: string) => {
     });
 
     pythonProcess.on('close', (code) => {
-        console.log(`Python process exited with code ${code}`);
+        sseSend("push:notif", { message: `Python process exited with code ${code}` });
         if (code !== 0) {
             console.error('PDF conversion failed.');
         } else {
-            console.log('PDF conversion completed successfully.');
+            sseSend("push:notif", { message: 'PDF conversion completed successfully.' });
         }
     });
 }
@@ -124,10 +126,10 @@ const createTable = async () => {
     try {
         // const query = await sql`${createQuery}`
 
-        // console.log(query)
+        // sseSend("push:notif",{message: quer}y)
 
     } catch (error) {
-        console.log(error)
+        console.error(error)
 
     }
 }
@@ -181,7 +183,7 @@ function isValidHttpURL(file: string) {
 export const loadDocument = async (file: string): Promise<Document[]> => {
     let loader;
 
-    console.log('loading document...')
+    sseSend("push:notif", { message: 'loading document...' })
 
 
     if (isValidHttpURL(file)) {
@@ -267,37 +269,37 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
     let summaries: Document[]
 
     if (existsSync(pathSummary)) {
-        console.log('file json exists...', pathSummary)
+        sseSend("push:notif", { message: 'file json exists...', pathSummary })
 
         let json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
 
         if (docs.length !== json.length) {
-            console.log('file json exists but document length is different...', pathSummary)
+            sseSend("push:notif", { message: 'file json exists but document length is different...', pathSummary })
             summaries = await getDocumentSummary(docs, ids)
 
             const content = JSON.stringify(summaries)
 
             writeFile(pathSummary, content, err => {
-                console.log('rewriting file...', pathSummary)
+                sseSend("push:notif", { message: 'rewriting file...', pathSummary })
                 if (err) {
-                    console.log(err, content)
+                    console.error({ message: err, content })
                 }
             })
         } else {
-            console.log('retrieve exisiting file...', pathSummary)
+            sseSend("push:notif", { message: 'retrieve exisiting file...', pathSummary })
             summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
         }
 
     } else {
-        console.log('file doesnt exists', pathSummary)
+        sseSend("push:notif", { message: 'file doesnt exists', pathSummary })
         summaries = await getDocumentSummary(docs, ids)
 
         const content = JSON.stringify(summaries)
 
         writeFile(pathSummary, content, err => {
-            console.log('writing new file', pathSummary)
+            sseSend("push:notif", { message: 'writing new file', pathSummary })
             if (err) {
-                console.log(err, content)
+                console.error({ message: err, content })
             }
         })
 
@@ -314,7 +316,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
  * @returns A promise that resolves to an object with the following properties: title, summary, context, and source.
  */
 export const getDocumentSummary = async (docs: Document[], ids: { fileId: string, docIds: string[] }) => {
-    console.log('getting documents summary...')
+    sseSend("push:notif", { message: 'getting documents summary...' })
 
     const queryOutput = z.object({
         title: z.string().describe("Title of the document"),
@@ -398,7 +400,7 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
         maxConcurrency: 1,
     });
 
-    console.log('successfully getting documents summary...')
+    sseSend("push:notif", { message: 'successfully getting documents summary...' })
 
     return summaries.map((summaryMap, i) => {
         const { summary, loc, title, attachment } = summaryMap
@@ -443,7 +445,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
     const filename = basename(filepath, extension)
 
-    console.log('getting ids from database...', filename)
+    sseSend("push:notif", { message: 'getting ids from database...', filename })
 
     const { data, error } = await supabase
         .from('documents')
@@ -455,11 +457,11 @@ export const setVectorStore = async (filepath: string, documentData: { category_
     }
 
     if (data?.length) {
-        console.log('file exists in database...', filename)
+        sseSend("push:notif", { message: 'file exists in database...', filename })
     } else {
-        console.log('file not exists in database...')
+        sseSend("push:notif", { message: 'file not exists in database...' })
 
-        const fileId = `${filename}_${uuid()}`
+        const fileId = getUuidFromFilename(filename)
 
         const ids = {
             docIds: docs.map((_, i) => `${filename}_${i}`),
@@ -476,23 +478,23 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
         const summaries = await generateSummaries(docs, ids, filepath)
 
-        console.log('insert new data to database...', filename)
+        sseSend("push:notif", { message: 'insert new data to database...', filename })
 
         await storeToDB(docs.slice(0, 5), data)
 
-        console.log('adding data to vector store...', filename)
+        sseSend("push:notif", { message: 'adding data to vector store...', filename })
 
         await vectorstore.addDocuments(summaries);
 
     }
-    console.log('success adding to vector store...', filename)
+    sseSend("push:notif", { message: 'success adding to vector store...', filename })
 
     return vectorstore
 }
 
 
 const getBasicMetadata = (filePath: string) => {
-    console.log('geting meta data...', filePath)
+    sseSend("push:notif", { message: 'getting meta data...', filePath })
     const stats = statSync(filePath);
 
     return {
@@ -519,10 +521,10 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
         summary: z.string().describe("Summary of the document"),
     });
 
-    const { category_id, division_id, filename } = data
+    const { category_id, division_id, filename, fileId } = data
 
 
-    console.log('generating file summary ...', filename)
+    sseSend("push:notif", { message: 'generating file summary ...', filename })
 
     const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
@@ -539,10 +541,12 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
     const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
+
+
     const { data: docResponse, error: docerror } = await supabase
         .from('documents')
         .insert({
-            uuid: filename,
+            uuid: fileId,
             title,
             filename,
             metadata: {
@@ -552,29 +556,38 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
         })
         .select()
 
-    console.log('success creating new data...', filename)
+    sseSend("push:notif", { message: 'success creating new data...', filename })
 
     if (docerror) {
-        console.log('docerror', docerror)
+        console.error('docerror', docerror)
     }
 
     if (docResponse) {
 
+        // insert to relation table
+        let relationData = []
+
+        for (const categoryId of category_id) {
+            for (const divisionId of division_id) {
+                relationData.push({
+                    document_id: docResponse[0].id,
+                    category_id: categoryId,
+                    division_id: divisionId
+                })
+            }
+        }
+
         const { data: relationResponse, error: relationError } = await supabase
             .from('categories_documents_divisions')
-            .insert({
-                document_id: docResponse[0].id,
-                category_id,
-                division_id
-            })
+            .insert(relationData)
             .select()
 
         if (relationError) {
-            console.log('relationError', relationError)
+            console.error('relationError', relationError)
         }
 
         if (relationResponse) {
-            console.log('success adding relation...', relationResponse)
+            sseSend("push:notif", { message: 'success adding relation...' })
         }
     }
 }
@@ -587,7 +600,7 @@ async function run() {
 
         const docs = await listDocuments(folderpath)
 
-        console.log('found documents:', docs)
+        // sseSend("push:notif",{message: 'found documents:', doc}s)
 
         // for (let doc of docs) {
         //     console.warn('initiating document:', doc)
@@ -602,7 +615,7 @@ async function run() {
 
         // const result = await retriever.invoke('jumlah sampah dan jumlah orang di semarang')
 
-        // console.log(result.length, inspect(result, false, null, true))
+        // sseSend("push:notif",{message: result.length, inspect(result, false, null, true}))
 
         // const model = getModel('google')
 
@@ -616,7 +629,7 @@ async function run() {
 
         // const result = await generate.invoke('skenario dan proyeksi pengurangan sampah yang optimal dengan gambar dan tabel')
 
-        // console.log(inspect(result, false, null, true))
+        // sseSend("push:notif",{message: inspect(result, false, null, true}))
 
     } catch (error) {
         console.error('error database', error)

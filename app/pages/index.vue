@@ -46,6 +46,16 @@ const selectDocument = (data: FilteredData) => {
   selected.value = data
 }
 
+const nuxtApp = useNuxtApp()
+const toast = useToast()
+
+nuxtApp.hook('app:upload', (payload) => {
+  console.log('hooks call:', payload)
+
+  toast.add({ title: 'Success', description: `${payload.message}`, color: 'success' })
+
+})
+
 </script>
 
 <template>

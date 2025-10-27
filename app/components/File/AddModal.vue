@@ -2,8 +2,10 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
-import { getFilenameWithoutExtension } from '../../utils/index';
+import { getFilenameWithoutExtension, getFileExtension } from '../../utils/index';
 import { v4 as uuid } from 'uuid'
+import * as pdfjsLib from 'pdfjs-dist';
+
 
 const openModal = ref(false)
 
@@ -38,14 +40,16 @@ async function upload(files: File[]) {
 
   const formData = new FormData();
 
-  ids = files.map(file => uuid())
+  ids = files.map((_) => uuid())
 
   files.forEach((file, index) => {
+    let extension = getFileExtension(file.name)
+    let filename = getFilenameWithoutExtension(file.name)
 
-    formData.append('file', file, `${file.name}`);
+    formData.append('file', file, `${filename}_${ids[index]}.${extension}`);
 
     // @ts-ignore
-    formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`);
+    formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}_${ids[index]}.png`);
   })
 
   try {
@@ -70,16 +74,28 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
   isSubmitting.value = true
 
   try {
-    const { message } = await $fetch('/api/documents', {
+    const response = await $fetch<ReadableStream>('/api/documents', {
       method: 'post',
-      body: data
+      body: data,
+      responseType: 'stream',
     })
 
     console.log('submit')
 
-    toast.add({ title: 'Success', description: `${message} `, color: 'success' })
+    const reader = response.pipeThrough(new TextDecoderStream()).getReader()
 
-    openModal.value = false
+    // Read the chunk of data as we get it
+    while (true) {
+      const { value, done } = await reader.read()
+
+      if (done) { break }
+
+      console.log('Received:', value)
+    }
+
+    // toast.add({ title: 'Success', description: `${message} `, color: 'success' })
+
+    // openModal.value = false
 
   } catch (error) {
     console.log(error)
@@ -116,16 +132,58 @@ const onChange = () => {
 
 }
 
+let worker: pdfjsLib.PDFWorker
+
+onMounted(() => {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+
+  worker = new pdfjsLib.PDFWorker()
+})
+
+const generateThumbnail = async (data: Uint8Array) => {
+  try {
+
+    let load = pdfjsLib.getDocument({ data, worker })
+
+    let pdf = await load.promise
+
+    const page = await pdf.getPage(1)
+
+    let viewport = page.getViewport({ scale: 1 })
+
+    const canvas = document.createElement("canvas");
+
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // @ts-ignore
+    await page.render({ canvasContext: context, viewport: viewport }).promise
+
+    return canvas
+
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const toast = useToast()
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { files, ...data } = event.data
 
   const filenames = await upload(files)
 
-  await submit({
-    filenames,
-    ...data
-  })
+  if (!filenames) {
+    toast.add({ title: 'Error', description: `File upload failed`, color: 'error' })
+    return
+  } else {
+    await submit({
+      filenames,
+      ...data
+    })
+  }
+
 }
 </script>
 

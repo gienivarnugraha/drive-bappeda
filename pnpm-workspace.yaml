@@ -1,10 +1,7 @@
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
   - '@parcel/watcher'
-  - '@tailwindcss/oxide'
+  - canvas
   - esbuild
-  - maplibre-gl
+  - protobufjs
   - unrs-resolver
   - vue-demi
-
-onlyBuiltDependencies:
-  - canvas

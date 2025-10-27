@@ -1,6 +1,7 @@
 import { mkdir, writeFile, cp } from 'node:fs/promises';
 import { join } from 'node:path';
-import { v4 as uuid } from 'uuid'
+
+import { sseSend } from '../utils/sse';
 
 const allowedTypes = [
     "image/jpeg", "image/png", "image/gif", "application/pdf", "text/plain",];
@@ -12,6 +13,8 @@ export default eventHandler(async (event) => {
     if (!formData || formData.length === 0) {
         throw new Error('No files uploaded.');
     }
+
+    sseSend("push:notif", { message: "File upload started" })
 
     let filenames: string[] = []
 
@@ -31,7 +34,10 @@ export default eventHandler(async (event) => {
             filenames.push(file.filename!)
         }
 
+
         await storage.setItemRaw(file.filename!, file.data)
+
+        sseSend("push:notif", { message: `File ${file.filename} uploaded ` })
     });
 
     return { message: 'File uploaded successfully', filenames };

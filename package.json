@@ -27,6 +27,7 @@
     "d3-dsv": "^2.0.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
+    "hookable": "^5.5.3",
     "langchain": "^0.3.30",
     "mammoth": "^1.11.0",
     "motion-v": "^1.7.1",
