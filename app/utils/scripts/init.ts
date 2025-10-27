@@ -430,7 +430,7 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const setVectorStore = async (filepath: string) => {
+export const setVectorStore = async (filepath: string, documentData: { category_id: number[], division_id: number[] }) => {
     const vectorstore = getVectorStore()
 
     const documents = await loadDocument(filepath)
@@ -471,13 +471,8 @@ export const setVectorStore = async (filepath: string) => {
         const data = {
             ...ids,
             ...metadata,
+            ...documentData
         }
-
-        // if (extension === '.pdf') {
-        //     const thumbnailPath = await getFileThumbnail(filepath, `${documentPath}/${fileId}.png`)
-
-        //     Object.assign(data, { thumbnailPath })
-        // }
 
         const summaries = await generateSummaries(docs, ids, filepath)
 
@@ -518,13 +513,13 @@ const getBasicMetadata = (filePath: string) => {
  * @returns A promise that resolves when the data has been successfully stored to the database.
  */
 
-const storeToDB = async (doc: Document[], data: DocumentMetadata) => {
+const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id: number[], division_id: number[] }) => {
     const queryOutput = z.object({
         title: z.string().describe("Title of the document"),
         summary: z.string().describe("Summary of the document"),
     });
 
-    const { fileId, filename } = data
+    const { category_id, division_id, filename } = data
 
 
     console.log('generating file summary ...', filename)
@@ -544,10 +539,10 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata) => {
 
     const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
-    const { error } = await supabase
+    const { data: docResponse, error: docerror } = await supabase
         .from('documents')
         .insert({
-            uuid: fileId,
+            uuid: filename,
             title,
             filename,
             metadata: {
@@ -555,11 +550,32 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata) => {
                 ...data
             }
         })
+        .select()
 
     console.log('success creating new data...', filename)
 
-    if (error) {
-        console.log('error', error)
+    if (docerror) {
+        console.log('docerror', docerror)
+    }
+
+    if (docResponse) {
+
+        const { data: relationResponse, error: relationError } = await supabase
+            .from('categories_documents_divisions')
+            .insert({
+                document_id: docResponse[0].id,
+                category_id,
+                division_id
+            })
+            .select()
+
+        if (relationError) {
+            console.log('relationError', relationError)
+        }
+
+        if (relationResponse) {
+            console.log('success adding relation...', relationResponse)
+        }
     }
 }
 

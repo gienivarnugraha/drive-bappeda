@@ -3,6 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
 import { getFilenameWithoutExtension } from '../../utils/index';
+import { v4 as uuid } from 'uuid'
 
 const openModal = ref(false)
 
@@ -20,6 +21,8 @@ const schema = z.object({
   division_id: z.number().array(),
 })
 
+const thumbnails: Ref<{ filename: string, blob: Blob }[]> = ref([])
+
 type Schema = z.infer<typeof schema>
 
 const state = reactive<Partial<Schema>>({
@@ -28,22 +31,22 @@ const state = reactive<Partial<Schema>>({
   division_id: undefined,
 })
 
+let ids: string[] = []
+
 async function upload(files: File[]) {
   fileUploading.value = true
 
   const formData = new FormData();
 
-  for (const file of files) {
-    //@ts-ignore
-    formData.append('file', file);
+  ids = files.map(file => uuid())
 
-  }
+  files.forEach((file, index) => {
 
-  for (const thumbnail of thumbnails.value) {
-    //@ts-ignore
-    formData.append('thumbnail', thumbnail.blob, `${thumbnail.filename}.png`);
+    formData.append('file', file, `${file.name}`);
 
-  }
+    // @ts-ignore
+    formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`);
+  })
 
   try {
     const { message, filenames } = await $fetch('/api/upload', {
@@ -86,14 +89,13 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
   }
 }
 
-const thumbnails = ref<{ filename: string, blob: Blob }[]>([])
-
-const onChange = async () => {
+const onChange = () => {
   const shouldGenerateThumbnails = ['application/pdf']
 
   state.files?.forEach(file => {
 
     if (shouldGenerateThumbnails.includes(file.type)) {
+
 
       file.arrayBuffer().then(async (buff) => {
 
@@ -102,6 +104,7 @@ const onChange = async () => {
         thumbnail?.toBlob(function (blob) {
           thumbnails.value.push({
             filename: getFilenameWithoutExtension(file.name),
+            // @ts-ignore
             blob
           })
         }, 'image/png', 1)
@@ -110,8 +113,8 @@ const onChange = async () => {
 
     }
   })
-}
 
+}
 
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -156,16 +159,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 
         <UFormField name="division_id" label="division"
-          description="Your unique division for logging in and your profile URL." v-if="divisionsStatus === 'success'">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id" label-key="name"
-            v-model="state.division_id" name="division_id" />
-
+          description="Your unique division for logging in and your profile URL.">
+          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="divisions"
+            :loading="divisionsStatus === 'pending'" value-key="id" label-key="name" v-model="state.division_id"
+            name="division_id" />
         </UFormField>
 
         <UFormField name="category_id" label="category"
-          description="Your unique division for logging in and your profile URL." v-if="categoriesStatus === 'success'">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="categories" value-key="id"
-            label-key="name" v-model="state.category_id" name="category_id" />
+          description="Your unique division for logging in and your profile URL.">
+          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="categories"
+            :loading="categoriesStatus === 'pending'" value-key="id" label-key="name" v-model="state.category_id"
+            name="category_id" />
         </UFormField>
 
         <div class="flex justify-end gap-2">

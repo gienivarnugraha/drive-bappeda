@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { v4 as uuid } from 'uuid'
+import { setVectorStore } from '~/utils/scripts/init';
 
 
 type Schema = {
@@ -8,7 +9,7 @@ type Schema = {
     category_id: number[],
     division_id: number[],
 }
-
+const documentPath = process.env.DOCUMENT_PATH
 export default eventHandler(async (event) => {
     const data = await readBody<Schema>(event);
 
@@ -16,16 +17,12 @@ export default eventHandler(async (event) => {
 
     const storage = useStorage('documents');
 
-    data.filenames.forEach(async (filename) => {
+    const { filenames, ...rest } = data
+
+    filenames.forEach(async (filename) => {
         console.log('hasItem:', filename, await storage.hasItem(filename))
 
-        // 1. get summary
-        // create thumbnail 
-
-        // 2. get metadata
-
-        // 3. add to database
-
+        await setVectorStore(`${documentPath}/${filename}`, rest)
     })
 
     return { message: 'File added successfully' };

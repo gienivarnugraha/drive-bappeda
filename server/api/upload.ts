@@ -27,15 +27,11 @@ export default eventHandler(async (event) => {
 
         const storage = useStorage('documents'); // 'uploads' is a bucket defined in nuxt.config.ts
 
-        const id = uuid()
-
-        const filePath = `${id}_${file.filename}`;
-
         if (file.name === 'file') {
-            filenames.push(filePath)
+            filenames.push(file.filename!)
         }
 
-        await storage.setItemRaw(filePath, file.data, { id })
+        await storage.setItemRaw(file.filename!, file.data)
     });
 
     return { message: 'File uploaded successfully', filenames };
