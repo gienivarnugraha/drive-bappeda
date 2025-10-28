@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import * as pdfjsLib from 'pdfjs-dist';
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
 import { getFilenameWithoutExtension, getFileExtension } from '../../utils/index';
 import { v4 as uuid } from 'uuid'
-import * as pdfjsLib from 'pdfjs-dist';
 
 
-const openModal = ref(false)
+const { addModalOpen } = useDashboard()
 
 const { data: categories, status: categoriesStatus } = await useFetch<Category[]>('/api/categories')
 
@@ -77,25 +77,11 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
     const response = await $fetch<ReadableStream>('/api/documents', {
       method: 'post',
       body: data,
-      responseType: 'stream',
     })
 
     console.log('submit')
 
-    const reader = response.pipeThrough(new TextDecoderStream()).getReader()
-
-    // Read the chunk of data as we get it
-    while (true) {
-      const { value, done } = await reader.read()
-
-      if (done) { break }
-
-      console.log('Received:', value)
-    }
-
-    // toast.add({ title: 'Success', description: `${message} `, color: 'success' })
-
-    // openModal.value = false
+    // addModalOpen.value = false
 
   } catch (error) {
     console.log(error)
@@ -132,7 +118,7 @@ const onChange = () => {
 
 }
 
-let worker: pdfjsLib.PDFWorker
+let worker: pdfjsLib.PDFWorker | undefined = undefined
 
 onMounted(() => {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
@@ -172,6 +158,23 @@ const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { files, ...data } = event.data
 
+  const response = await $fetch<ReadableStream>('/api/push-notif', {
+    responseType: 'stream',
+  })
+
+  console.log('streaming')
+
+  const reader = response.pipeThrough(new TextDecoderStream()).getReader()
+
+  // Read the chunk of data as we get it
+  while (true) {
+    const { value, done } = await reader.read()
+
+    if (done) { break }
+
+    toast.add({ title: 'Success', description: `${value} `, color: 'success' })
+  }
+
   const filenames = await upload(files)
 
   if (!filenames) {
@@ -188,8 +191,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UModal v-model:open="openModal" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
-    <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
+  <UModal v-model:open="addModalOpen" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
 
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
@@ -231,7 +233,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="openModal = false" />
+          <UButton label="Cancel" color="neutral" variant="subtle" @click="addModalOpen = false" />
           <UButton label="Create" color="primary" variant="solid" type="submit" />
         </div>
       </UForm>

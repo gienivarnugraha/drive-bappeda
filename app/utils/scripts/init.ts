@@ -523,7 +523,6 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
     const { category_id, division_id, filename, fileId } = data
 
-
     sseSend("push:notif", { message: 'generating file summary ...', filename })
 
     const prompt = PromptTemplate.fromTemplate(`
@@ -541,8 +540,6 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
     const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
-
-
     const { data: docResponse, error: docerror } = await supabase
         .from('documents')
         .insert({
@@ -559,7 +556,7 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
     sseSend("push:notif", { message: 'success creating new data...', filename })
 
     if (docerror) {
-        console.error('docerror', docerror)
+        throw new Error(`docerror: ${docerror}`)
     }
 
     if (docResponse) {
@@ -583,7 +580,7 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
             .select()
 
         if (relationError) {
-            console.error('relationError', relationError)
+            throw new Error(`relationError: ${relationError}`)
         }
 
         if (relationResponse) {

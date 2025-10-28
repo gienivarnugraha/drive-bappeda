@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { isNotificationsSlideoverOpen } = useDashboard()
+const { isNotificationsSlideoverOpen, addModalOpen } = useDashboard()
 
 const isSidebarSlideoverOpen = ref(false)
 
@@ -7,7 +7,6 @@ defineShortcuts({
   o: () => isSidebarSlideoverOpen.value = !isSidebarSlideoverOpen.value
 })
 
-const route = useRoute()
 const toast = useToast()
 
 
@@ -81,7 +80,7 @@ onMounted(async () => {
             <UColorModeButton />
 
             <UTooltip text="Add Document" :shortcuts="['N']">
-              <FileAddModal />
+              <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" @click="addModalOpen = true" />
             </UTooltip>
 
             <UserMenu />

@@ -17,34 +17,49 @@ type ChatMessage = {
     parts: {
         type: string, text: string
     }[]
-
 }
 
-const messages = ref<ChatMessage[]>([
-    {
-        id: uuid(),
-        role: 'user',
-        parts: [
-            {
-                type: 'text',
-                text: 'Hello AI! How are you today?'
+const messages = ref<ChatMessage[]>([])
 
-            }
-        ]
+onMounted(() => {
+    messages.value.push(
+        {
+            id: uuid(),
+            role: 'user',
+            parts: [
+                {
+                    type: 'text',
+                    text: 'Hello AI!'
 
-    },
-    {
-        id: uuid(),
-        role: 'assistant',
-        parts: [
-            {
-                type: 'text',
-                text: 'Hello, Im Fine'
+                }
+            ]
 
-            }
-        ]
-    }
-])
+        },
+        {
+            id: uuid(),
+            role: 'user',
+            parts: [
+                {
+                    type: 'text',
+                    text: 'How are you today?'
+
+                }
+            ]
+
+        },
+        {
+            id: uuid(),
+            role: 'assistant',
+            parts: [
+                {
+                    type: 'text',
+                    text: '##Hello, Im Fine'
+
+                }
+            ]
+        }
+    )
+})
 
 const exampleMessage: string[] = [
     'Jumlah Sampah Yang Dihasilkan Di Kota Semarang',
@@ -60,27 +75,38 @@ const submitExampleMessage = (e: Event) => {
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     status.value = 'submitted'
-    //   chat.sendMessage({ text: input.value })
 
     messages.value.push({
         id: uuid(),
         role: 'user',
         parts: [{ type: 'text', text: question.value }]
-    } satisfies ChatMessage)
-
-    // messages.value.push({ role: 'assistant', message: '' })
+    })
 
     // const response = await $fetch<ReadableStream>('/api/chat', {
-    //     method: 'post',
-    //     body: {
-    //         question: question.value,
-    //         uuid: threadId
-    //     },
-    //     responseType: 'stream',
-    // })
+    const response = await $fetch<{ type: string, text: string }>('/api/chat', {
+        method: 'post',
+        body: {
+            question: question.value,
+            uuid: threadId
+        },
+        // responseType: 'stream',
+    })
 
-    // const lastMessageIndex = messages.value.length - 1
+    messages.value.push({
+        id: uuid(),
+        role: 'assistant',
+        parts: []
+    })
 
+    const lastMessageIndex = messages.value.length - 1
+
+    let answer = messages.value[lastMessageIndex]?.parts.push(response)
+
+    console.log(messages.value)
+
+    status.value = 'ready'
+
+    question.value = ''
     // const reader = response.pipeThrough(new TextDecoderStream()).getReader()
 
     // let markdownMessage = ''
@@ -90,7 +116,7 @@ const handleSubmit = async (e: Event) => {
 
     //     if (done) {
     //         //@ts-ignore
-    //         messages.value[lastMessageIndex].message = markdownMessage
+    //         messages.value[lastMessageIndex]?.parts.push(markdownMessage)
 
     //         status.value = 'ready'
     //         break
@@ -101,13 +127,10 @@ const handleSubmit = async (e: Event) => {
     //     markdownMessage += value
 
     //     //@ts-ignore
-    //     messages.value[lastMessageIndex].message = markdownMessage
+    //     messages.value[lastMessageIndex]?.parts.push(markdownMessage)
 
     // }
-    setTimeout(() => {
-        status.value = 'ready'
-    }, 2000)
-    question.value = ''
+
 }
 </script>
 
@@ -122,6 +145,7 @@ const handleSubmit = async (e: Event) => {
         }
     }">
             <template #content="{ message }">
+                {{ message }}
                 <MDC :value="getTextFromMessage(message)" :cache-key="message.id" unwrap="p" />
             </template>
         </UChatMessages>

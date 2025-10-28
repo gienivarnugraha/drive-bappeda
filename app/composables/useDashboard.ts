@@ -5,6 +5,7 @@ const _useDashboard = () => {
   const router = useRouter()
   const isNotificationsSlideoverOpen = ref(false)
   const isFileDetailsSlideoverOpen = ref(false)
+  const addModalOpen = ref(false)
 
   defineShortcuts({
     'g-h': () => router.push('/'),
@@ -18,9 +19,14 @@ const _useDashboard = () => {
     isNotificationsSlideoverOpen.value = false
   })
 
+  watch(() => addModalOpen, (val) => {
+    console.log(val)
+  })
+
   return {
     isNotificationsSlideoverOpen,
-    isFileDetailsSlideoverOpen
+    isFileDetailsSlideoverOpen,
+    addModalOpen
   }
 }
 
