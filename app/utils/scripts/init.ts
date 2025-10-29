@@ -500,6 +500,7 @@ const getBasicMetadata = (filePath: string) => {
     return {
         filename: basename(filePath),
         extension: extname(filePath),
+        thumbnailSrc: `${basename(filePath, extname(filePath))}.png`,
         filePath,
         filesize: stats.size, // Size in bytes
         createdAt: stats.birthtime,

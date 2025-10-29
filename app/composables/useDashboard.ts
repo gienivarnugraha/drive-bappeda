@@ -6,12 +6,15 @@ const _useDashboard = () => {
   const isNotificationsSlideoverOpen = ref(false)
   const isFileDetailsSlideoverOpen = ref(false)
   const addModalOpen = ref(false)
+  const isSidebarSlideOverOpen = ref(false)
 
   defineShortcuts({
-    'g-h': () => router.push('/'),
-    'g-i': () => router.push('/inbox'),
-    'g-c': () => router.push('/customers'),
-    'g-s': () => router.push('/settings'),
+    //   'g-h': () => router.push('/'),
+    //   'g-i': () => router.push('/inbox'),
+    //   'g-c': () => router.push('/customers'),
+    //   'g-s': () => router.push('/settings'),
+    'o': () => isSidebarSlideOverOpen.value = !isSidebarSlideOverOpen.value,
+    'a': () => addModalOpen.value = !addModalOpen.value,
     'n': () => isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value
   })
 
@@ -26,6 +29,7 @@ const _useDashboard = () => {
   return {
     isNotificationsSlideoverOpen,
     isFileDetailsSlideoverOpen,
+    isSidebarSlideOverOpen,
     addModalOpen
   }
 }

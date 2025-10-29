@@ -1,32 +1,10 @@
 <script lang="ts" setup>
-import * as pdfjsLib from 'pdfjs-dist';
 import { formatBytes, dateToLocale } from '#imports';
-
-export interface Document {
-    id: number;
-    filename: string;
-    title: string;
-    metadata: Metadata;
-    created_at: string;
-    uuid: string;
-}
-
-export interface Metadata {
-    docIds: string[];
-    fileId: string;
-    summary: string;
-    filePath: string;
-    filename: string;
-    filesize: number;
-    createdAt: string;
-    extension: string;
-    modifiedAt: string;
-}
-
+import type { FilteredData, Results } from '~/types';
 
 const props = defineProps({
     data: {
-        type: Object as PropType<FilteredData>,
+        type: Object as PropType<Results>,
         required: true
     },
     isSelected: {
@@ -34,63 +12,43 @@ const props = defineProps({
     }
 })
 
-let canvas = useTemplateRef('canvas') as Ref<HTMLCanvasElement>
-let pdfPath = ''
-
-async function renderThumbnails(file: string) {
-    const worker = new pdfjsLib.PDFWorker()
-
-    const regex = /^.*(documents\/.*)\.md$/;
-    const replacement = '/$1.pdf';
-    pdfPath = file.replace(regex, replacement);
-
-    let load = pdfjsLib.getDocument({ url: pdfPath, worker })
-
-    let pdf = await load.promise
-
-    const page = await pdf.getPage(1)
-
-    let viewport = page.getViewport({ scale: 0.25 })
-
-    const context = canvas.value.getContext('2d');
-    canvas.value.height = viewport.height;
-    canvas.value.width = viewport.width;
-
-    await page.render({ canvasContext: context, viewport: viewport }).promise
-
-    // return canvas.toDataURL('image/png')
-}
-
-onMounted(async () => {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
-
-    try {
-        await renderThumbnails(props.data.documents.metadata.filePath)
-    } catch (error) {
-        console.error('ERROR LOADING DOCUMENT', error)
-    }
-})
+const thumbnail = `documents/${props.data.metadata.thumbnailSrc}`
 
 </script>
 
 <template>
     <ClientOnly>
-        <UCard :id="data.documents.metadata.fileId" :class="[isSelected ? 'ring-2 ring-primary' : '']"
-            class="cursor-pointer">
+        <UCard :id="data.metadata.fileId" :class="[isSelected ? 'ring-2 ring-primary' : '']" class="cursor-pointer">
             <template #header>
-                <div class="flex justify-between align-center">
-                    <p class="text-gray text-xs"> {{ data.documents.filename }} </p>
-                    <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
+                <div class="flex flex-col gap-4 ">
+                    <div class="flex justify-between align-center">
+                        <p class="text-gray text-xs"> {{ data.filename }} </p>
+                        <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
+                    </div>
+
                 </div>
             </template>
 
-            <canvas ref="canvas"></canvas>
+            <img :src="thumbnail" class="w-full h-full"></img>
 
             <template #footer>
-                <ul>
-                    <li class="text-primary text-xs font-bold"> {{ data.documents.title }} </li>
-                    <li class="text-gray text-xs"> {{ formatBytes(data.documents.metadata.filesize) }} </li>
-                </ul>
+                <div class="grid gap-2">
+
+                    <p class="text-primary text-xs font-bold"> {{ data.title }} </p>
+
+                    <p class="text-gray text-xs"> {{ formatBytes(data.metadata.filesize) }} </p>
+
+                    <p class="text-xs">Bidang:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <UBadge v-for="division in data.divisions" :key="division.id" color="primary" variant="outline"
+                            :label="division.name" />
+
+                    </div>
+
+                    <p class="text-xs">Kategori:</p>
+                    <UBadge v-for="category in data.categories" :key="category.id" color="primary" variant="outline"
+                        :label="category.name" />
+                </div>
             </template>
         </UCard>
     </ClientOnly>

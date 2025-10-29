@@ -1,11 +1,6 @@
 <script setup lang="ts">
-const { isNotificationsSlideoverOpen, addModalOpen } = useDashboard()
+const { isSidebarSlideOverOpen, isNotificationsSlideoverOpen, addModalOpen } = useDashboard()
 
-const isSidebarSlideoverOpen = ref(false)
-
-defineShortcuts({
-  o: () => isSidebarSlideoverOpen.value = !isSidebarSlideoverOpen.value
-})
 
 const toast = useToast()
 
@@ -38,7 +33,7 @@ onMounted(async () => {
 
 <template>
   <UDashboardGroup unit="rem">
-    <UDashboardSidebar id="default" v-model:open="isSidebarSlideoverOpen" collapsible class="bg-elevated/25 min-h-full "
+    <UDashboardSidebar id="default" v-model:open="isSidebarSlideOverOpen" collapsible class="bg-elevated/25 min-h-full "
       :collapsed-size="0" :default-size="25" :ui="{
       header: 'lg:border-b lg:border-default h-auto',
       footer: 'lg:border-t lg:border-default'
@@ -79,8 +74,9 @@ onMounted(async () => {
 
             <UColorModeButton />
 
-            <UTooltip text="Add Document" :shortcuts="['N']">
-              <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" @click="addModalOpen = true" />
+            <UTooltip text="Add Document" :shortcuts="['A']">
+              <UButton color="neutral" variant="ghost" square icon="i-lucide-plus"
+                @click="addModalOpen = !addModalOpen" />
             </UTooltip>
 
             <UserMenu />

@@ -27,16 +27,14 @@ export interface Document {
   uuid: string
   filename: string
   title: string
-  category_id: number
-  category: Category
-  division_id: number
-  division: Division
+  categories: Category[]
+  divisions: Division[]
   created_at: string
   metadata: DocumentMetadata
 }
 
 export interface DocumentMetadata {
-  thumbnailPath?: string
+  thumbnailSrc?: string
   extension: string
   filename: string
   filesize: number
@@ -48,6 +46,13 @@ export interface FilteredData {
   documents: Document,
   categories: Category,
   divisions: Division
+}
+
+type OmitFilteredData = Omit<FilteredData, 'categories' | 'divisions'>
+
+export type Results = Document & {
+  categories: Category[],
+  divisions: Division[]
 }
 
 export interface Notification {

@@ -1,3 +1,4 @@
+import { markdownToHtml } from '~/utils/markdown';
 export default defineEventHandler(async (event) => {
     const { question, uuid } = await readBody(event)
 
@@ -40,8 +41,6 @@ export default defineEventHandler(async (event) => {
         // return readable
         const answer = await response.invoke(question)
 
-        console.log(answer)
-
         return {
             type: 'text',
             text: answer,
@@ -51,8 +50,8 @@ export default defineEventHandler(async (event) => {
         setResponseStatus(event, 400, "Streaming Error")
         console.error("Streaming error:", err, typeof err);
         return {
-            error: 'Streaming error:',
-            cause: err
+            type: 'error',
+            text: err
         }
     }
 })

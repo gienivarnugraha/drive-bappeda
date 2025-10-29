@@ -1,3 +1,4 @@
+import { Document, FilteredData, Results } from '../../app/types/index';
 
 const stringToNumberArray = (input: string[] | string): number[] => {
     if (!Array.isArray(input)) {
@@ -46,10 +47,33 @@ export default eventHandler(async (event) => {
 
     const { data, error } = await request
 
+
     if (error) {
         console.error('Error fetching documents:', error.message);
     } else {
-        return data
+        return groupBy(data)
     }
 
 })
+
+const groupBy = (array: FilteredData[]) => {
+
+    let data: Document[] = []
+
+    array.forEach((item) => {
+        let index = data.findIndex((it) => it.id === item.documents.id)
+
+        if (index > 0) {
+            data[index].categories.push(item.categories)
+            data[index].divisions.push(item.divisions)
+        } else {
+            data.push({
+                ...item.documents,
+                categories: [item.categories],
+                divisions: [item.divisions],
+            })
+        }
+    });
+
+    return data
+};

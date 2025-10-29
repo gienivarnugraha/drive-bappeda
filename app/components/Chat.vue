@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
-
+import { markdownToHtml } from '~/utils/markdown'
 import { v4 as uuid } from 'uuid'
 
 defineProps<{
@@ -31,14 +31,7 @@ onMounted(() => {
                     type: 'text',
                     text: 'Hello AI!'
 
-                }
-            ]
-
-        },
-        {
-            id: uuid(),
-            role: 'user',
-            parts: [
+                },
                 {
                     type: 'text',
                     text: 'How are you today?'
@@ -68,7 +61,7 @@ const exampleMessage: string[] = [
 
 
 const submitExampleMessage = (e: Event) => {
-    // question.value = e.target.value
+    question.value = e.target?.value
     handleSubmit(e)
 }
 
@@ -82,31 +75,42 @@ const handleSubmit = async (e: Event) => {
         parts: [{ type: 'text', text: question.value }]
     })
 
-    // const response = await $fetch<ReadableStream>('/api/chat', {
-    const response = await $fetch<{ type: string, text: string }>('/api/chat', {
-        method: 'post',
-        body: {
-            question: question.value,
-            uuid: threadId
-        },
-        // responseType: 'stream',
-    })
+    try {
+        // const response = await $fetch<ReadableStream>('/api/chat', {
+        const { type, text } = await $fetch<{ type: string, text: string }>('/api/chat', {
+            method: 'post',
+            body: {
+                question: question.value,
+                uuid: threadId
+            },
+            // responseType: 'stream',
+        })
 
-    messages.value.push({
-        id: uuid(),
-        role: 'assistant',
-        parts: []
-    })
+        messages.value.push({
+            id: uuid(),
+            role: 'assistant',
+            parts: []
+        })
 
-    const lastMessageIndex = messages.value.length - 1
+        const lastMessageIndex = messages.value.length - 1
 
-    let answer = messages.value[lastMessageIndex]?.parts.push(response)
+        messages.value[lastMessageIndex]?.parts.push({
+            type,
+            text: await markdownToHtml(text)
+        })
 
-    console.log(messages.value)
+        console.log(messages.value[lastMessageIndex])
 
-    status.value = 'ready'
+    } catch (error) {
+        console.error(error)
+        status.value = 'error'
+    } finally {
+        question.value = ''
+        if (status.value !== 'error') {
+            status.value = 'ready'
+        }
+    }
 
-    question.value = ''
     // const reader = response.pipeThrough(new TextDecoderStream()).getReader()
 
     // let markdownMessage = ''
@@ -134,9 +138,14 @@ const handleSubmit = async (e: Event) => {
 }
 </script>
 
+<style>
+div.markdown>p {
+    margin-bottom: 1rem;
+}
+</style>
+
 <template>
-    <div v-if="!collapsed" class="flex flex-col h-full">
-        <!-- <UChatMessages :messages="chat.messages" :status="chat.status"> -->
+    <div v-if="!collapsed" class="flex flex-col justify-between">
         <UChatMessages :messages="messages" :status="status" :user="{
         side: 'left',
         variant: 'solid',
@@ -145,15 +154,19 @@ const handleSubmit = async (e: Event) => {
         }
     }">
             <template #content="{ message }">
-                {{ message }}
-                <MDC :value="getTextFromMessage(message)" :cache-key="message.id" unwrap="p" />
+                <div class="markdown" v-html="getTextFromMessage(message)"> </div>
             </template>
         </UChatMessages>
 
+        <div class="flex flex-wrap my-4 gap-4 ">
+            <UButton v-for="example in exampleMessage" class="text-xs" :key="example" variant="outline"
+                @click="submitExampleMessage" :value="example">
+                {{ example }}
+            </UButton>
+        </div>
+
         <UChatPrompt v-model="question" @submit="handleSubmit">
-            <!-- <UChatPrompt v-model="input" :error="chat.error" @submit="handleSubmit"> -->
             <UChatPromptSubmit :status="status" />
-            <!-- <UChatPromptSubmit :status="chat.status" @stop="chat.stop" @reload="chat.regenerate" /> -->
         </UChatPrompt>
     </div>
 </template>

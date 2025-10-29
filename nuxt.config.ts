@@ -10,6 +10,12 @@ export default defineNuxtConfig({
   devtools: {
     enabled: false
   },
+  runtimeConfig: {
+    public: {
+      documentPath: process.env.DOCUMENT_PATH,
+
+    }
+  },
   debug: false,
 
   nitro: {
