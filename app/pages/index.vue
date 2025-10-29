@@ -43,6 +43,12 @@ const { data: divisions, status: divisionsStatus } = await useFetch<Division[]>(
 
 const selectDocument = (data: Results) => {
   isFileDetailsSlideoverOpen.value = true
+
+  if (selected.value?.id === data.id) {
+    selected.value = null
+    return
+  }
+
   selected.value = data
 }
 
@@ -72,7 +78,7 @@ const contentWidth = computed(() => isFileDetailsSlideoverOpen.value || isSideba
       <div class="flex flex-col gap-4">
         <p class="text-xs">Dokumen</p>
         <div v-if="status === 'success'" class="grid"
-          :class="[contentWidth ? 'grid-cols-2 gap-4' : 'grid-cols-4 gap-6']">
+          :class="[contentWidth ? 'grid-cols-1 sm:grid-cols-2 gap-4' : 'grid-cols-2 sm:grid-cols-4 gap-6']">
           <FileThumbnail v-for=" ( item, idx )  in   data  " :key="item.id" :data="item"
             :is-selected="item.id === selected?.id" @click="selectDocument(item)" />
         </div>
