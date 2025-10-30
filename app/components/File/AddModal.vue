@@ -45,14 +45,11 @@ async function upload(files: File[]) {
   ids = files.map((_) => uuid())
 
   files.forEach((file, index) => {
-    let extension = getFileExtension(file.name)
-    let filename = getFilenameWithoutExtension(file.name)
-
-    formData.append('file', file, `${filename}_${ids[index]}.${extension}`);
+    formData.append('file', file);
 
     if (thumbnails.value) {
       // @ts-ignore
-      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}_${ids[index]}.png`);
+      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`);
     }
   })
 
@@ -235,12 +232,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <template #process>
           <div class="w-full h-48 flex flex-col items-center justify-start">
-            <div class="my-4 w-full flex flex-row items-center justify-center space-x-4"
+            <div class="my-4 w-full flex flex-row items-center justify-start space-x-4"
               v-for="(step, index) in processSteps" :key="index">
               <UIcon :name="index === processSteps.length - 1 ? 'i-lucide-loader' : 'i-lucide-check'"
                 :class="index === processSteps.length - 1 ? 'animate-spin' : ''" class="h-8 w-8 flex-none"
                 color=" primary" />
-              <p class="flex-1 text-left text-xs">{{ step }}</p>
+              <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
+                class="flex-1 text-left text-xs">{{ step }}</p>
             </div>
           </div>
         </template>

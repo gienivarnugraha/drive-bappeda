@@ -461,11 +461,9 @@ export const setVectorStore = async (filepath: string, documentData: { category_
     } else {
         sseSend("push:notif", { message: `file not exists in database... ${filename}`, status: 'info' })
 
-        const fileId = getUuidFromFilename(filename)
-
         const ids = {
             docIds: docs.map((_, i) => `${filename}_${i}`),
-            fileId
+            fileId: `${filename}_${uuid()}`,
         }
 
         const metadata = getBasicMetadata(filepath)
