@@ -66,8 +66,12 @@ const groupBy = (array: FilteredData[]) => {
         let index = data.findIndex((it) => it.id === item.documents.id)
 
         if (index > 0) {
-            data[index].categories.push(item.categories)
-            data[index].divisions.push(item.divisions)
+            if (!data[index].categories.includes(item.categories)) {
+                data[index].categories.push(item.categories)
+            }
+            if (!data[index].divisions.includes(item.divisions)) {
+                data[index].divisions.push(item.divisions)
+            }
         } else {
             data.push({
                 ...item.documents,

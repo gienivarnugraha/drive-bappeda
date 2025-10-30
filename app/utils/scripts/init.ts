@@ -46,7 +46,7 @@ const convertToMarkdown = async (command: string) => {
     const pythonProcess = spawn('python', [scriptPath, sourceDirectory]);
 
     pythonProcess.stdout.on('data', (data) => {
-        sseSend("push:notif", { message: `Python stdout: ${data}` });
+        sseSend("push:notif", { message: `Python stdout: ${data}`, status: 'info' });
     });
 
     pythonProcess.stderr.on('data', (data) => {
@@ -54,11 +54,11 @@ const convertToMarkdown = async (command: string) => {
     });
 
     pythonProcess.on('close', (code) => {
-        sseSend("push:notif", { message: `Python process exited with code ${code}` });
+        sseSend("push:notif", { message: `Python process exited with code ${code}`, status: 'info' });
         if (code !== 0) {
             console.error('PDF conversion failed.');
         } else {
-            sseSend("push:notif", { message: 'PDF conversion completed successfully.' });
+            sseSend("push:notif", { message: 'PDF conversion completed successfully.', status: 'info' });
         }
     });
 }
@@ -126,7 +126,7 @@ const createTable = async () => {
     try {
         // const query = await sql`${createQuery}`
 
-        // sseSend("push:notif",{message: quer}y)
+        // sseSend("push:notif",{message: quer}, status:'info'y)
 
     } catch (error) {
         console.error(error)
@@ -183,7 +183,7 @@ function isValidHttpURL(file: string) {
 export const loadDocument = async (file: string): Promise<Document[]> => {
     let loader;
 
-    sseSend("push:notif", { message: 'loading document...' })
+    sseSend("push:notif", { message: 'loading document...', status: 'info' })
 
 
     if (isValidHttpURL(file)) {
@@ -269,35 +269,35 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
     let summaries: Document[]
 
     if (existsSync(pathSummary)) {
-        sseSend("push:notif", { message: 'file json exists...', pathSummary })
+        sseSend("push:notif", { message: `file json exists... ${pathSummary}`, status: 'info' })
 
         let json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
 
         if (docs.length !== json.length) {
-            sseSend("push:notif", { message: 'file json exists but document length is different...', pathSummary })
+            sseSend("push:notif", { message: `file json exists but document length is different... ${pathSummary}`, status: 'info' })
             summaries = await getDocumentSummary(docs, ids)
 
             const content = JSON.stringify(summaries)
 
             writeFile(pathSummary, content, err => {
-                sseSend("push:notif", { message: 'rewriting file...', pathSummary })
+                sseSend("push:notif", { message: `rewriting file... ${pathSummary}`, status: 'info' })
                 if (err) {
                     console.error({ message: err, content })
                 }
             })
         } else {
-            sseSend("push:notif", { message: 'retrieve exisiting file...', pathSummary })
+            sseSend("push:notif", { message: `retrieve exisiting file... ${pathSummary}`, status: 'info' })
             summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
         }
 
     } else {
-        sseSend("push:notif", { message: 'file doesnt exists', pathSummary })
+        sseSend("push:notif", { message: `file doesnt exists... ${pathSummary}`, status: 'info' })
         summaries = await getDocumentSummary(docs, ids)
 
         const content = JSON.stringify(summaries)
 
         writeFile(pathSummary, content, err => {
-            sseSend("push:notif", { message: 'writing new file', pathSummary })
+            sseSend("push:notif", { message: `writing new file... ${pathSummary}`, status: 'info' })
             if (err) {
                 console.error({ message: err, content })
             }
@@ -316,7 +316,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
  * @returns A promise that resolves to an object with the following properties: title, summary, context, and source.
  */
 export const getDocumentSummary = async (docs: Document[], ids: { fileId: string, docIds: string[] }) => {
-    sseSend("push:notif", { message: 'getting documents summary...' })
+    sseSend("push:notif", { message: 'getting documents summary...', status: 'info' })
 
     const queryOutput = z.object({
         title: z.string().describe("Title of the document"),
@@ -400,7 +400,7 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
         maxConcurrency: 1,
     });
 
-    sseSend("push:notif", { message: 'successfully getting documents summary...' })
+    sseSend("push:notif", { message: 'successfully getting documents summary...', status: 'info' })
 
     return summaries.map((summaryMap, i) => {
         const { summary, loc, title, attachment } = summaryMap
@@ -445,7 +445,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
     const filename = basename(filepath, extension)
 
-    sseSend("push:notif", { message: 'getting ids from database...', filename })
+    sseSend("push:notif", { message: `getting ids from database... ${filename}`, status: 'info' })
 
     const { data, error } = await supabase
         .from('documents')
@@ -457,9 +457,9 @@ export const setVectorStore = async (filepath: string, documentData: { category_
     }
 
     if (data?.length) {
-        sseSend("push:notif", { message: 'file exists in database...', filename })
+        sseSend("push:notif", { message: `file exists in database... ${filename}`, status: 'info' })
     } else {
-        sseSend("push:notif", { message: 'file not exists in database...' })
+        sseSend("push:notif", { message: `file not exists in database... ${filename}`, status: 'info' })
 
         const fileId = getUuidFromFilename(filename)
 
@@ -478,23 +478,23 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
         const summaries = await generateSummaries(docs, ids, filepath)
 
-        sseSend("push:notif", { message: 'insert new data to database...', filename })
+        sseSend("push:notif", { message: `insert new data to database... ${filename}`, status: 'info' })
 
         await storeToDB(docs.slice(0, 5), data)
 
-        sseSend("push:notif", { message: 'adding data to vector store...', filename })
+        sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
 
         await vectorstore.addDocuments(summaries);
 
     }
-    sseSend("push:notif", { message: 'success adding to vector store...', filename })
+    sseSend("push:notif", { message: `success adding to vector store... ${filename}`, status: 'info' })
 
     return vectorstore
 }
 
 
 const getBasicMetadata = (filePath: string) => {
-    sseSend("push:notif", { message: 'getting meta data...', filePath })
+    sseSend("push:notif", { message: `getting meta data... ${filePath}`, status: 'info' })
     const stats = statSync(filePath);
 
     return {
@@ -524,7 +524,7 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
     const { category_id, division_id, filename, fileId } = data
 
-    sseSend("push:notif", { message: 'generating file summary ...', filename })
+    sseSend("push:notif", { message: `generating file summary ... ${filename}`, status: 'info' })
 
     const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
@@ -554,7 +554,7 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
         })
         .select()
 
-    sseSend("push:notif", { message: 'success creating new data...', filename })
+    sseSend("push:notif", { message: `success creating new data... ${filename}`, status: 'info' })
 
     if (docerror) {
         throw new Error(`docerror: ${docerror}`)
@@ -585,9 +585,12 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
         }
 
         if (relationResponse) {
-            sseSend("push:notif", { message: 'success adding relation...' })
+            sseSend("push:notif", { message: 'success adding relation...', status: 'info' })
         }
     }
+
+    sseSend("push:notif", { message: 'success adding document...', status: 'success' })
+
 }
 
 async function run() {
@@ -598,7 +601,7 @@ async function run() {
 
         const docs = await listDocuments(folderpath)
 
-        // sseSend("push:notif",{message: 'found documents:', doc}s)
+        // sseSend("push:notif",{message: 'found documents:', doc}, status:'info's)
 
         // for (let doc of docs) {
         //     console.warn('initiating document:', doc)
@@ -613,7 +616,7 @@ async function run() {
 
         // const result = await retriever.invoke('jumlah sampah dan jumlah orang di semarang')
 
-        // sseSend("push:notif",{message: result.length, inspect(result, false, null, true}))
+        // sseSend("push:notif",{message: result.length, inspect(result, false, null, true}, status:'info'))
 
         // const model = getModel('google')
 
@@ -627,7 +630,7 @@ async function run() {
 
         // const result = await generate.invoke('skenario dan proyeksi pengurangan sampah yang optimal dengan gambar dan tabel')
 
-        // sseSend("push:notif",{message: inspect(result, false, null, true}))
+        // sseSend("push:notif",{message: inspect(result, false, null, true}, status:'info'))
 
     } catch (error) {
         console.error('error database', error)

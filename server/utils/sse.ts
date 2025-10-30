@@ -3,9 +3,17 @@ import { v4 as uuid } from 'uuid'
 
 export const sseEvent = new EventEmitter();
 
-export const sseSend = function (event: string, data: Record<string, string>) {
-    sseEvent.emit(event, {
+type Data = {
+    message: string,
+    id: string,
+    status: | 'info' | 'error' | 'success'
+}
+
+export const sseSend = function (event: string, data?: Omit<Data, 'id'>) {
+
+    sseEvent.emit<Data>(event, {
         id: uuid(),
         ...data
     });
+
 }

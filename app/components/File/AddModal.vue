@@ -17,6 +17,8 @@ const fileUploading = ref(false)
 
 const isSubmitting = ref(false)
 
+const isProcessing = ref(false)
+
 const schema = z.object({
   files: z.instanceof(File).array(),
   category_id: z.number().array(),
@@ -76,14 +78,10 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
   isSubmitting.value = true
 
   try {
-    const response = await $fetch<ReadableStream>('/api/documents', {
+    const response = await $fetch('/api/documents', {
       method: 'post',
       body: data,
     })
-
-    console.log('submit')
-
-    // addModalOpen.value = false
 
   } catch (error) {
     console.log(error)
@@ -109,7 +107,7 @@ const onChange = () => {
         thumbnail?.toBlob(function (blob) {
           thumbnails.value.push({
             filename: getFilenameWithoutExtension(file.name),
-            // @ts-ignore
+            //@ts-ignore
             blob
           })
         }, 'image/png', 1)
@@ -121,28 +119,93 @@ const onChange = () => {
 
 }
 
+let eventSource: EventSource | null = null
+
+onUnmounted(() => {
+  if (eventSource) {
+    eventSource.close()
+  }
+  isProcessing.value = false
+})
+
+
+
+import type { StepperItem } from '@nuxt/ui'
+
+const stepperItems = ref<StepperItem[]>([
+  {
+    slot: 'upload' as const,
+    title: 'Upload',
+    description: 'Uploading your files',
+    icon: 'i-lucide-upload'
+  },
+  {
+    slot: 'process' as const,
+    title: 'Process',
+    description: 'Processing your files',
+    icon: 'i-lucide-truck'
+  },
+  {
+    slot: 'done' as const,
+    title: 'Done',
+    description: 'Use chatbot to ask questions about your documents',
+    icon: 'i-lucide-check'
+  }
+])
+
+const processSteps: Ref<string[]> = ref([])
+
+const processStepsText = computed(() => processSteps.value.join('\n'))
+
+const stepActive = ref(0)
+
+const stream = async () => {
+
+  eventSource = new EventSource('api/push-notif');
+
+  // Listen for messages from the server
+  eventSource.onmessage = function (event) {
+    let data = JSON.parse(event.data)
+
+    if (data.status === 'success') {
+      if (eventSource) {
+        eventSource.close()
+      }
+
+      stepActive.value = 2
+    }
+
+    stepActive.value = 1
+
+    if (!processSteps.value.includes(data.message)) {
+      processSteps.value.push(data.message)
+    }
+
+    // stepperItems.value[1].description = processStepsText.value
+  };
+
+  // Log connection error
+  eventSource.onerror = function (event) {
+    isProcessing.value = false
+
+    if (eventSource) {
+      eventSource.close()
+    }
+
+    toast.add({ title: 'Error', description: `${event} `, color: 'error' })
+  };
+
+}
+
 
 const toast = useToast()
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { files, ...data } = event.data
 
-  const response = await $fetch<ReadableStream>('/api/push-notif', {
-    responseType: 'stream',
-  })
+  isProcessing.value = true
 
-  console.log('streaming')
-
-  const reader = response.pipeThrough(new TextDecoderStream()).getReader()
-
-  // Read the chunk of data as we get it
-  while (true) {
-    const { value, done } = await reader.read()
-
-    if (done) { break }
-
-    toast.add({ title: 'Success', description: `${value} `, color: 'success' })
-  }
+  await stream()
 
   const filenames = await upload(files)
 
@@ -165,7 +228,27 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
 
     <template #body>
-      <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
+
+      <UStepper v-if="isProcessing" disabled orientation="vertical" :items="stepperItems" v-model="stepActive"
+        class="w-full">
+
+
+        <template #process>
+          <div class="w-full h-48 flex flex-col items-center justify-start">
+            <div class="my-4 w-full flex flex-row items-center justify-center space-x-4"
+              v-for="(step, index) in processSteps" :key="index">
+              <UIcon :name="index === processSteps.length - 1 ? 'i-lucide-loader' : 'i-lucide-check'"
+                :class="index === processSteps.length - 1 ? 'animate-spin' : ''" class="h-8 w-8 flex-none"
+                color=" primary" />
+              <p class="flex-1 text-left text-xs">{{ step }}</p>
+            </div>
+          </div>
+        </template>
+
+      </UStepper>
+
+
+      <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
 
         <UFormField>
           <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop your images here"

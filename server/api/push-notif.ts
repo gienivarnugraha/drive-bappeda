@@ -9,27 +9,26 @@ export default eventHandler(async (event) => {
     setHeader(event, 'content-type', 'text/event-stream')
     setResponseStatus(event, 200)
 
-    const stream = new ReadableStream({
-        start(controller) {
-            const sendEvent = (data: any) => {
-                controller.enqueue(JSON.stringify(data));
-            };
+    clients.push(event.node.req);
 
-            // Listen for 'dataUpdate' events and push them to the client
-            sseEvent.on('push:notif', (data) => {
-                console.log('SSE send event:', data);
-                sendEvent(data);
-            });
+    sseEvent.on('push:notif', (data) => {
+        console.log('SSE send event:', data);
 
-            // Handle client disconnect
-            event.node.req.on('close', () => {
-                console.log('SSE client disconnected');
-                sseEvent.removeListener('push:notif', sendEvent);
-                controller.close();
-            });
-        },
+        event.node.res.write(`data: ${JSON.stringify(data)}\n\n`);
+        event.node.res.flushHeaders()
     });
 
+    // Handle client disconnect
+    event.node.req.on('close', () => {
+        console.log('SSE client disconnected');
 
-    return stream;
+        clients = clients.filter(client => client !== event.node.req);
+
+        sseEvent.removeListener('push:notif', (data) => {
+            return { message: data.message };
+        });
+
+    })
+
+    event._handled = true; // Prevent further processing
 })

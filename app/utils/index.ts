@@ -61,6 +61,11 @@ export function getFilenameWithoutExtension(file: string) {
     fileNameWithoutExtension = file; // No extension found
   }
 
+  //  return name.toLowerCase()
+  //   .replace(/\.[^/.]+$/, '')
+  //   .replace(/[^a-z0-9-_]+/g, '-')
+  //   .replace(/^-+|-+$/g, '')
+
   return fileNameWithoutExtension
 }
 
