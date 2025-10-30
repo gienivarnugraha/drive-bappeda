@@ -41,24 +41,28 @@ const { data: divisions, pending: divisionsPending } = await useFetch<Division[]
 
 
 const selectDocument = (data: Results) => {
-  isFileDetailsSlideoverOpen.value = true
-
   if (selected.value?.id === data.id) {
     selected.value = null
+    isFileDetailsSlideoverOpen.value = false
     return
   }
 
   selected.value = data
 }
 
-const contentWidth = computed(() => isFileDetailsSlideoverOpen.value || isSidebarSlideOverOpen.value)
+const documentRef = useTemplateRef('documentRef')
 
+const computedDocumentRef = computed(() => documentRef)
+
+watch(computedDocumentRef, (val) => console.log(val.value?.clientWidth))
+
+const contentWidth = computed(() => isSidebarSlideOverOpen ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-4')
 
 </script>
 
 <template>
   <div class="flex flex-row">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 ">
       <div class="my-2">
         <div v-if="divisionsPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <USkeleton v-for="value in 4" class="h-8 w-full" />
@@ -88,8 +92,7 @@ const contentWidth = computed(() => isFileDetailsSlideoverOpen.value || isSideba
           <USkeleton v-for="value in 4" class="h-16 w-full" />
         </div>
 
-        <div v-else class="grid"
-          :class="[contentWidth ? 'grid-cols-1 sm:grid-cols-2 gap-4' : 'grid-cols-2 sm:grid-cols-4 gap-6']">
+        <div v-else class="grid gap-4" :class="[contentWidth]" ref="documentRef">
           <FileThumbnail v-for="(item, idx) in documentData" :key="item.id" :data="item"
             :is-selected="item.id === selected?.id" @click="selectDocument(item)" />
         </div>
@@ -99,7 +102,9 @@ const contentWidth = computed(() => isFileDetailsSlideoverOpen.value || isSideba
 
     </div>
 
-    <FileDetailsSlideOver :document="selected" />
+    <div class="h-12 w-8 relative">
+      <FileDetailsSlideOver v-if="selected" :document="selected" />
+    </div>
 
   </div>
 </template>

@@ -12,12 +12,20 @@ export function dateToLocale(date: string) {
   return new Date(date).toLocaleDateString()
 }
 
-export function toTitleCase(str: string) {
+export function toTitleCase(str: string): string {
+  // The regex \w\S* matches:
+  // \w - one word character (like 'h' or 'W')
+  // \S* - followed by zero or more non-whitespace characters (like 'ello' or 'ORLD')
   return str.replace(/\w\S*/g, function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  })
-}
+    // 1. Capitalize the first character.
+    const firstChar = txt.charAt(0).toUpperCase();
 
+    // 2. Take the rest of the string (substr(1)) and leave it AS IS.
+    const restOfString = txt.substr(1);
+
+    return firstChar + restOfString;
+  });
+}
 /**
  * Extracts the first standard UUID (Universally Unique Identifier) found in a string (like a filename).
  *

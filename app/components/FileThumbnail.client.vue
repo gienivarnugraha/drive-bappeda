@@ -22,32 +22,34 @@ const thumbnail = `documents/${props.data.metadata.thumbnailSrc}`
             <template #header>
                 <div class="flex flex-col gap-4 ">
                     <div class="flex justify-between align-center">
-                        <p class="text-gray text-xs"> {{ data.filename }} </p>
+                        <p class="text-gray text-xs"> Nama File: {{ data.filename }} </p>
                         <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
                     </div>
 
                 </div>
             </template>
 
-            <img :src="thumbnail" class="w-full h-full"></img>
+            <img :src="thumbnail" class="w-full h-52 sm:h-64 object-cover rounded"></img>
 
             <template #footer>
                 <div class="grid gap-2">
 
-                    <p class="text-primary text-xs font-bold"> {{ data.title }} </p>
+                    <p class="text-primary text-xs font-bold"> {{ toTitleCase(data.title) }} </p>
 
                     <p class="text-gray text-xs"> {{ formatBytes(data.metadata.filesize) }} </p>
 
                     <p class="text-xs">Bidang:</p>
                     <div class="flex flex-wrap gap-2">
                         <UBadge v-for="division in data.divisions" :key="division.id" color="primary" variant="outline"
-                            :label="division.name" />
+                            :label="toTitleCase(division.name)" />
 
                     </div>
 
                     <p class="text-xs">Kategori:</p>
-                    <UBadge v-for="category in data.categories" :key="category.id" color="primary" variant="outline"
-                        :label="category.name" />
+                    <div class="flex flex-wrap gap-2">
+                        <UBadge v-for="category in data.categories" :key="category.id" color="primary" variant="outline"
+                            :label="toTitleCase(category.name)" />
+                    </div>
                 </div>
             </template>
         </UCard>

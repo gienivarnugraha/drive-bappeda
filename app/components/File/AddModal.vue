@@ -152,8 +152,26 @@ const stepperItems = ref<StepperItem[]>([
 
 const processSteps: Ref<string[]> = ref([])
 
-const processStepsText = computed(() => processSteps.value.join('\n'))
+const processStepsStyle = (index: number, data: any) => {
+  if (index === processSteps.value.length - 1) {
+    return {
+      icon: 'i-lucide-loader',
+      class: 'animate-spin'
+    }
+  }
 
+  if (data.status === 'error') {
+    return {
+      icon: 'i-lucide-x',
+      class: 'text-error'
+    }
+  }
+
+  return {
+    icon: 'i-lucide-check',
+    class: 'text-primary'
+  }
+}
 const stepActive = ref(0)
 
 const stream = async () => {
@@ -174,11 +192,9 @@ const stream = async () => {
 
     stepActive.value = 1
 
-    if (!processSteps.value.includes(data.message)) {
-      processSteps.value.push(data.message)
+    if (!processSteps.value.includes(data)) {
+      processSteps.value.push(data)
     }
-
-    // stepperItems.value[1].description = processStepsText.value
   };
 
   // Log connection error
@@ -234,9 +250,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <div class="w-full h-48 flex flex-col items-center justify-start">
             <div class="my-4 w-full flex flex-row items-center justify-start space-x-4"
               v-for="(step, index) in processSteps" :key="index">
-              <UIcon :name="index === processSteps.length - 1 ? 'i-lucide-loader' : 'i-lucide-check'"
-                :class="index === processSteps.length - 1 ? 'animate-spin' : ''" class="h-8 w-8 flex-none"
-                color=" primary" />
+              <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"
+                class="h-8 w-8 flex-none" color=" primary" />
               <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
                 class="flex-1 text-left text-xs">{{ step }}</p>
             </div>

@@ -49,7 +49,7 @@ onMounted(async () => {
       </template>
 
       <template #footer="{ collapsed }">
-        <span class="text-xs text-center">{{ collapsed ? '' : 'copyright' }} © 2024</span>
+        <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2024</span>
       </template>
     </UDashboardSidebar>
 

@@ -21,6 +21,13 @@ const _useDashboard = () => {
     isNotificationsSlideoverOpen.value = false
   })
 
+  watch(isFileDetailsSlideoverOpen, () => {
+    console.log(isFileDetailsSlideoverOpen.value)
+  })
+  watch(isSidebarSlideOverOpen, () => {
+    console.log(isSidebarSlideOverOpen.value)
+  })
+
   onUnmounted(() => {
     watcher()
   })

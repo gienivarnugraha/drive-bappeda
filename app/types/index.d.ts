@@ -35,11 +35,13 @@ export interface Document {
 
 export interface DocumentMetadata {
   thumbnailSrc?: string
+  summary: string
   extension: string
   filename: string
   filesize: number
   filePath: string
   fileId: string
+  createdAt: string
 }
 
 export interface FilteredData {
