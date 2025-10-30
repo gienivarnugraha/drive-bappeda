@@ -7,6 +7,8 @@ const stringToNumberArray = (input: string[] | string): number[] => {
     return input.map((item) => parseInt(item))
 }
 
+
+
 export default eventHandler(async (event) => {
     const query = getQuery<{ category: string[]; division: string[]; search: string }>(event)
 

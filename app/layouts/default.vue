@@ -1,9 +1,7 @@
 <script setup lang="ts">
-const { isSidebarSlideOverOpen, isNotificationsSlideoverOpen, addModalOpen } = useDashboard()
-
+const { isSidebarSlideOverOpen, isNotificationsSlideoverOpen } = useDashboard()
 
 const toast = useToast()
-
 
 onMounted(async () => {
   const cookie = useCookie('cookie-consent')
@@ -35,9 +33,9 @@ onMounted(async () => {
   <UDashboardGroup unit="rem">
     <UDashboardSidebar id="default" v-model:open="isSidebarSlideOverOpen" collapsible class="bg-elevated/25 min-h-full "
       :collapsed-size="0" :default-size="25" :ui="{
-      header: 'lg:border-b lg:border-default h-auto',
-      footer: 'lg:border-t lg:border-default'
-    }">
+        header: 'lg:border-b lg:border-default h-auto',
+        footer: 'lg:border-t lg:border-default'
+      }">
       <template #header="{ collapsed }">
         <Logo :collapsed="collapsed" />
       </template>
@@ -74,10 +72,7 @@ onMounted(async () => {
 
             <UColorModeButton />
 
-            <UTooltip text="Add Document" :shortcuts="['A']">
-              <UButton color="neutral" variant="ghost" square icon="i-lucide-plus"
-                @click="addModalOpen = !addModalOpen" />
-            </UTooltip>
+            <FileAddModal />
 
             <UserMenu />
           </template>

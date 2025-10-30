@@ -5,7 +5,6 @@ const _useDashboard = () => {
   const router = useRouter()
   const isNotificationsSlideoverOpen = ref(false)
   const isFileDetailsSlideoverOpen = ref(false)
-  const addModalOpen = ref(false)
   const isSidebarSlideOverOpen = ref(false)
 
   defineShortcuts({
@@ -14,23 +13,22 @@ const _useDashboard = () => {
     //   'g-c': () => router.push('/customers'),
     //   'g-s': () => router.push('/settings'),
     'o': () => isSidebarSlideOverOpen.value = !isSidebarSlideOverOpen.value,
-    'a': () => addModalOpen.value = !addModalOpen.value,
     'n': () => isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value
   })
 
-  watch(() => route.fullPath, () => {
+
+  const watcher = watch(() => route.fullPath, () => {
     isNotificationsSlideoverOpen.value = false
   })
 
-  watch(() => addModalOpen, (val) => {
-    console.log(val)
+  onUnmounted(() => {
+    watcher()
   })
 
   return {
     isNotificationsSlideoverOpen,
     isFileDetailsSlideoverOpen,
     isSidebarSlideOverOpen,
-    addModalOpen
   }
 }
 

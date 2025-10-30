@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import * as pdfjsLib from 'pdfjs-dist';
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
-import { getFilenameWithoutExtension, getFileExtension } from '../../utils/index';
+import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index';
+import { generateThumbnail } from '~/utils/pdf';
 import { v4 as uuid } from 'uuid'
 
 
-const { addModalOpen } = useDashboard()
+const addModalOpen: Ref<boolean> = ref(false)
 
-const { data: categories, status: categoriesStatus } = await useFetch<Category[]>('/api/categories')
+const { data: categories, pending: categoriesPending } = await useFetch<Category[]>('/api/categories')
 
-const { data: divisions, status: divisionsStatus } = await useFetch<Division[]>('/api/divisions')
+const { data: divisions, pending: divisionsPending } = await useFetch<Division[]>('/api/divisions')
 
 const fileUploading = ref(false)
 
@@ -48,8 +48,10 @@ async function upload(files: File[]) {
 
     formData.append('file', file, `${filename}_${ids[index]}.${extension}`);
 
-    // @ts-ignore
-    formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}_${ids[index]}.png`);
+    if (thumbnails.value) {
+      // @ts-ignore
+      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}_${ids[index]}.png`);
+    }
   })
 
   try {
@@ -101,6 +103,7 @@ const onChange = () => {
 
       file.arrayBuffer().then(async (buff) => {
 
+        // const thumbnail = await generateThumbnail(new Uint8Array(buff))
         const thumbnail = await generateThumbnail(new Uint8Array(buff))
 
         thumbnail?.toBlob(function (blob) {
@@ -118,40 +121,6 @@ const onChange = () => {
 
 }
 
-let worker: pdfjsLib.PDFWorker | undefined = undefined
-
-onMounted(() => {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
-
-  worker = new pdfjsLib.PDFWorker()
-})
-
-const generateThumbnail = async (data: Uint8Array) => {
-  try {
-
-    let load = pdfjsLib.getDocument({ data, worker })
-
-    let pdf = await load.promise
-
-    const page = await pdf.getPage(1)
-
-    let viewport = page.getViewport({ scale: 1 })
-
-    const canvas = document.createElement("canvas");
-
-    const context = canvas.getContext('2d');
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    // @ts-ignore
-    await page.render({ canvasContext: context, viewport: viewport }).promise
-
-    return canvas
-
-  } catch (error) {
-    console.error(error)
-  }
-}
 
 const toast = useToast()
 
@@ -193,6 +162,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 <template>
   <UModal v-model:open="addModalOpen" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
 
+    <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
+
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
 
@@ -220,16 +191,22 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <UFormField name="division_id" label="division"
           description="Your unique division for logging in and your profile URL.">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="divisions"
-            :loading="divisionsStatus === 'pending'" value-key="id" label-key="name" v-model="state.division_id"
-            name="division_id" />
+          <div v-if="divisionsPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <USkeleton v-for="value in 4" class="h-8 w-full" />
+          </div>
+
+          <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id"
+            label-key="name" v-model="state.division_id" name="division_id" />
         </UFormField>
 
         <UFormField name="category_id" label="category"
           description="Your unique division for logging in and your profile URL.">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="categories"
-            :loading="categoriesStatus === 'pending'" value-key="id" label-key="name" v-model="state.category_id"
-            name="category_id" />
+          <div v-if="categoriesPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <USkeleton v-for="value in 4" class="h-8 w-full" />
+          </div>
+
+          <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" :items="categories" value-key="id"
+            label-key="name" v-model="state.category_id" name="category_id" />
         </UFormField>
 
         <div class="flex justify-end gap-2">
