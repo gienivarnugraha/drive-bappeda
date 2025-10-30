@@ -266,38 +266,39 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
     const pathSummary = join(documentPath, fileSummary)
 
-    let summaries: Document[]
+    let summaries: Document[] | undefined
 
     if (existsSync(pathSummary)) {
-        sseSend("push:notif", { message: `file json exists... ${pathSummary}`, status: 'info' })
+        sseSend("push:notif", { message: `file json exists... ${fileSummary}`, status: 'info' })
 
         let json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
 
         if (docs.length !== json.length) {
-            sseSend("push:notif", { message: `file json exists but document length is different... ${pathSummary}`, status: 'info' })
+            sseSend("push:notif", { message: `file json exists but document length is different... ${fileSummary}`, status: 'info' })
             summaries = await getDocumentSummary(docs, ids)
 
             const content = JSON.stringify(summaries)
 
             writeFile(pathSummary, content, err => {
-                sseSend("push:notif", { message: `rewriting file... ${pathSummary}`, status: 'info' })
+                sseSend("push:notif", { message: `rewriting file... ${fileSummary}`, status: 'info' })
+
                 if (err) {
                     console.error({ message: err, content })
                 }
             })
         } else {
-            sseSend("push:notif", { message: `retrieve exisiting file... ${pathSummary}`, status: 'info' })
+            sseSend("push:notif", { message: `retrieve exisiting file... ${fileSummary}`, status: 'info' })
             summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
         }
 
     } else {
-        sseSend("push:notif", { message: `file doesnt exists... ${pathSummary}`, status: 'info' })
+        sseSend("push:notif", { message: `file doesnt exists... ${fileSummary}`, status: 'info' })
         summaries = await getDocumentSummary(docs, ids)
 
         const content = JSON.stringify(summaries)
 
         writeFile(pathSummary, content, err => {
-            sseSend("push:notif", { message: `writing new file... ${pathSummary}`, status: 'info' })
+            sseSend("push:notif", { message: `writing new file... ${fileSummary}`, status: 'info' })
             if (err) {
                 console.error({ message: err, content })
             }
@@ -396,30 +397,36 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
         model.withStructuredOutput(queryOutput),
     ]);
 
-    const summaries = await chain.batch(docs, {
-        maxConcurrency: 1,
-    });
-
-    sseSend("push:notif", { message: 'successfully getting documents summary...', status: 'info' })
-
-    return summaries.map((summaryMap, i) => {
-        const { summary, loc, title, attachment } = summaryMap
-
-        // @ts-ignore
-        const content = docs[i].pageContent
-
-        return new Document({
-            pageContent: content,
-            metadata: {
-                summary,
-                loc,
-                title,
-                attachment,
-                doc_id: ids.docIds[i],
-                source_id: ids.fileId
-            },
+    try {
+        const summaries = await chain.batch(docs, {
+            maxConcurrency: 1,
         });
-    });
+
+        sseSend("push:notif", { message: 'successfully getting documents summary...', status: 'info' })
+
+        return summaries.map((summaryMap, i) => {
+            const { summary, loc, title, attachment } = summaryMap
+
+            // @ts-ignore
+            const content = docs[i].pageContent
+
+            return new Document({
+                pageContent: content,
+                metadata: {
+                    summary,
+                    loc,
+                    title,
+                    attachment,
+                    doc_id: ids.docIds[i],
+                    source_id: ids.fileId
+                },
+            });
+        });
+
+    } catch (error) {
+        console.error('Error generating summaries', error)
+        sseSend("push:notif", { message: 'Error generating documents summary', status: 'error' })
+    }
 
 
 }
@@ -454,6 +461,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
     if (error) {
         console.error('Failed to get documents from database', error)
+        sseSend("push:notif", { message: `error getting ids from database... ${filename}`, status: 'error' })
     }
 
     if (data?.length) {
@@ -474,15 +482,18 @@ export const setVectorStore = async (filepath: string, documentData: { category_
             ...documentData
         }
 
-        const summaries = await generateSummaries(docs, ids, filepath)
-
-        sseSend("push:notif", { message: `insert new data to database... ${filename}`, status: 'info' })
-
         await storeToDB(docs.slice(0, 5), data)
 
-        sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
+        const summaries = await generateSummaries(docs, ids, filepath)
 
-        await vectorstore.addDocuments(summaries);
+        if (summaries) {
+            sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
+
+            await vectorstore.addDocuments(summaries);
+        } else {
+            sseSend("push:notif", { message: `no summaries generated... ${filename}`, status: 'error' })
+        }
+
 
     }
     sseSend("push:notif", { message: `success adding to vector store... ${filename}`, status: 'info' })
@@ -522,7 +533,7 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
     const { category_id, division_id, filename, fileId } = data
 
-    sseSend("push:notif", { message: `generating file summary ... ${filename}`, status: 'info' })
+    sseSend("push:notif", { message: `generating title and summary... ${filename}`, status: 'info' })
 
     const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
@@ -552,14 +563,14 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
         })
         .select()
 
-    sseSend("push:notif", { message: `success creating new data... ${filename}`, status: 'info' })
-
     if (docerror) {
-        throw new Error(`docerror: ${docerror}`)
+        console.error('Failed to insert document to database', docerror)
+
+        sseSend("push:notif", { message: `error creating new data... ${filename}`, status: 'error' })
     }
 
     if (docResponse) {
-
+        sseSend("push:notif", { message: `success creating new data... ${filename}`, status: 'info' })
         // insert to relation table
         let relationData = []
 
@@ -580,10 +591,11 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
 
         if (relationError) {
             throw new Error(`relationError: ${relationError}`)
+            sseSend("push:notif", { message: `error adding document relations... ${filename}`, status: 'error' })
         }
 
         if (relationResponse) {
-            sseSend("push:notif", { message: 'success adding relation...', status: 'info' })
+            sseSend("push:notif", { message: 'success adding document relations...', status: 'info' })
         }
     }
 
