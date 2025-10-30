@@ -82,7 +82,8 @@ const contentWidth = computed(() => isSidebarSlideOverOpen ? 'grid-cols-1 sm:gri
         </div>
 
         <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" legend="Kategori" :items="categories"
-          value-key="id" label-key="name" orientation="horizontal" v-model="selectedCategory" />
+          value-key="id" label-key="name" orientation="horizontal" v-model="selectedCategory"
+          :ui="{ fieldset: 'flex flex-wrap gap-x-2' }" />
       </div>
 
 

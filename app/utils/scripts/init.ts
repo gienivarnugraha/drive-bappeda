@@ -183,7 +183,7 @@ function isValidHttpURL(file: string) {
 export const loadDocument = async (file: string): Promise<Document[]> => {
     let loader;
 
-    sseSend("push:notif", { message: 'loading document...', status: 'info' })
+    sseSend("push:notif", { message: `loading document... ${file}`, status: 'info' })
 
 
     if (isValidHttpURL(file)) {
@@ -496,7 +496,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
 
     }
-    sseSend("push:notif", { message: `success adding to vector store... ${filename}`, status: 'info' })
+    sseSend("push:notif", { message: `success adding to vector store... ${filename}`, status: 'success' })
 
     return vectorstore
 }
@@ -525,7 +525,7 @@ const getBasicMetadata = (filePath: string) => {
  * @returns A promise that resolves when the data has been successfully stored to the database.
  */
 
-const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id: number[], division_id: number[] }) => {
+const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
     const queryOutput = z.object({
         title: z.string().describe("Title of the document"),
         summary: z.string().describe("Summary of the document"),
@@ -590,8 +590,8 @@ const storeToDB = async (doc: Document[], data: DocumentMetadata & { category_id
             .select()
 
         if (relationError) {
-            throw new Error(`relationError: ${relationError}`)
             sseSend("push:notif", { message: `error adding document relations... ${filename}`, status: 'error' })
+            console.error(`relationError: ${relationError}`)
         }
 
         if (relationResponse) {

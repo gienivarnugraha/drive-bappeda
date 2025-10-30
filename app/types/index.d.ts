@@ -41,7 +41,7 @@ export interface DocumentMetadata {
   filesize: number
   filePath: string
   fileId: string
-  createdAt: string
+  createdAt: date
 }
 
 export interface FilteredData {

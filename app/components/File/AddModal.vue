@@ -5,6 +5,7 @@ import type { Category, Division } from '~/types'
 import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index';
 import { generateThumbnail } from '~/utils/pdf';
 import { v4 as uuid } from 'uuid'
+import type { StepperItem } from '@nuxt/ui'
 
 
 const addModalOpen: Ref<boolean> = ref(false)
@@ -59,13 +60,11 @@ async function upload(files: File[]) {
       body: formData
     })
 
-    console.log('filenames', filenames)
-
-    toast.add({ title: 'Success', description: `${message}`, color: 'success' })
-
     return filenames
+
   } catch (error) {
     console.log(error)
+    toast.add({ title: 'Error', description: `${error.statusMessage}`, color: 'error' })
   } finally {
     fileUploading.value = false
   }
@@ -80,9 +79,10 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
       body: data,
     })
 
+    toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
+
   } catch (error) {
     console.log(error)
-    toast.add({ title: 'Success', description: `Error Submitting : ${error} `, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
@@ -126,9 +126,6 @@ onUnmounted(() => {
 })
 
 
-
-import type { StepperItem } from '@nuxt/ui'
-
 const stepperItems = ref<StepperItem[]>([
   {
     slot: 'upload' as const,
@@ -150,10 +147,10 @@ const stepperItems = ref<StepperItem[]>([
   }
 ])
 
-const processSteps: Ref<string[]> = ref([])
+const processSteps: Ref<{ message: string, status: string }[]> = ref([])
 
 const processStepsStyle = (index: number, data: any) => {
-  if (index === processSteps.value.length - 1) {
+  if (index === processSteps.value.length - 1 && data.status !== 'success') {
     return {
       icon: 'i-lucide-loader',
       class: 'animate-spin'
@@ -162,13 +159,20 @@ const processStepsStyle = (index: number, data: any) => {
 
   if (data.status === 'error') {
     return {
-      icon: 'i-lucide-x',
+      icon: 'i-lucide-circle-x',
       class: 'text-error'
     }
   }
 
+  if (data.status === 'success') {
+    return {
+      icon: 'i-lucide-circle-check',
+      class: 'text-primary'
+    }
+  }
+
   return {
-    icon: 'i-lucide-check',
+    icon: 'i-lucide-info',
     class: 'text-primary'
   }
 }
@@ -222,15 +226,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   const filenames = await upload(files)
 
-  if (!filenames) {
-    toast.add({ title: 'Error', description: `File upload failed`, color: 'error' })
-    return
-  } else {
+  if (filenames && filenames.length > 0) {
     await submit({
       filenames,
       ...data
     })
   }
+
+  return
 
 }
 </script>
@@ -242,18 +245,24 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     <template #body>
 
+      <div v-if="isProcessing" class="flex mb-4 justify-between items-center">
+        <p> Progress </p>
+
+        <UButton @click="isProcessing = false" icon="i-lucide-arrow-left" label="Back" />
+
+      </div>
+
       <UStepper v-if="isProcessing" disabled orientation="vertical" :items="stepperItems" v-model="stepActive"
         class="w-full">
-
 
         <template #process>
           <div class="w-full h-48 flex flex-col items-center justify-start">
             <div class="my-4 w-full flex flex-row items-center justify-start space-x-4"
               v-for="(step, index) in processSteps" :key="index">
               <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"
-                class="h-8 w-8 flex-none" color=" primary" />
+                class="h-4 w-4 flex-none" color=" primary" />
               <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
-                class="flex-1 text-left text-xs">{{ step }}</p>
+                class="flex-1 text-left text-xs">{{ step.message }}</p>
             </div>
           </div>
         </template>
@@ -264,20 +273,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
 
         <UFormField>
-          <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop your images here"
-            @change="onChange" description="SVG, PNG, JPG or GIF (max. 2MB)" layout="list" multiple
-            class="w-full min-h-48">
+          <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
+            @change="onChange" description="PDF, Word files" layout="list" multiple class="w-full min-h-48">
 
             <template #actions="{ open }">
-              <UButton label="Select images" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
+              <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
             </template>
 
             <template #files-top="{ open, files }">
-              <div v-if="files?.length" class="mb-2 flex items-center justify-between">
+              <div v-if="files?.length" class="my-2 w-full flex items-center justify-between">
                 <p class="font-bold">Files ({{ files?.length }})</p>
 
-                <UButton icon="i-lucide-plus" label="Add more" color="neutral" variant="outline" class="-my-2"
-                  @click="open()" />
+                <UButton icon="i-lucide-plus" label="Add more" color="neutral" variant="outline" @click="open()" />
               </div>
             </template>
 
@@ -285,24 +292,25 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
 
-        <UFormField name="division_id" label="division"
+        <UFormField name="division_id" label="Bidang"
           description="Your unique division for logging in and your profile URL.">
           <div v-if="divisionsPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
 
-          <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id"
-            label-key="name" v-model="state.division_id" name="division_id" />
+          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id" label-key="name"
+            v-model="state.division_id" name="division_id" :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
         </UFormField>
 
-        <UFormField name="category_id" label="category"
+        <UFormField name="category_id" label="Kategori"
           description="Your unique division for logging in and your profile URL.">
           <div v-if="categoriesPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
 
           <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" :items="categories" value-key="id"
-            label-key="name" v-model="state.category_id" name="category_id" />
+            label-key="name" v-model="state.category_id" name="category_id"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
         </UFormField>
 
         <div class="flex justify-end gap-2">
