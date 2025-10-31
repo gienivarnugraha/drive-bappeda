@@ -1,6 +1,3 @@
-import { mkdir, writeFile, cp } from 'node:fs/promises';
-import { join } from 'node:path';
-
 import { sseSend } from '../utils/sse';
 
 const allowedTypes = [
@@ -22,7 +19,8 @@ export default eventHandler(async (event) => {
 
     const storage = useStorage('documents'); // 'uploads' is a bucket defined in nuxt.config.ts
 
-    formData.forEach(async (file) => {
+    for (const file of formData) {
+
         if (!file.type || !allowedTypes.includes(file.type)) {
             throw createError({
                 statusCode: 400,
@@ -32,23 +30,22 @@ export default eventHandler(async (event) => {
             });
         }
 
-        if (await storage.hasItem(file.filename!)) {
-            filenamesExists.push(file.filename!)
+        const filename = file.filename as string
 
-            sseSend("push:notif", { message: `file exists in storage... ${file.filename}`, status: 'info' })
+        if (await storage.hasItem(filename)) {
+            filenamesExists.push(filename)
+
+            sseSend("push:notif", { message: `file exists in storage... ${filename}`, status: 'info' })
 
         } else {
+            filenames.push(filename)
 
-            if (file.name === 'file') {
-                filenames.push(file.filename!)
-            }
+            await storage.setItemRaw(filename, file.data)
 
-            await storage.setItemRaw(file.filename!, file.data)
-
-            sseSend("push:notif", { message: `File ${file.filename} uploaded `, status: 'info' })
+            sseSend("push:notif", { message: `File ${filename} uploaded `, status: 'info' })
 
         }
-    });
+    }
 
     console.log(filenames, filenamesExists)
 
@@ -64,5 +61,4 @@ export default eventHandler(async (event) => {
             statusMessage: `${filenamesExists.join(', ')} exists in storage...`,
         });
     }
-
 })

@@ -1,13 +1,5 @@
 import { Document, FilteredData, Results } from '../../app/types/index';
-
-const stringToNumberArray = (input: string[] | string): number[] => {
-    if (!Array.isArray(input)) {
-        return [parseInt(input)]
-    }
-    return input.map((item) => parseInt(item))
-}
-
-
+import { stringToNumberArray } from '~/utils';
 
 export default eventHandler(async (event) => {
     const query = getQuery<{ category: string[]; division: string[]; search: string }>(event)
@@ -58,7 +50,7 @@ export default eventHandler(async (event) => {
 
 })
 
-const groupBy = (array: FilteredData[]) => {
+const groupBy = (array: any[]) => {
 
     let data: Document[] = []
 

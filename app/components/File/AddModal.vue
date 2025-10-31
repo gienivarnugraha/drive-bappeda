@@ -6,13 +6,11 @@ import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index';
 import { generateThumbnail } from '~/utils/pdf';
 import { v4 as uuid } from 'uuid'
 import type { StepperItem } from '@nuxt/ui'
-
+import { useItems } from '~/composables/useItems'
 
 const addModalOpen: Ref<boolean> = ref(false)
 
-const { data: categories, pending: categoriesPending } = await useFetch<Category[]>('/api/categories')
-
-const { data: divisions, pending: divisionsPending } = await useFetch<Division[]>('/api/divisions')
+const { divisions, categories } = await useItems()
 
 const fileUploading = ref(false)
 
@@ -62,7 +60,7 @@ async function upload(files: File[]) {
 
     return filenames
 
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
     toast.add({ title: 'Error', description: `${error.statusMessage}`, color: 'error' })
   } finally {
@@ -294,23 +292,26 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <UFormField name="division_id" label="Bidang"
           description="Your unique division for logging in and your profile URL.">
-          <div v-if="divisionsPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <UCheckboxGroup v-if="divisions" indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id"
+            label-key="name" v-model="state.division_id" name="division_id"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+
+          <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
 
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id" label-key="name"
-            v-model="state.division_id" name="division_id" :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
         </UFormField>
 
         <UFormField name="category_id" label="Kategori"
           description="Your unique division for logging in and your profile URL.">
-          <div v-if="categoriesPending" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+          <UCheckboxGroup v-if="categories" indicator="hidden" size="sm" variant="card" :items="categories"
+            value-key="id" label-key="name" v-model="state.category_id" name="category_id"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+
+          <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
-
-          <UCheckboxGroup v-else indicator="hidden" size="sm" variant="card" :items="categories" value-key="id"
-            label-key="name" v-model="state.category_id" name="category_id"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
         </UFormField>
 
         <div class="flex justify-end gap-2">

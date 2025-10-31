@@ -1,5 +1,4 @@
 <script setup>
-import { VPdfViewer } from '@vue-pdf-viewer/viewer'
 const router = useRoute()
 
 const param = router.params.doc
@@ -12,6 +11,5 @@ const path = `/documents/${param}`
 
 <template>
     <div :style="{ width: '1028px', height: '700px' }">
-        <VPdfViewer :src="path" />
     </div>
 </template>

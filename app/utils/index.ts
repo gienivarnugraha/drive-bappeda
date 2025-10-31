@@ -12,6 +12,14 @@ export function dateToLocale(date: string) {
   return new Date(date).toLocaleDateString()
 }
 
+export const stringToNumberArray = (input: string[] | string): number[] => {
+  if (!Array.isArray(input)) {
+    return [parseInt(input)]
+  }
+  return input.map((item) => parseInt(item))
+}
+
+
 export function toTitleCase(str: string): string {
   // The regex \w\S* matches:
   // \w - one word character (like 'h' or 'W')
