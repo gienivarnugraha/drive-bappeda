@@ -33,12 +33,16 @@ export default eventHandler(async (event) => {
         const filename = file.filename as string
 
         if (await storage.hasItem(filename)) {
-            filenamesExists.push(filename)
+            if (file.name === 'file') {
+                filenamesExists.push(filename)
+            }
 
             sseSend("push:notif", { message: `file exists in storage... ${filename}`, status: 'info' })
 
         } else {
-            filenames.push(filename)
+            if (file.name === 'file') {
+                filenames.push(filename)
+            }
 
             await storage.setItemRaw(filename, file.data)
 
@@ -47,14 +51,12 @@ export default eventHandler(async (event) => {
         }
     }
 
-    console.log(filenames, filenamesExists)
-
     if (filenames.length > 0) {
         sseSend("push:notif", { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
 
         return { message: `${filenames.length} files uploaded successfully`, filenames };
     } else {
-        sseSend("push:notif", { message: `${filenamesExists.join(', ')} exists in storage...`, status: 'success' })
+        sseSend("push:notif", { message: `${filenamesExists.join(', ')} exists in storage...`, status: 'error' })
 
         throw createError({
             statusCode: 400,

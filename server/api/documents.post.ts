@@ -1,10 +1,13 @@
 import { sseSend } from '../utils/sse';
 import { setVectorStore } from '~/utils/scripts/init';
 import { Document } from '~/types';
+import { inspect } from 'node:util';
+import { modifyRelation } from '~/utils/db'
+import divisions from './divisions';
 
 type BaseSchema = {
-    category_id: number[],
-    division_id: number[],
+    categories: number[],
+    divisions: number[],
 }
 
 type EditSchema = {
@@ -28,7 +31,7 @@ export default eventHandler(async (event) => {
     console.log('document data', data)
 
     if ('shouldEdit' in data || 'shouldDelete' in data) {
-        const { document, shouldDelete, category_id, division_id } = data as EditSchema;
+        const { document, shouldDelete, categories, divisions } = data as EditSchema;
 
         let request;
 
@@ -37,27 +40,27 @@ export default eventHandler(async (event) => {
             request = supabase
                 .from('documents')
                 .delete()
-                .eq('document_id', document.id) // Assuming document.id is the key
+                .eq('id', document.id) // Assuming document.id is the key
+
+            await modifyRelation({ document, categories, divisions }, 'delete')
 
         } else {
-            // Logic for Update (Edit)
-            // Need to merge document with updated IDs for category/division
-            const updatePayload = {
-                ...document,
-                category_id, // Assuming document table has category_id and division_id columns
-                division_id
-            }
-
             request = supabase
                 .from('documents')
-                .update(updatePayload) // Use the merged payload
+                .update({
+                    title: document.title,
+                })
                 .eq('id', document.id)
+
+            await modifyRelation({ document, categories, divisions }, 'edit')
         }
 
         const { data: result, error } = await request
 
 
         if (error) {
+            console.error(`error ${shouldDelete ? 'Delete' : 'Update'} file: ${inspect(error, true, null, true)}`)
+
             throw createError({
                 statusCode: 400,
                 statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} file:  ${error}`,
@@ -68,11 +71,11 @@ export default eventHandler(async (event) => {
         }
 
     } else {
-        const { filenames, ...rest } = data as PostSchema
+        const { filenames, categories, divisions } = data as PostSchema
 
 
         for (const filename of filenames) {
-            await setVectorStore(`${documentPath}/${filename}`, rest)
+            await setVectorStore(`${documentPath}/${filename}`, { category_id: categories, division_id: divisions })
         }
 
         sseSend("close")

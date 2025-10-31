@@ -148,7 +148,7 @@ const stepperItems = ref<StepperItem[]>([
 const processSteps: Ref<{ message: string, status: string }[]> = ref([])
 
 const processStepsStyle = (index: number, data: any) => {
-  if (index === processSteps.value.length - 1 && data.status !== 'success') {
+  if (index === processSteps.value.length - 1 && data.status === 'info') {
     return {
       icon: 'i-lucide-loader',
       class: 'animate-spin'
@@ -185,11 +185,14 @@ const stream = async () => {
     let data = JSON.parse(event.data)
 
     if (data.status === 'success') {
+      stepActive.value = 2
+
+      console.log(data.status, stepActive.value)
+
       if (eventSource) {
         eventSource.close()
       }
 
-      stepActive.value = 2
     }
 
     stepActive.value = 1
@@ -212,6 +215,11 @@ const stream = async () => {
 
 }
 
+const backFromProcess = () => {
+  isProcessing.value = false
+  stepActive.value = 0
+  processSteps.value = []
+}
 
 const toast = useToast()
 
@@ -246,7 +254,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <div v-if="isProcessing" class="flex mb-4 justify-between items-center">
         <p> Progress </p>
 
-        <UButton @click="isProcessing = false" icon="i-lucide-arrow-left" label="Back" />
+        <UButton @click="backFromProcess" icon="i-lucide-arrow-left" label="Back" />
 
       </div>
 
@@ -254,7 +262,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="w-full">
 
         <template #process>
-          <div class="w-full h-48 flex flex-col items-center justify-start">
+          <div class="w-full h-48 flex flex-col items-center justify-start pb-4">
             <div class="my-4 w-full flex flex-row items-center justify-start space-x-4"
               v-for="(step, index) in processSteps" :key="index">
               <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"

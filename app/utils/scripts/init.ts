@@ -482,17 +482,17 @@ export const setVectorStore = async (filepath: string, documentData: { category_
             ...documentData
         }
 
-        await storeToDB(docs.slice(0, 5), data)
+        // await storeToDB(docs.slice(0, 5), data)
 
-        const summaries = await generateSummaries(docs, ids, filepath)
+        // const summaries = await generateSummaries(docs, ids, filepath)
 
-        if (summaries) {
-            sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
+        // if (summaries) {
+        //     sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
 
-            await vectorstore.addDocuments(summaries);
-        } else {
-            sseSend("push:notif", { message: `no summaries generated... ${filename}`, status: 'error' })
-        }
+        //     await vectorstore.addDocuments(summaries);
+        // } else {
+        //     sseSend("push:notif", { message: `no summaries generated... ${filename}`, status: 'error' })
+        // }
 
 
     }
@@ -572,27 +572,7 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
     if (docResponse) {
         sseSend("push:notif", { message: `success creating new data... ${filename}`, status: 'info' })
         // insert to relation table
-        let relationData = []
-
-        for (const categoryId of category_id) {
-            for (const divisionId of division_id) {
-                relationData.push({
-                    document_id: docResponse[0].id,
-                    category_id: categoryId,
-                    division_id: divisionId
-                })
-            }
-        }
-
-        const { data: relationResponse, error: relationError } = await supabase
-            .from('categories_documents_divisions')
-            .insert(relationData)
-            .select()
-
-        if (relationError) {
-            sseSend("push:notif", { message: `error adding document relations... ${filename}`, status: 'error' })
-            console.error(`relationError: ${relationError}`)
-        }
+        const relationResponse = await modifyRelation({ document: docResponse[0], categories: category_id, divisions: division_id }, 'edit')
 
         if (relationResponse) {
             sseSend("push:notif", { message: 'success adding document relations...', status: 'info' })

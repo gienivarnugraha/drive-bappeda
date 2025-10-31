@@ -1,22 +1,45 @@
 import { Document, FilteredData, Results } from '../../app/types/index';
 import { stringToNumberArray } from '~/utils';
+import { inspect } from 'node:util'
+
+
+const getPagination = (page: number, size: number) => {
+    const limit = size ? +size : 3;
+    const from = page ? page * limit : 0;
+    const to = page ? from + size : size;
+
+    console.log(limit, from, to)
+
+    return { from, to };
+};
+
+const countDocument = async () => {
+    let { count, error } = await supabase
+        .from('documents')
+        .select('*', { count: 'exact', head: true });
+
+    if (error) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: `Error counting documents:  ${error}`,
+        });
+    }
+
+    return count
+}
 
 export default eventHandler(async (event) => {
-    const query = getQuery<{ category: string[]; division: string[]; search: string }>(event)
+    const query = getQuery<{ category: string[]; division: string[]; search: string, perPage: string, page: string }>(event)
 
-    let { category, division, search } = query
+    let { category, division, search, } = query
 
-    console.log('documents query:', category, division, search)
-    /* 
-        const options = {
-            limit: 10,
-            offset: 0,
-            sortBy: { column: 'name', order: 'asc' },
-        }
-    
-        if (search) {
-            Object.assign(options, { search })
-        } */
+
+    let perPage = parseInt(query.perPage)
+    let page = parseInt(query.page)
+
+    const { from, to } = getPagination(page - 1, perPage)
+
+    console.log('documents query:', query)
 
     let request = supabase
         .from('categories_documents_divisions')
@@ -26,6 +49,7 @@ export default eventHandler(async (event) => {
                 divisions(id, name)
             `
         )
+    // .range(from, to)
 
     if (category) {
         request = request.in('category_id', stringToNumberArray(category))
@@ -39,31 +63,33 @@ export default eventHandler(async (event) => {
         request = request.or(`category_id.in.(${stringToNumberArray(category)}) , division_id.in.(${stringToNumberArray(division)})`)
     }
 
-    const { data, error } = await request
-
+    const { data: response, error } = await request
 
     if (error) {
         console.error('Error fetching documents:', error.message);
     } else {
-        return groupBy(data)
+        const count = await countDocument()
+        console.log('count:', count)
+        return {
+            count,
+            data: groupBy(response),
+            page: page,
+        }
     }
 
 })
 
-const groupBy = (array: any[]) => {
+const groupBy = (array: any[]): Results[] => {
 
     let data: Document[] = []
 
-    array.forEach((item) => {
+    array.forEach((item: FilteredData) => {
         let index = data.findIndex((it) => it.id === item.documents.id)
 
         if (index > 0) {
-            if (!data[index].categories.includes(item.categories)) {
-                data[index].categories.push(item.categories)
-            }
-            if (!data[index].divisions.includes(item.divisions)) {
-                data[index].divisions.push(item.divisions)
-            }
+            data[index].categories = removeDuplicates(data[index].categories, item.categories)
+
+            data[index].divisions = removeDuplicates(data[index].divisions, item.divisions)
         } else {
             data.push({
                 ...item.documents,
@@ -75,3 +101,22 @@ const groupBy = (array: any[]) => {
 
     return data
 };
+
+interface Identifiable {
+    id: any; // Use 'any' or a specific type like 'number' or 'string' for the ID
+    // You can add other properties here if known
+    [key: string]: any;
+}
+
+const removeDuplicates = <T extends Identifiable>(array: T[], newData: T): T[] => {
+    // 1. Merge the two arrays
+    let data = [...array, newData];
+
+    // 2. Filter the merged array for unique items
+    return data.filter((item, index, self) => {
+        // self.findIndex finds the *first* index where the condition is true.
+        // If the current item's index matches that first index, it is a unique item
+        // in the merged array (first one encountered wins).
+        return index === self.findIndex((t) => t.id === item.id);
+    });
+}

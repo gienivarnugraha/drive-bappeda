@@ -67,22 +67,24 @@ export function base64ToArrayBuffer(data: string) {
   return bytes;
 };
 
+export const deepClone = (object: any) => JSON.parse(JSON.stringify(object));
+
 export function getFilenameWithoutExtension(file: string) {
-  const lastDotIndex = file.lastIndexOf('.');
+  /* onst lastDotIndex = file.lastIndexOf('.');
   let fileNameWithoutExtension;
 
   if (lastDotIndex !== -1) {
     fileNameWithoutExtension = file.substring(0, lastDotIndex);
   } else {
     fileNameWithoutExtension = file; // No extension found
-  }
+  } */
 
-  //  return name.toLowerCase()
-  //   .replace(/\.[^/.]+$/, '')
-  //   .replace(/[^a-z0-9-_]+/g, '-')
-  //   .replace(/^-+|-+$/g, '')
+  return file.toLowerCase()
+    .replace(/\.[^/.]+$/, '')
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 
-  return fileNameWithoutExtension
+  // return fileNameWithoutExtension
 }
 
 export function getFileExtension(filename: string) {

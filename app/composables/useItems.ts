@@ -6,13 +6,15 @@ export const useItems = async () => {
 
 
     if (categories.value.length === 0) {
-        const { data: categoriesData } = await useFetch<Category[]>('/api/categories')
-        categories.value = categoriesData.value || []
+        const categoriesData = await $fetch<Category[]>('/api/categories')
+        let cat = categoriesData.map((category: Category) => ({ ...category, name: toTitleCase(category.name) }))
+        categories.value = cat
     }
 
     if (divisions.value.length === 0) {
-        const { data: divisionsData } = await useFetch<Division[]>('/api/divisions')
-        divisions.value = divisionsData.value || []
+        const divisionsData = await $fetch<Division[]>('/api/divisions')
+        let div = divisionsData.map((division: Division) => ({ ...division, name: toTitleCase(division.name) }))
+        divisions.value = div
     }
 
     return {
