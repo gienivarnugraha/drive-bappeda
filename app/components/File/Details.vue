@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatBytes } from '#imports';
-import type { Document as DocumentTypes } from '~/types';
+import type { Document, Category, Division, Results } from '~/types';
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 
@@ -10,29 +10,44 @@ const { isFileDetailsSlideoverOpen } = useDashboard()
 
 
 const props = defineProps<{
-  document: DocumentTypes
+  document: Document
 }>()
 
+const isSubmitting: Ref<boolean> = ref(false)
+
+const setData = (document: Document) => {
+  state.document = document
+  state.categories = document.categories
+  state.divisions = document.divisions
+}
+
 onMounted(() => {
-  if (props.document) {
-    state.document = props.document
-    state.categories = props.document.categories.map((category: any) => category.id)
-    state.divisions = props.document.divisions.map((division: any) => division.id)
-  }
+  setData(props.document)
 })
 
+onUnmounted(() => {
+  watcher()
+})
 
-const isSubmitting: Ref<boolean> = ref(false)
+const watcher = watch(() => props.document, (doc) => {
+  setData(doc)
+})
+
+const onEdit = () => {
+  state.shouldEdit = !state.shouldEdit
+}
+
+const edit = computed(() => state.shouldEdit)
+
 const toast = useToast()
 
 const schema = z.object({
-  document: z.custom<DocumentTypes>(),
-  categories: z.number().array(),
-  divisions: z.number().array(),
+  document: z.custom<Document>(),
+  categories: z.custom<Category>().array(),
+  divisions: z.custom<Division>().array(),
   shouldEdit: z.boolean().optional(),
   shouldDelete: z.boolean().optional(),
 })
-
 
 type Schema = z.infer<typeof schema>
 
@@ -44,15 +59,7 @@ let state = reactive<Partial<Schema>>({
   shouldDelete: false,
 })
 
-const onEdit = () => {
-  state.shouldEdit = !state.shouldEdit
-}
-
-const edit = computed(() => state.shouldEdit)
-
-onMounted(() => {
-  state.document = props.document
-})
+const emits = defineEmits(['update:document'])
 
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   isSubmitting.value = true
@@ -60,9 +67,10 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
       method: 'post',
-      body: toRaw(state),
+      body: state,
     })
 
+    emits('update:document')
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
 
@@ -81,10 +89,12 @@ const onDelete = async () => {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
       method: 'post',
       body: {
-        document: props.document,
+        document: state.document,
         shouldDelete: true
       },
     })
+    emits('update:document')
+
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
 
   } catch (error) {
@@ -115,7 +125,8 @@ const onDelete = async () => {
       </p>
 
       <div class="flex justify-between items-center space-x-1">
-        <UButton color="neutral" variant="ghost" :icon="edit ? 'i-lucide-check' : 'i-lucide-pencil'" @click="onEdit" />
+        <UButton color="neutral" variant="ghost" :icon="edit ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
+          @click="onEdit" />
         <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
 
       </div>
@@ -129,13 +140,13 @@ const onDelete = async () => {
             class="w-full sm:w-60 h-48 sm:h-32 object-cover rounded" alt="File Thumbnail" />
 
           <UFormField v-if="edit" label="Judul File" name="title">
-            <UInput v-model="document.title" />
+            <UTextarea class="w-full" :rows="2" v-model="document.title" />
           </UFormField>
 
-          <!-- <UFormField v-if="edit" label="Ringkasan" name="summary">
+          <UFormField v-if="edit" label="Ringkasan" name="summary">
             <UTextarea class="w-full" v-model="document.metadata.summary" :rows="4" />
-          </UFormField> -->
-          <!-- <p v-else class="line-clamp-4 text-md"> {{ document.metadata.summary }}</p> -->
+          </UFormField>
+
           <p v-if="!edit" class="line-clamp-4 text-md"> {{ document.metadata.summary }}</p>
 
           <FormDivision :edit="edit" v-model="state.divisions" />

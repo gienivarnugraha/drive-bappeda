@@ -8,7 +8,7 @@ const props = defineProps({
         default: false,
         required: false
     },
-    categories: {
+    modelValue: {
         type: Array as PropType<Category[]>,
         default: []
     }
@@ -24,22 +24,29 @@ const watcher = watch(category_id, (newVal) => {
     emit('update:modelValue', newVal)
 })
 
-onMounted(() => {
-    if (props.categories) {
-        category_id.value = props.categories.map((category: Category) => category.id)
-    }
-})
+// const watcherDivisions = watch(() => props.modelValue, (newVal) => {
+//     setData(newVal)
+// })
+
+// const setData = (data: Category[]) => {
+//     category_id.value = data.map((category: Category) => category.id)
+// }
+
+// onMounted(() => {
+//     setData(props.modelValue)
+// })
 
 onUnmounted(() => {
     watcher()
+    // watcherDivisions()
 })
+
 
 </script>
 <template>
     <div>
 
         <UFormField label="Kategori" name="categories">
-            {{ category_id }}
             <div v-if="edit">
                 <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="availableCategories" value-key="id"
                     label-key="name" v-model="category_id" name="category_id"
@@ -47,7 +54,7 @@ onUnmounted(() => {
             </div>
 
             <div v-else class="flex flex-wrap gap-2">
-                <UBadge v-for="category in categories" :key="category.id" color="primary" variant="outline"
+                <UBadge v-for="category in modelValue" :key="category.id" color="primary" variant="outline"
                     :label="toTitleCase(category.name)" />
 
             </div>

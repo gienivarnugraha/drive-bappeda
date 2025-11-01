@@ -1,5 +1,5 @@
 import type { Category, Division, Document } from "~/types"
-
+import { inspect } from 'node:util'
 
 export const modifyRelation = async (data: { document: Document, categories: number[], divisions: number[] }, action: 'edit' | 'delete') => {
     const { document, categories, divisions } = data
@@ -20,14 +20,18 @@ export const modifyRelation = async (data: { document: Document, categories: num
             }
         }
 
-        request = supabase.from('categories_documents_divisions').upsert(relationData)
+        console.log(relationData)
+
+        request = supabase.from('categories_documents_divisions').insert(relationData).select()
     } else {
-        request = supabase.from('categories_documents_divisions').delete().eq('document_id', document.id)
+        request = supabase.from('categories_documents_divisions').delete().eq('document_id', document.id).select()
     }
 
     let { data: result, error } = await request
 
     if (error) {
+        console.error(`error ${action} relation: ${inspect(error, true, null, true)}`)
+
         throw createError({
             statusCode: 400,
             statusMessage: `Error ${action} relation:  ${error}`,

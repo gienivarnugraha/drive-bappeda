@@ -27,12 +27,12 @@ if (!documentPath) {
 export default eventHandler(async (event) => {
     const data = await readBody<EditSchema | PostSchema>(event);
 
-    console.log('document data', data)
-
     if ('shouldEdit' in data || 'shouldDelete' in data) {
         const { document, shouldDelete, categories, divisions } = data as EditSchema;
 
         let request;
+
+        await modifyRelation({ document, categories, divisions }, 'delete')
 
         if (shouldDelete === true) {
             // Logic for Deletion
@@ -41,16 +41,16 @@ export default eventHandler(async (event) => {
                 .delete()
                 .eq('id', document.id) // Assuming document.id is the key
 
-            await modifyRelation({ document, categories, divisions }, 'delete')
-
         } else {
+            // throw categories and division
+            let { categories: cat, divisions: div, ...payload } = document
+
             request = supabase
                 .from('documents')
-                .update({
-                    title: document.title,
-                })
+                .upsert(payload, { onConflict: 'id' })
                 .eq('id', document.id)
 
+            // add the relation again after deleting
             await modifyRelation({ document, categories, divisions }, 'edit')
         }
 

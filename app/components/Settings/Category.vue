@@ -57,7 +57,7 @@ const submit = async (item: Schema, shouldDelete = false) => {
 
 <template>
     <UPageCard title="Categories" description="Edit categories." variant="subtle">
-        <div class="flex flex-row space-x-2 flex-wrap ">
+        <div class="flex flex-row space-x-2 space-y-2 flex-wrap ">
             <div v-for="category in categories" :key="category.id"
                 class="flex flex-row space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1">
                 <p> {{ category.name }}</p>

@@ -47,8 +47,7 @@ const selectDocument = (data: Results) => {
     <ClientOnly>
         <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             <UCard :class="[isSelected(item) ? 'ring-2 ring-primary' : '']" class="cursor-pointer"
-                v-for="(item, idx) in state" :key="item.id" :is-selected="item.id === selected?.id"
-                @click="selectDocument(item)">
+                v-for="(item, idx) in state" :key="item.id" @click="selectDocument(item)">
                 <!-- <template #header>
                     <div class="flex flex-col gap-4 ">
                         <div class="flex justify-between align-center">
@@ -64,14 +63,13 @@ const selectDocument = (data: Results) => {
                 <template #footer>
                     <div class="grid gap-2">
 
-                        <p class="text-primary text-xs font-bold"> {{ toTitleCase(item.title) }} </p>
+                        <p class="text-primary text-xs font-bold line-clamp-1"> {{ toTitleCase(item.title) }} </p>
 
                         <p class="text-gray text-xs"> {{ formatBytes(item.metadata.filesize) }} </p>
 
+                        <FormDivision v-model="item.divisions" :key="item.id" />
 
-                        <FormDivision v-model="item.divisions" />
-
-                        <FormCategory v-model="item.categories" />
+                        <FormCategory v-model="item.categories" :key="item.id" />
 
                     </div>
                 </template>

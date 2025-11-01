@@ -2,8 +2,12 @@ import { Division } from "~/types"
 import { inspect } from 'node:util'
 
 type EditSchema = {
-    shouldDelete: boolean
-} & Division
+    shouldDelete?: boolean
+    id?: number
+    name: string
+    description: string
+    icon: string
+}
 
 export default eventHandler(async (event) => {
     const { shouldDelete, ...payload } = await readBody<EditSchema>(event);

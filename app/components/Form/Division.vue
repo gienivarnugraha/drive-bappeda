@@ -8,7 +8,7 @@ const props = defineProps({
         default: false,
         required: false
     },
-    divisions: {
+    modelValue: {
         type: Array as PropType<Division[]>,
         default: []
     }
@@ -24,14 +24,23 @@ const watcher = watch(division_id, (newVal) => {
     emit('update:modelValue', newVal)
 })
 
+// const setData = (data: Division[]) => {
+//     division_id.value = data.map((division: Division) => division.id)
+// }
+
+// const watcherDivisions = watch(() => props.modelValue, (newVal) => {
+//     console.log('model value changed')
+//     setData(newVal)
+// })
+
 onMounted(() => {
-    if (props.divisions) {
-        division_id.value = props.divisions.map((division: Division) => division.id)
-    }
+    // setData(props.modelValue)
 })
 
 onUnmounted(() => {
+    console.log('FormDivision unmounted')
     watcher()
+    // watcherDivisions()
 })
 
 </script>
@@ -39,12 +48,11 @@ onUnmounted(() => {
 <template>
     <div>
         <UFormField label="Bidang" name="divisions">
-            {{ division_id }}
             <UCheckboxGroup v-if="edit" indicator="hidden" size="sm" variant="card" :items="availableDivisions"
                 value-key="id" label-key="name" v-model="division_id" name="division_id"
                 :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
             <div v-else class="flex flex-wrap gap-2">
-                <UBadge v-for="division in divisions" :key="division.id" color="primary" variant="outline"
+                <UBadge v-for="division in modelValue" :key="division.id" color="primary" variant="outline"
                     :label="toTitleCase(division.name)" />
             </div>
         </UFormField>

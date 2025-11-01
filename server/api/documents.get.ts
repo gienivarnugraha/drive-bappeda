@@ -67,6 +67,11 @@ export default eventHandler(async (event) => {
 
     if (error) {
         console.error('Error fetching documents:', error.message);
+
+        throw createError({
+            statusCode: 400,
+            statusMessage: `Error getting documents: ${error}`,
+        });
     } else {
         const count = await countDocument()
         console.log('count:', count)
@@ -86,15 +91,19 @@ const groupBy = (array: any[]): Results[] => {
     array.forEach((item: FilteredData) => {
         let index = data.findIndex((it) => it.id === item.documents.id)
 
-        if (index > 0) {
-            data[index].categories = removeDuplicates(data[index].categories, item.categories)
 
-            data[index].divisions = removeDuplicates(data[index].divisions, item.divisions)
+        let categories = item.categories ?? { id: 0, name: 'Tidak ada Kategori' }
+        let divisions = item.divisions ?? { id: 0, name: 'Tidak ada Bidang' }
+
+        if (index > 0) {
+            data[index].categories = removeDuplicates(data[index].categories, categories)
+
+            data[index].divisions = removeDuplicates(data[index].divisions, divisions)
         } else {
             data.push({
                 ...item.documents,
-                categories: [item.categories],
-                divisions: [item.divisions],
+                categories: [categories],
+                divisions: [divisions],
             })
         }
     });

@@ -9,19 +9,15 @@ const toast = useToast()
 
 const schema = z.object({
     name: z.string().min(2, 'Too short'),
-    metadata: z.object({
-        description: z.string().optional(),
-        icon: z.string().optional(),
-    }).optional()
+    description: z.string().optional(),
+    icon: z.string().optional(),
 })
 type Schema = z.output<typeof schema>
 
 const state = reactive<Schema>({
     name: '',
-    metadata: {
-        description: '',
-        icon: ''
-    },
+    description: '',
+    icon: ''
 })
 
 const addView = ref(false)
@@ -63,7 +59,7 @@ const divisionSubmit = async (item: Schema, shouldDelete = false) => {
 
 <template>
     <UPageCard title="divisions" description="Edit divisions." variant="subtle">
-        <div class="flex flex-row space-x-2 flex-wrap ">
+        <div class="flex flex-row space-x-2 space-y-2 flex-wrap ">
             <div v-for="division in divisions" :key="division.id"
                 class="flex flex-row space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1">
                 <p> {{ division.name }}</p>
@@ -90,8 +86,7 @@ const divisionSubmit = async (item: Schema, shouldDelete = false) => {
 
             <UFormField name="description" label="Description" description="Deskripsi Bidang"
                 class="flex max-sm:flex-col justify-between items-start gap-4">
-                <UTextarea :rows="2" v-model="state.metadata?.description" placeholder="Description of division"
-                    class="w-full" />
+                <UTextarea :rows="2" v-model="state.description" placeholder="Description of division" class="w-full" />
             </UFormField>
 
             <UButton label="Add" class="w-fit" type="submit" />

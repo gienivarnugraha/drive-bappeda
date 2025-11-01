@@ -16,7 +16,7 @@ const layoutView: Ref<'grid' | 'table'> = ref('grid')
 
 const currentPage: Ref<number> = ref(1)
 
-const { data: documentData, pending: documentPending } = await useLazyFetch<{ count: number, data: Results[] }>('/api/documents',
+const { data: documentData, pending: documentPending, refresh } = await useLazyFetch<{ count: number, data: Results[] }>('/api/documents',
   {
     params: {
       category: selectedCategory.value.includes(0) ? [] : selectedCategory.value,
@@ -43,9 +43,11 @@ onMounted(() => {
     availableDivisions.value = deepClone(divisions.value)
     availableDivisions.value.unshift({ id: 0, name: 'Semua Bidang' })
   }
-
-
 })
+
+const documentUpdated = () => {
+  refresh()
+}
 
 
 </script>
@@ -112,7 +114,7 @@ onMounted(() => {
 
 
       <div class="h-12 w-8 relative">
-        <FileDetails v-if="selected" :document="selected" />
+        <FileDetails v-if="selected" :document="selected" @update:document="documentUpdated" />
       </div>
 
     </div>
