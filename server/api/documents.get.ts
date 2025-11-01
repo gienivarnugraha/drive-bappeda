@@ -1,7 +1,7 @@
 import { Document, FilteredData, Results } from '../../app/types/index';
 import { stringToNumberArray } from '~/utils';
 import { inspect } from 'node:util'
-
+import supabase from '~/utils/supabase'
 
 const getPagination = (page: number, size: number) => {
     const limit = size ? +size : 3;
@@ -74,7 +74,7 @@ export default eventHandler(async (event) => {
         });
     } else {
         const count = await countDocument()
-        console.log('count:', count)
+
         return {
             count,
             data: groupBy(response),
@@ -91,8 +91,8 @@ const groupBy = (array: any[]): Results[] => {
     array.forEach((item: FilteredData) => {
         let index = data.findIndex((it) => it.id === item.documents.id)
 
-
         let categories = item.categories ?? { id: 0, name: 'Tidak ada Kategori' }
+
         let divisions = item.divisions ?? { id: 0, name: 'Tidak ada Bidang' }
 
         if (index > 0) {

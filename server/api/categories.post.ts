@@ -1,5 +1,6 @@
 import { Category } from "~/types"
 import { inspect } from 'node:util'
+import supabase from '~/utils/supabase'
 
 type EditSchema = {
     shouldDelete: boolean

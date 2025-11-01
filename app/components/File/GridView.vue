@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { formatBytes, dateToLocale } from '#imports';
-import type { FilteredData, Results } from '~/types';
+import type { DocumentMetadata, FilteredData, Results } from '~/types';
 
 
 const props = defineProps({
@@ -27,7 +27,7 @@ const isSelected = (item: Results) => item.id === selected.value?.id
 
 const emits = defineEmits(['update:modelValue'])
 
-const thumbnail = (data: Results) => `documents/${data.metadata.thumbnailSrc}`
+const thumbnail = (data: DocumentMetadata) => `${data.fileUrl}/${data.thumbnailSrc}`
 
 const selectDocument = (data: Results) => {
     if (selected.value?.id === data.id) {
@@ -58,14 +58,14 @@ const selectDocument = (data: Results) => {
                     </div>
                 </template> -->
 
-                <img :src="thumbnail(item)" class="w-full h-24 sm:h-30 object-cover rounded"></img>
+                <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded"></img>
 
                 <template #footer>
                     <div class="grid gap-2">
 
                         <p class="text-primary text-xs font-bold line-clamp-1"> {{ toTitleCase(item.title) }} </p>
 
-                        <p class="text-gray text-xs"> {{ formatBytes(item.metadata.filesize) }} </p>
+                        <p class="text-gray text-xs"> {{ formatBytes(item.metadata.fileSize) }} </p>
 
                         <FormDivision v-model="item.divisions" :key="item.id" />
 

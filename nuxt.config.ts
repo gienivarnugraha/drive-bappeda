@@ -18,6 +18,11 @@ export default defineNuxtConfig({
         driver: "fs",
         base: process.env.DOCUMENT_PATH,
       },
+      blobs: {
+        driver: 'vercelBlob',
+        access: 'public', // Optional, depends on your needs
+        // Other Vercel Blob driver options
+      },
     },
   },
 

@@ -1,4 +1,4 @@
-import { markdownToHtml } from '~/utils/markdown';
+
 export default defineEventHandler(async (event) => {
     const { question, uuid } = await readBody(event)
 

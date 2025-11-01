@@ -1,3 +1,6 @@
+
+import supabase from '~/utils/supabase'
+
 export default eventHandler(async (event) => {
     const { data, error } = await supabase
         .from('categories')

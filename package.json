@@ -29,6 +29,7 @@
     "@vercel/blob": "^2.0.0",
     "@vueuse/nuxt": "^13.9.0",
     "canvas": "^3.2.0",
+    "cheerio": "^1.1.2",
     "d3-dsv": "^2.0.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",

@@ -10,7 +10,7 @@ import { useItems } from '~/composables/useItems'
 
 const addModalOpen: Ref<boolean> = ref(false)
 
-const { divisions, categories } = await useItems()
+const { divisions: availableDivisions, categories: availableCategories } = await useItems()
 
 const fileUploading = ref(false)
 
@@ -20,8 +20,8 @@ const isProcessing = ref(false)
 
 const schema = z.object({
   files: z.instanceof(File).array(),
-  category_id: z.number().array(),
-  division_id: z.number().array(),
+  categories: z.number().array(),
+  divisions: z.number().array(),
 })
 
 const thumbnails: Ref<{ filename: string, blob: Blob }[]> = ref([])
@@ -30,8 +30,8 @@ type Schema = z.infer<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   files: undefined,
-  category_id: undefined,
-  division_id: undefined,
+  categories: undefined,
+  divisions: undefined,
 })
 
 let ids: string[] = []
@@ -298,10 +298,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
 
-        <UFormField name="division_id" label="Bidang"
+        <UFormField name="divisions" label="Bidang"
           description="Your unique division for logging in and your profile URL.">
-          <UCheckboxGroup v-if="divisions" indicator="hidden" size="sm" variant="card" :items="divisions" value-key="id"
-            label-key="name" v-model="state.division_id" name="division_id"
+          <UCheckboxGroup v-if="availableDivisions" indicator="hidden" size="sm" variant="card"
+            :items="availableDivisions" value-key="id" label-key="name" v-model="state.divisions" name="divisions"
             :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -310,11 +310,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         </UFormField>
 
-        <UFormField name="category_id" label="Kategori"
+        <UFormField name="categories" label="Kategori"
           description="Your unique division for logging in and your profile URL.">
 
-          <UCheckboxGroup v-if="categories" indicator="hidden" size="sm" variant="card" :items="categories"
-            value-key="id" label-key="name" v-model="state.category_id" name="category_id"
+          <UCheckboxGroup v-if="availableCategories" indicator="hidden" size="sm" variant="card"
+            :items="availableCategories" value-key="id" label-key="name" v-model="state.categories" name="categories"
             :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">

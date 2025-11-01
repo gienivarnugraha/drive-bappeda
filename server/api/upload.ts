@@ -1,5 +1,5 @@
-import { sseSend } from '../utils/sse';
-import { put } from '@vercel/blob';
+import { sseSend } from '~/utils/sse';
+
 const allowedTypes = [
     "image/jpeg", "image/png", "image/gif", "application/pdf", "text/plain",];
 
@@ -17,7 +17,7 @@ export default eventHandler(async (event) => {
 
     let filenamesExists: string[] = []
 
-    const storage = useStorage('documents'); // 'uploads' is a bucket defined in nuxt.config.ts
+    const storage = useStorage('blobs'); // 'uploads' is a bucket defined in nuxt.config.ts
 
     for (const file of formData) {
 
@@ -40,9 +40,9 @@ export default eventHandler(async (event) => {
             sseSend("push:notif", { message: `file exists in storage... ${filename}`, status: 'info' })
 
         } else {
+            const data = await storage.setItemRaw(filename, file.data)
 
-
-            await storage.setItemRaw(filename, file.data)
+            console.log(data)
 
             if (file.name === 'file') {
                 filenames.push(filename)

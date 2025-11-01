@@ -70,21 +70,10 @@ export function base64ToArrayBuffer(data: string) {
 export const deepClone = (object: any) => JSON.parse(JSON.stringify(object));
 
 export function getFilenameWithoutExtension(file: string) {
-  /* onst lastDotIndex = file.lastIndexOf('.');
-  let fileNameWithoutExtension;
-
-  if (lastDotIndex !== -1) {
-    fileNameWithoutExtension = file.substring(0, lastDotIndex);
-  } else {
-    fileNameWithoutExtension = file; // No extension found
-  } */
-
   return file.toLowerCase()
     .replace(/\.[^/.]+$/, '')
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-  // return fileNameWithoutExtension
 }
 
 export function getFileExtension(filename: string) {

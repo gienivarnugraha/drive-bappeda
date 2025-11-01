@@ -6,7 +6,7 @@ import { PDFLoader } from "./pdfLoader";
 import { MultiFileLoader } from 'langchain/document_loaders/fs/multi_file';
 import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Document, type DocumentInput } from "@langchain/core/documents";
-import { getModel, getVectorStore } from '../../../server/utils/ai';
+import { getModel, getVectorStore } from '../ai';
 // import { generateAnswerFromDocument } from '../server/utils/rag';
 import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from '@langchain/core/prompts';
 import { RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables';
@@ -18,16 +18,18 @@ import { inspect } from 'node:util';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { formatDocumentsAsString } from 'langchain/util/document';
 import { ChatMessageHistory } from 'langchain/stores/message/in_memory';
-import { generateAnswerFromDocument, getRetriever } from '../../../server/utils/rag';
+import { generateAnswerFromDocument, getRetriever } from '../rag';
 import { spawn } from 'node:child_process';
 import { TextLoader } from "langchain/document_loaders/fs/text";
-import supabase from '../../../server/utils/supabase';
+import supabase from '../supabase';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { DocxLoader, } from '@langchain/community/document_loaders/fs/docx';
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { type DocumentMetadata } from '~/types';
-import { getUuidFromFilename } from '~/utils';
-import { sseSend } from '../../../server/utils/sse';
+import { getFileExtension, getFilenameWithoutExtension } from '~/utils';
+import { modifyRelation } from '~/utils/db';
+import { sseSend } from '~/utils/sse';
+import type { StorageMeta } from 'unstorage'
 
 const model = getModel('google')
 const documentPath = process.env.DOCUMENT_PATH as string
@@ -439,7 +441,7 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const setVectorStore = async (filepath: string, documentData: { category_id: number[], division_id: number[] }) => {
+export const setVectorStore = async (filepath: string, documentData: { category_id: number[], division_id: number[], storageMeta: StorageMeta }) => {
     const vectorstore = getVectorStore()
 
     const documents = await loadDocument(filepath)
@@ -474,15 +476,19 @@ export const setVectorStore = async (filepath: string, documentData: { category_
             fileId: `${filename}_${uuid()}`,
         }
 
-        const metadata = getBasicMetadata(filepath)
+        const { storageMeta, ...restData } = documentData
+
+        const metadata = getBasicMetadata(filepath, storageMeta)
 
         const data = {
             ...ids,
-            ...metadata,
-            ...documentData
+            ...restData,
+            ...metadata
         }
 
-        // await storeToDB(docs.slice(0, 5), data)
+        console.log('data ', inspect(data, true, 1, true))
+
+        await storeToDB(docs.slice(0, 5), data)
 
         // const summaries = await generateSummaries(docs, ids, filepath)
 
@@ -502,19 +508,22 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 }
 
 
-const getBasicMetadata = (filePath: string) => {
+const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
     sseSend("push:notif", { message: `getting meta data... ${filePath}`, status: 'info' })
-    const stats = statSync(filePath);
+
+    const url = new URL(filePath)
+    const fileUrl = url.origin
+    const pathname = url.pathname.slice(1);
 
     return {
-        filename: basename(filePath),
+        filename: pathname as string,
         extension: extname(filePath),
-        thumbnailSrc: `${basename(filePath, extname(filePath))}.png`,
-        filePath,
-        filesize: stats.size, // Size in bytes
-        createdAt: stats.birthtime,
-        modifiedAt: stats.mtime,
-    };
+        thumbnailSrc: `${getFilenameWithoutExtension(pathname)}.png`,
+        fileUrl,
+        fileSize: meta.size as number,
+        createdAt: meta.mtime as Date,
+        uploadedAt: meta.uploadedAt as Date
+    }
 };
 
 
@@ -548,7 +557,9 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
     const content = formatDocumentsAsString(doc)
 
-    const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
+    // const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
+    const title = 'test title'
+    const summary = 'test summary'
 
     const { data: docResponse, error: docerror } = await supabase
         .from('documents')

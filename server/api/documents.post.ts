@@ -1,8 +1,9 @@
-import { sseSend } from '../utils/sse';
+import { sseSend } from '../../app/utils/sse';
 import { setVectorStore } from '~/utils/scripts/init';
 import { Document } from '~/types';
 import { inspect } from 'node:util';
 import { modifyRelation } from '~/utils/db'
+import supabase from '~/utils/supabase'
 
 type BaseSchema = {
     categories: number[],
@@ -27,6 +28,8 @@ if (!documentPath) {
 export default eventHandler(async (event) => {
     const data = await readBody<EditSchema | PostSchema>(event);
 
+    const storage = useStorage('blobs')
+
     if ('shouldEdit' in data || 'shouldDelete' in data) {
         const { document, shouldDelete, categories, divisions } = data as EditSchema;
 
@@ -40,6 +43,8 @@ export default eventHandler(async (event) => {
                 .from('documents')
                 .delete()
                 .eq('id', document.id) // Assuming document.id is the key
+
+            await storage.remove(document.filename)
 
         } else {
             // throw categories and division
@@ -74,7 +79,11 @@ export default eventHandler(async (event) => {
 
 
         for (const filename of filenames) {
-            await setVectorStore(`${documentPath}/${filename}`, { category_id: categories, division_id: divisions })
+            const storageMeta = await storage.getMeta(filename)
+
+            console.log('documents posts file metadata : ', storageMeta)
+
+            await setVectorStore(`${storageMeta.url}`, { category_id: categories, division_id: divisions, storageMeta })
         }
 
         sseSend("close")

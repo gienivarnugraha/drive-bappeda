@@ -41,12 +41,13 @@ export interface Document {
 export interface DocumentMetadata {
   thumbnailSrc?: string
   summary: string
-  extension: string
   filename: string
-  filesize: number
   filePath?: string
+  extension: string
+  fileSize: number
   fileId: string
   fileUrl?: string
+  uploadedAt: date
   createdAt: date
 }
 
