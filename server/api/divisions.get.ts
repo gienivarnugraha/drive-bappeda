@@ -3,6 +3,7 @@ export default eventHandler(async (event) => {
         .from('divisions')
         .select()
 
+
     if (error) return false
 
     return data

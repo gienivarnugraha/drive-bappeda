@@ -9,6 +9,15 @@ export default defineEventHandler(async (event) => {
     //     "content-type": "text/event-stream"
     // });
 
+    event.node.req.on('close', () => {
+        console.log('Client disconnected');
+    });
+
+    event.node.req.on('aborted', () => {
+        console.log('Request aborted');
+        // reject(new Error('Aborted')); // Reject the promise on abort
+    });
+
     try {
         //@ts-ignore
         // const response = await generateAnwserFromDB()
@@ -46,13 +55,23 @@ export default defineEventHandler(async (event) => {
             text: answer,
         }
 
-    } catch (err) {
-        setResponseStatus(event, 400, "Streaming Error")
-        console.error("Streaming error:", err, typeof err);
-        return {
-            type: 'error',
-            text: err
+    } catch (err: H3Error) {
+        if (err.message === 'Aborted') {
+            setResponseStatus(event, 400, "Streaming Error")
+            console.error("Streaming error:", err, typeof err);
+            return {
+                type: 'error',
+                text: 'Aborted'
+            }
+        } else {
+            setResponseStatus(event, 400, "Streaming Error")
+            console.error("Streaming error:", err, typeof err);
+            return {
+                type: 'error',
+                text: err
+            }
         }
+
     }
 })
 

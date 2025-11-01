@@ -15,11 +15,16 @@ export interface User {
 export interface Category {
   id: number
   name: string
+  description?: string
 }
 
 export interface Division {
   id: number
   name: string
+  metadata?: {
+    description?: string
+    icon?: string
+  }
 }
 
 export interface Document {
@@ -39,8 +44,9 @@ export interface DocumentMetadata {
   extension: string
   filename: string
   filesize: number
-  filePath: string
+  filePath?: string
   fileId: string
+  fileUrl?: string
   createdAt: date
 }
 

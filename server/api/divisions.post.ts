@@ -1,9 +1,9 @@
-import { Category } from "~/types"
+import { Division } from "~/types"
 import { inspect } from 'node:util'
 
 type EditSchema = {
     shouldDelete: boolean
-} & Category
+} & Division
 
 export default eventHandler(async (event) => {
     const { shouldDelete, ...payload } = await readBody<EditSchema>(event);
@@ -12,12 +12,12 @@ export default eventHandler(async (event) => {
 
     if (shouldDelete) {
         request = supabase
-            .from('categories')
+            .from('divisions')
             .delete()
             .eq('id', payload.id)
     } else {
         request = supabase
-            .from('categories')
+            .from('divisions')
             .upsert(payload, { onConflict: 'name' })
             .select()
     }
@@ -25,13 +25,13 @@ export default eventHandler(async (event) => {
     const { data, error } = await request
 
     if (error) {
-        console.error(`error ${shouldDelete ? 'Delete' : 'Update'} category: ${inspect(error, true, null, true)}`)
+        console.error(`error ${shouldDelete ? 'Delete' : 'Update'} division: ${inspect(error, true, null, true)}`)
 
         throw createError({
             statusCode: 400,
-            statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} category:  ${error}`,
+            statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} division:  ${error}`,
         });
     }
 
-    return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, data: payload }
+    return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} division: ${payload.name}`, data: payload }
 })

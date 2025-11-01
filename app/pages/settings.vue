@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
+import { useItems } from '#imports'
+import type { Category, Division } from '~/types'
+import StateBlock from 'markdown-it/lib/rules_block/state_block.mjs'
 
 const fileRef = ref<HTMLInputElement>()
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Too short'),
-  email: z.email('Invalid email'),
+  email: z.string().email('Invalid email'),
   username: z.string().min(2, 'Too short'),
   avatar: z.string().optional(),
   bio: z.string().optional()
@@ -22,6 +25,7 @@ const profile = reactive<Partial<ProfileSchema>>({
   bio: undefined
 })
 const toast = useToast()
+
 async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
   toast.add({
     title: 'Success',
@@ -46,7 +50,6 @@ function onFileClick() {
   fileRef.value?.click()
 }
 
-
 const passwordSchema = z.object({
   current: z.string().min(8, 'Must be at least 8 characters'),
   new: z.string().min(8, 'Must be at least 8 characters')
@@ -66,6 +69,7 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
   }
   return errors
 }
+
 </script>
 
 <template>
@@ -123,9 +127,13 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
       </UForm>
     </UPageCard>
 
+    <SettingsCategory />
+
+    <SettingsDivision />
+
     <UPageCard title="Account"
       description="No longer want to use our service? You can delete your account here. This action is not reversible. All information related to this account will be deleted permanently."
-      class="bg-gradient-to-tl from-error/10 from-5% to-default">
+      class="bg-linear-to-tl from-error/10 from-5% to-default">
       <template #footer>
         <UButton label="Delete account" color="error" />
       </template>

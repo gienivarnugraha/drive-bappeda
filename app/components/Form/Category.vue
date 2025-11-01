@@ -40,13 +40,18 @@ onUnmounted(() => {
 
         <UFormField label="Kategori" name="categories">
             {{ category_id }}
-            <UCheckboxGroup v-if="edit" indicator="hidden" size="sm" variant="card" :items="availableCategories"
-                value-key="id" label-key="name" v-model="category_id" name="category_id"
-                :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+            <div v-if="edit">
+                <UCheckboxGroup indicator="hidden" size="sm" variant="card" :items="availableCategories" value-key="id"
+                    label-key="name" v-model="category_id" name="category_id"
+                    :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+            </div>
+
             <div v-else class="flex flex-wrap gap-2">
                 <UBadge v-for="category in categories" :key="category.id" color="primary" variant="outline"
                     :label="toTitleCase(category.name)" />
+
             </div>
+
         </UFormField>
     </div>
 

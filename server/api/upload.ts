@@ -1,5 +1,5 @@
 import { sseSend } from '../utils/sse';
-
+import { put } from '@vercel/blob';
 const allowedTypes = [
     "image/jpeg", "image/png", "image/gif", "application/pdf", "text/plain",];
 
@@ -40,11 +40,14 @@ export default eventHandler(async (event) => {
             sseSend("push:notif", { message: `file exists in storage... ${filename}`, status: 'info' })
 
         } else {
+
+
+            await storage.setItemRaw(filename, file.data)
+
             if (file.name === 'file') {
                 filenames.push(filename)
             }
 
-            await storage.setItemRaw(filename, file.data)
 
             sseSend("push:notif", { message: `File ${filename} uploaded `, status: 'info' })
 

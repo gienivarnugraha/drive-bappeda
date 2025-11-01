@@ -54,6 +54,9 @@ onMounted(() => {
     )
 })
 
+const controller = new AbortController();
+const signal = controller.signal;
+
 const exampleMessage: string[] = [
     'Jumlah Sampah Yang Dihasilkan Di Kota Semarang',
     'Skenario Dan Proyeksi Pengurangan Sampah Yang Optimal Dengan Gambar Dan Tabel',
@@ -83,6 +86,7 @@ const handleSubmit = async (e: Event) => {
                 question: question.value,
                 uuid: threadId
             },
+            signal
             // responseType: 'stream',
         })
 
@@ -147,12 +151,12 @@ div.markdown>p {
 <template>
     <div v-if="!collapsed" class="flex flex-col justify-between">
         <UChatMessages :messages="messages" :status="status" :user="{
-        side: 'left',
-        variant: 'solid',
-        avatar: {
-            src: 'https://github.com/benjamincanac.png'
-        }
-    }">
+            side: 'left',
+            variant: 'solid',
+            avatar: {
+                src: 'https://github.com/benjamincanac.png'
+            }
+        }">
             <template #content="{ message }">
                 <div class="markdown" v-html="getTextFromMessage(message)"> </div>
             </template>

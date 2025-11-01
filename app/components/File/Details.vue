@@ -103,7 +103,7 @@ const onDelete = async () => {
     :ui="{ header: 'flex justify-between items-center' }">
 
     <UTooltip text="Tutup Panel Detail Berkas">
-      <UButton color="neutral" variant="ghost" class="fixed bottom-1 right-1"
+      <UButton color="neutral" variant="solid" class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
         label="Open File" :ui="{
           trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'

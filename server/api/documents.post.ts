@@ -3,7 +3,6 @@ import { setVectorStore } from '~/utils/scripts/init';
 import { Document } from '~/types';
 import { inspect } from 'node:util';
 import { modifyRelation } from '~/utils/db'
-import divisions from './divisions';
 
 type BaseSchema = {
     categories: number[],
