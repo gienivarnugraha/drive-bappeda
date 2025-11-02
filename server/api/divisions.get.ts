@@ -6,7 +6,7 @@ export default eventHandler(async (event) => {
     .select()
 
   if (error) {
-    console.error(error)
+    console.error('Error fetching division:', error)
 
     throw createError({
       statusCode: 400,

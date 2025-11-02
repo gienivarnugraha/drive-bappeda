@@ -25,6 +25,6 @@ export const generateThumbnail = async (data: Uint8Array) => {
 
     return canvas
   } catch (error) {
-    console.error(error)
+    console.error('generate canvas', error)
   }
 }

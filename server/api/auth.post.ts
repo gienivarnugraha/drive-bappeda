@@ -16,7 +16,7 @@ export default eventHandler(async (event) => {
     })
 
     if (error) {
-      console.error(error)
+      console.error('auth error: ', error)
 
       throw createError({
         statusCode: 400,

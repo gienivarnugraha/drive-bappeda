@@ -30,7 +30,7 @@ export default eventHandler(async (event) => {
   const { data, error } = await request
 
   if (error) {
-    console.error(`error ${shouldDelete ? 'Delete' : 'Update'} division: ${inspect(error, true, null, true)}`)
+    console.error(`Error ${shouldDelete ? 'Delete' : 'Update'} division: ${inspect(error, true, null, true)}`)
 
     throw createError({
       statusCode: 400,

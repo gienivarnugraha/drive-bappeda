@@ -71,7 +71,7 @@ const selectDocument = (data: Results) => {
             </p>
 
             <p class="text-gray text-xs">
-              {{ formatBytes(item.metadata.fileSize) }}
+              {{ formatBytes(item.metadata.fileSize ?? 0) }}
             </p>
 
             <FormDivision :key="item.id" v-model="item.divisions" />

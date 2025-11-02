@@ -4,10 +4,10 @@ import { useStorage } from '@vueuse/core'
 export default defineNuxtRouteMiddleware(async (to, from) => {
   console.log('middleware called')
 
-  // const user = localStorage.getItem('user-store')
+  //  const user = useSupabaseUser()
 
-  // console.log('user:', user)
-  // const user = await supabase.auth.getUser()
-  // console.log('user:', user)
+  // if (!user.value) {
+  //   return navigateTo('/login')
+  // }
   return
 })

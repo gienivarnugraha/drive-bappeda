@@ -550,6 +550,7 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
       uuid: fileId,
       title,
       filename,
+      description: summary,
       metadata: {
         summary,
         ...data

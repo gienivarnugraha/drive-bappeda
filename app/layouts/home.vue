@@ -27,22 +27,16 @@ onMounted(async () => {
   //   }]
   // })
 })
+const { smAndLarger } = useTailwindBreakpoints()
 </script>
 
 <template>
   <UDashboardGroup unit="rem">
-    <UDashboardSidebar
-      id="default"
-      v-model:open="isSidebarSlideOverOpen"
-      collapsible
-      class="bg-elevated/25 min-h-full "
-      :collapsed-size="0"
-      :default-size="25"
-      :ui="{
+    <UDashboardSidebar id="default" v-model:open="isSidebarSlideOverOpen" collapsible class="bg-elevated/25 min-h-full "
+      :collapsed-size="0" :default-size="25" :ui="{
         header: 'lg:border-b lg:border-default h-auto',
         footer: 'lg:border-t lg:border-default'
-      }"
-    >
+      }">
       <template #header="{ collapsed }">
         <Logo :collapsed="collapsed" />
       </template>
@@ -64,33 +58,23 @@ onMounted(async () => {
         <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
           <template #leading>
             <UDashboardSidebarCollapse />
-            <UButton
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-home"
-              to="/"
-            />
+            <!-- <UButton variant="ghost" color="neutral" icon="i-lucide-home" to="/" /> -->
           </template>
 
           <template #right>
-            <UTooltip text="Notifications" :shortcuts="['N']">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                square
-                @click="isNotificationsSlideoverOpen = true"
-              >
+            <!-- <UTooltip text="Notifications" :shortcuts="['N']">
+              <UButton color="neutral" variant="ghost" square @click="isNotificationsSlideoverOpen = true">
                 <UChip color="error" inset>
                   <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
                 </UChip>
               </UButton>
-            </UTooltip>
+            </UTooltip> -->
 
             <UColorModeButton />
 
             <FileAddModal />
 
-            <UserMenu />
+            <UserMenu :collapsed="!smAndLarger" />
           </template>
         </UDashboardNavbar>
       </template>

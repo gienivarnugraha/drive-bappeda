@@ -46,22 +46,23 @@ onUnmounted(() => {
 
 <template>
   <div>
-    UFormField label="Bidang" name="divisions"
-    <UCheckboxGroup v-if="edit" v-model="division_id" indicator="hidden" size="sm" variant="card"
-      :items="availableDivisions" value-key="id" label-key="name" name="division_id"
-      :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
-      <template #label="{ item }">
-        <UTooltip :text="item.name">
-          <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
-        </UTooltip>
-      </template>
-    </UCheckboxGroup>
-    <div v-else class="flex flex-wrap gap-2">
-      <UBadge v-for="item in modelValue" :key="item.id" color="primary" variant="outline">
-        <UTooltip :text="item.name">
-          <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 10) }}</span>
-        </UTooltip>
-      </UBadge>
-    </div>
+    <UFormField label="Bidang" name="divisions">
+      <UCheckboxGroup v-if="edit" v-model="division_id" indicator="hidden" size="sm" variant="card"
+        :items="availableDivisions" value-key="id" label-key="name" name="division_id"
+        :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
+        <template #label="{ item }">
+          <UTooltip :text="item.name">
+            <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+          </UTooltip>
+        </template>
+      </UCheckboxGroup>
+      <div v-else class="flex flex-wrap gap-2">
+        <UBadge v-for="item in modelValue" :key="item.id" color="primary" variant="outline">
+          <UTooltip :text="item.name">
+            <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 10) }}</span>
+          </UTooltip>
+        </UBadge>
+      </div>
+    </UFormField>
   </div>
 </template>

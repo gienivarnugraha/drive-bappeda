@@ -31,6 +31,7 @@ export interface Document {
   id: number
   uuid: string
   filename: string
+  description?: string
   title: string
   categories: Category[]
   divisions: Division[]
@@ -49,6 +50,7 @@ export interface DocumentMetadata {
   uploadedAt: date
   createdAt: date
 }
+
 
 export interface FilteredData {
   documents: Document
@@ -76,4 +78,12 @@ export type Period = 'daily' | 'weekly' | 'monthly'
 export interface Range {
   start: Date
   end: Date
+}
+
+/* SUPABASE USER */
+
+export interface User {
+  display_name: string;
+  avatar: string
+  uuid: string
 }

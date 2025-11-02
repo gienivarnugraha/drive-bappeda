@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
+    // '@nuxtjs/supabase',
     '@vueuse/nuxt'
   ],
 
@@ -10,6 +11,12 @@ export default defineNuxtConfig({
     // enabled:  process.env.NODE_ENV === 'development'
     enabled: false
   },
+
+  // supabase: {
+  //   redirect: process.env.NODE_ENV === 'development' ? false : true,
+  //   key: process.env.SUPABASE_PRIVATE_KEY,
+  //   url: process.env.SUPABASE_URL
+  // },
 
   css: ['~/assets/css/main.css'],
   runtimeConfig: {

@@ -25,6 +25,7 @@
     "@nuxt/eslint": "1.7.1",
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/mdc": "^0.18.0",
+    "@nuxtjs/supabase": "^2.0.1",
     "@supabase/supabase-js": "^2.57.0",
     "@vercel/blob": "^2.0.0",
     "@vueuse/nuxt": "^13.9.0",
