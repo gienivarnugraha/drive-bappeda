@@ -49,19 +49,20 @@ const selectDocument = (data: Results) => {
     <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
       <UCard v-for="(item, idx) in state" :key="item.id" :class="[isSelected(item) ? 'ring-2 ring-primary' : '']"
         class="cursor-pointer" @click="selectDocument(item)">
-        <!-- <template #header>
-                    <div class="flex flex-col gap-4 ">
-                        <div class="flex justify-between align-center">
-                            <p class="text-gray text-xs"> Nama File: {{ data.filename }} </p>
-                            <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" />
-                        </div>
+        <template #header>
+          <div class="flex flex-col gap-4 ">
+            <div class="flex justify-between align-center">
+              <p class="text-gray text-xs"> Nama File: {{ clampCharacters(item.filename) }} </p>
+              <UTooltip :text="`Buka ${item.filename}`">
+                <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
+                  :to="`/documents/${item.filename}`" />
 
-                    </div>
-                </template> -->
+              </UTooltip>
+            </div>
 
-        <p class="text-gray text-xs">
-          Nama File: {{ clampCharacters(item.filename) }}
-        </p>
+          </div>
+        </template>
+
         <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded" />
 
         <template #footer>

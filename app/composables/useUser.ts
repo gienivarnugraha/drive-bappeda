@@ -6,11 +6,7 @@ export const useUser = async () => {
   try {
     const userData = await $fetch<User>('/api/user')
 
-    console.log(userData)
-
-    user.value = userData
-
-    return user
+    return userData
 
   } catch (error) {
     console.log(error)
