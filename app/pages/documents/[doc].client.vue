@@ -67,8 +67,6 @@ onMounted(async () => {
         <USkeleton v-if="isFetching" class="w-full h-[700px]" />
 
         <PdfViewer v-else :pdf-url="pdf" :page="page" />
-
-
       </div>
 
     </div>

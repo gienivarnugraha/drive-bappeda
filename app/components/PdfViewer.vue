@@ -4,13 +4,13 @@
             <div class="flex items-center justify-between gap-4 p-2">
                 <div class="flex items-center space-x-2">
                     <UButton icon="i-heroicons-arrow-left" :disabled="!pageControl || pageControl.currentPage === 1"
-                        color="primary" variant="ghost" @click="pageControl?.currentPage - 1" />
-                    <UInput :model-value="pageControl?.currentPage ?? 1" type="number" min="1"
+                        color="primary" variant="ghost" @click="previousePage" />
+                    <UInput :model-value="pageControl?.currentPage ?? 1" type="number" :min="1"
                         :max="pageControl?.totalPages ?? 1" class="w-16 text-center" @change="goToPage" />
                     <span class="text-gray-500">of {{ pageControl?.totalPages ?? '-' }}</span>
                     <UButton icon="i-heroicons-arrow-right"
                         :disabled="!pageControl || pageControl.currentPage === pageControl.totalPages" color="primary"
-                        variant="ghost" @click="pageControl?.currentPage + 1" />
+                        variant="ghost" @click="nextPage" />
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -45,6 +45,7 @@ const props = defineProps<{
 
 onMounted(() => {
     props.page && pageControl.value?.goToPage(props.page)
+    console.log(props.page, pageControl.value)
 })
 // Refs for the viewer instance
 const vpvRef: any = useTemplateRef('vpvRef');
@@ -53,6 +54,18 @@ const vpvRef: any = useTemplateRef('vpvRef');
 
 // Page Control
 const pageControl = computed(() => (vpvRef.value as any)?.pageControl);
+
+const previousePage = () => {
+    if (pageControl.value) {
+        pageControl.value.goToPage(pageControl.value.currentPage - 1);
+    }
+};
+
+const nextPage = () => {
+    if (pageControl.value) {
+        pageControl.value.goToPage(pageControl.value.currentPage + 1);
+    }
+};
 
 const goToPage = (event: Event) => {
     const pageNumber = parseInt((event.target as HTMLInputElement).value);

@@ -55,7 +55,7 @@ const selectDocument = (data: Results) => {
               <p class="text-gray text-xs"> Nama File: {{ clampCharacters(item.filename) }} </p>
               <UTooltip :text="`Buka ${item.filename}`">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
-                  :to="`/documents/${item.filename}`" />
+                  :to="`/documents/${item.filename}?page=3`" />
 
               </UTooltip>
             </div>
