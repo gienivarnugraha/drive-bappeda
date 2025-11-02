@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Category } from '~/types'
 import { z } from 'zod'
+import { clampCharacters, toTitleCase } from '~/utils'
 
 const { categories } = await useItems()
 
@@ -53,64 +54,30 @@ const submit = async (item: Schema, shouldDelete = false) => {
 <template>
   <UPageCard title="Categories" description="Edit categories." variant="subtle">
     <div class="flex flex-row space-x-2 space-y-2 flex-wrap ">
-      <div
-        v-for="category in categories"
-        :key="category.id"
-        class="flex flex-row space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1"
-      >
-        <p> {{ category.name }}</p>
-
-        <UTooltip :text="`Hapus ${category.name}`">
-          <UButton
-            color="error"
-            variant="ghost"
-            size="sm"
-            icon="i-lucide-trash"
-            @click="submit(category, true)"
-          />
+      <div v-for="category in categories" :key="category.id"
+        class="flex flex-row items-center justify-between space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1">
+        <UTooltip :text="category.name">
+          <p class="text-xs"> {{ clampCharacters(toTitleCase(category.name), 20) }}</p>
         </UTooltip>
+
+        <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(category, true)" />
       </div>
     </div>
 
     <UTooltip text="Tambah Kategori">
-      <UButton
-        variant="subtle"
-        label="Tambah Kategori"
-        color="primary"
-        size="sm"
-        :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        @click="addView = !addView"
-      />
+      <UButton variant="subtle" label="Tambah Kategori" color="primary" size="sm"
+        :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" @click="addView = !addView" />
     </UTooltip>
 
-    <UForm
-      v-if="addView"
-      :schema="schema"
-      :state="state"
-      class="flex flex-col gap-4 max-w-md "
-      @submit="submit(state)"
-    >
-      <UFormField
-        name="name"
-        label="Name"
-        description="Nama Kategori"
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
+    <UForm v-if="addView" :schema="schema" :state="state" class="flex flex-col gap-4 max-w-md " @submit="submit(state)">
+      <UFormField name="name" label="Name" description="Nama Kategori"
+        class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="state.name" placeholder="New Category Name" class="w-full" />
       </UFormField>
 
-      <UFormField
-        name="description"
-        label="Description"
-        description="Deskripsi Kategori"
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
-        <UTextarea
-          v-model="state.description"
-          :rows="2"
-          placeholder="Description of category"
-          class="w-full"
-        />
+      <UFormField name="description" label="Description" description="Deskripsi Kategori"
+        class="flex max-sm:flex-col justify-between items-start gap-4">
+        <UTextarea v-model="state.description" :rows="2" placeholder="Description of category" class="w-full" />
       </UFormField>
 
       <UButton label="Add" class="w-fit" type="submit" />

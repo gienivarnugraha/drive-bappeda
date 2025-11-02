@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '~/types'
-import { toTitleCase } from '#imports'
+import { toTitleCase, clampCharacters } from '#imports'
 
 definePageMeta({
   layout: 'home',
@@ -80,7 +80,13 @@ const documentUpdated = async () => {
         <div v-if="divisions.length > 0">
           <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
             :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap gap-x-2' }" />
+            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+            <template #label="{ item }">
+              <UTooltip :text="item.name">
+                <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+              </UTooltip>
+            </template>
+          </UCheckboxGroup>
         </div>
 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -98,7 +104,14 @@ const documentUpdated = async () => {
 
           <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
             :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap gap-x-2' }" />
+            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+            <template #label="{ item }">
+              <UTooltip :text="item.name">
+                <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+              </UTooltip>
+            </template>
+
+          </UCheckboxGroup>
         </div>
 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -111,7 +124,7 @@ const documentUpdated = async () => {
           <div class="flex flex-row space-x-2">
             <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
             <UPagination v-model:page="page" :total="count" />
-            <UInputMenu v-model="perPage" class="max-w-16" :items="[10, 25, 50, 75]" />
+            <UInputMenu v-model="perPage" class="max-w-16" :items="[10, 25, 50, 75]" label="Per halaman" />
           </div>
           <div class="flex flex-row space-x-2">
             <UButton icon="i-lucide-layout-grid" :variant="layoutView === 'grid' ? 'subtle' : 'ghost'"

@@ -26,7 +26,7 @@ import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
 import type { DocumentMetadata } from '~/types'
-import { getFileExtension, getFilenameWithoutExtension } from '~/utils'
+import { getFileExtension, sanitizeFileName } from '~/utils'
 import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
 import type { StorageMeta } from 'unstorage'
@@ -503,7 +503,7 @@ const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
   return {
     filename: pathname as string,
     extension: extname(filePath),
-    thumbnailSrc: `${getFilenameWithoutExtension(pathname)}.png`,
+    thumbnailSrc: `${sanitizeFileName(pathname)}.png`,
     fileSize: meta.size as number,
     createdAt: meta.mtime as Date,
     uploadedAt: meta.uploadedAt as Date

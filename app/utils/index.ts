@@ -44,6 +44,14 @@ export function toTitleCase(str: string): string {
     return firstChar + restOfString
   })
 }
+
+export function clampCharacters(text: string, limit: number = 25) {
+  if (!text || text.length <= limit) {
+    return text;
+  }
+  return text.substring(0, limit) + '...';
+}
+
 /**
  * Extracts the first standard UUID (Universally Unique Identifier) found in a string (like a filename).
  *
@@ -79,7 +87,7 @@ export function base64ToArrayBuffer(data: string) {
 
 export const deepClone = (object: any) => JSON.parse(JSON.stringify(object))
 
-export function getFilenameWithoutExtension(file: string) {
+export function sanitizeFileName(file: string) {
   return file.toLowerCase()
     .replace(/\.[^/.]+$/, '')
     .replace(/[^a-z0-9-_]+/g, '-')

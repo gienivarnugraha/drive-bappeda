@@ -2,7 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
-import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index'
+import { sanitizeFileName, getFileExtension } from '~/utils/index'
 import { generateThumbnail } from '~/utils/pdf'
 import { v4 as uuid } from 'uuid'
 
@@ -44,7 +44,7 @@ async function upload(files: File[]) {
   ids = files.map(_ => uuid())
 
   files.forEach((file, index) => {
-    formData.append('file', file, `${getFilenameWithoutExtension(file.name)}.${getFileExtension(file.name)}`)
+    formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
 
     if (thumbnails.value) {
       // @ts-ignore
@@ -95,7 +95,7 @@ const onChange = () => {
 
         thumbnail?.toBlob(function (blob) {
           thumbnails.value.push({
-            filename: getFilenameWithoutExtension(file.name),
+            filename: sanitizeFileName(file.name),
             // @ts-ignore
             blob
           })
@@ -232,12 +232,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <UModal v-model:open="addModalOpen" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
-    <UButton
-      color="neutral"
-      variant="ghost"
-      square
-      icon="i-lucide-plus"
-    />
+    <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
 
     <template #body>
       <div v-if="isProcessing" class="flex mb-4 justify-between items-center">
@@ -246,31 +241,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UButton icon="i-lucide-arrow-left" label="Back" @click="backFromProcess" />
       </div>
 
-      <UStepper
-        v-if="isProcessing"
-        v-model="stepActive"
-        disabled
-        orientation="vertical"
-        :items="stepperItems"
-        class="w-full"
-      >
+      <UStepper v-if="isProcessing" v-model="stepActive" disabled orientation="vertical" :items="stepperItems"
+        class="w-full">
         <template #process>
           <div class="w-full h-48 flex flex-col items-center justify-start pb-4">
-            <div
-              v-for="(step, index) in processSteps"
-              :key="index"
-              class="my-4 w-full flex flex-row items-center justify-start space-x-4"
-            >
-              <UIcon
-                :name="processStepsStyle(index, step).icon"
-                :class="processStepsStyle(index, step).class"
-                class="h-4 w-4 flex-none"
-                color=" primary"
-              />
-              <p
-                :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
-                class="flex-1 text-left text-xs"
-              >
+            <div v-for="(step, index) in processSteps" :key="index"
+              class="my-4 w-full flex flex-row items-center justify-start space-x-4">
+              <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"
+                class="h-4 w-4 flex-none" color=" primary" />
+              <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
+                class="flex-1 text-left text-xs">
                 {{ step.message }}
               </p>
             </div>
@@ -278,33 +258,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </template>
       </UStepper>
 
-      <UForm
-        v-else
-        :schema="schema"
-        :state="state"
-        class="space-y-4"
-        @submit="onSubmit"
-      >
+      <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField>
-          <UFileUpload
-            v-model="state.files"
-            icon="i-lucide-files"
-            reset
-            label="Drop file anda disini"
-            description="PDF, Word files"
-            layout="list"
-            multiple
-            class="w-full min-h-48"
-            @change="onChange"
-          >
+          <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
+            description="PDF, Word files" layout="list" multiple class="w-full min-h-48" @change="onChange">
             <template #actions="{ open }">
-              <UButton
-                label="Pilih File"
-                icon="i-lucide-upload"
-                color="neutral"
-                variant="outline"
-                @click="open()"
-              />
+              <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
             </template>
 
             <template #files-top="{ open, files }">
@@ -313,58 +272,28 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                   Files ({{ files?.length }})
                 </p>
 
-                <UButton
-                  icon="i-lucide-plus"
-                  label="Add more"
-                  color="neutral"
-                  variant="outline"
-                  @click="open()"
-                />
+                <UButton icon="i-lucide-plus" label="Add more" color="neutral" variant="outline" @click="open()" />
               </div>
             </template>
           </UFileUpload>
         </UFormField>
 
-        <UFormField
-          name="divisions"
-          label="Bidang"
-          description="Your unique division for logging in and your profile URL."
-        >
-          <UCheckboxGroup
-            v-if="availableDivisions"
-            v-model="state.divisions"
-            indicator="hidden"
-            size="sm"
-            variant="card"
-            :items="availableDivisions"
-            value-key="id"
-            label-key="name"
-            name="divisions"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }"
-          />
+        <UFormField name="divisions" label="Bidang"
+          description="Your unique division for logging in and your profile URL.">
+          <UCheckboxGroup v-if="availableDivisions" v-model="state.divisions" indicator="hidden" size="sm"
+            variant="card" :items="availableDivisions" value-key="id" label-key="name" name="divisions"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
         </UFormField>
 
-        <UFormField
-          name="categories"
-          label="Kategori"
-          description="Your unique division for logging in and your profile URL."
-        >
-          <UCheckboxGroup
-            v-if="availableCategories"
-            v-model="state.categories"
-            indicator="hidden"
-            size="sm"
-            variant="card"
-            :items="availableCategories"
-            value-key="id"
-            label-key="name"
-            name="categories"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }"
-          />
+        <UFormField name="categories" label="Kategori"
+          description="Your unique division for logging in and your profile URL.">
+          <UCheckboxGroup v-if="availableCategories" v-model="state.categories" indicator="hidden" size="sm"
+            variant="card" :items="availableCategories" value-key="id" label-key="name" name="categories"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
@@ -372,18 +301,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="subtle"
-            @click="addModalOpen = false"
-          />
-          <UButton
-            label="Create"
-            color="primary"
-            variant="solid"
-            type="submit"
-          />
+          <UButton label="Cancel" color="neutral" variant="subtle" @click="addModalOpen = false" />
+          <UButton label="Create" color="primary" variant="solid" type="submit" />
         </div>
       </UForm>
     </template>
