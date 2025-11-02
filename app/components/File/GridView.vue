@@ -60,7 +60,7 @@ const selectDocument = (data: Results) => {
                 </template> -->
 
         <p class="text-gray text-xs">
-          Nama File: {{ item.filename }}
+          Nama File: {{ clampCharacters(item.filename) }}
         </p>
         <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded" />
 

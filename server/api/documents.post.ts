@@ -3,6 +3,7 @@ import { setVectorStore } from '~/utils/scripts/init'
 import type { Document } from '~/types'
 import { inspect } from 'node:util'
 import { modifyRelation } from '~/utils/db'
+import { clampCharacters } from '~/utils'
 import supabase from '~/utils/supabase'
 
 type BaseSchema = {
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} file:  ${error}`
       })
     } else {
-      return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} file: ${document.filename}` }
+      return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} file: ${clampCharacters(document.filename)}` }
     }
   } else {
     const { filenames, categories, divisions } = data as PostSchema

@@ -1,4 +1,5 @@
 import { sseSend } from '~/utils/sse'
+import { clampCharacters } from '~/utils'
 
 const allowedTypes = [
   'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
@@ -23,7 +24,7 @@ export default eventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage:
-                    `File type ${file.type || 'unknown'} not allowed. 
+          `File type ${file.type || 'unknown'} not allowed. 
               Allowed types: ${allowedTypes.join(', ')}`
       })
     }
@@ -35,7 +36,7 @@ export default eventHandler(async (event) => {
         filenamesExists.push(filename)
       }
 
-      sseSend('push:notif', { message: `file exists in storage... ${filename}`, status: 'info' })
+      sseSend('push:notif', { message: `file exists in storage... ${clampCharacters(filename)}`, status: 'info' })
     } else {
       const data = await storage.setItemRaw(filename, file.data)
 
@@ -45,7 +46,7 @@ export default eventHandler(async (event) => {
         filenames.push(filename)
       }
 
-      sseSend('push:notif', { message: `File ${filename} uploaded `, status: 'info' })
+      sseSend('push:notif', { message: `File ${clampCharacters(filename)} uploaded `, status: 'info' })
     }
   }
 

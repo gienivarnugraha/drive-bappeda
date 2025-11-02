@@ -30,6 +30,7 @@ import { getFileExtension, sanitizeFileName } from '~/utils'
 import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
 import type { StorageMeta } from 'unstorage'
+import { clampCharacters } from '~/utils'
 
 const model = getModel('google')
 const documentPath = process.env.DOCUMENT_PATH as string
@@ -183,7 +184,7 @@ function isValidHttpURL(file: string) {
 export const loadDocument = async (file: string): Promise<Document[]> => {
   let loader
 
-  sseSend('push:notif', { message: `loading document... ${file}`, status: 'info' })
+  sseSend('push:notif', { message: `loading document... ${clampCharacters(file)}`, status: 'info' })
 
   if (isValidHttpURL(file)) {
     loader = new CheerioWebBaseLoader(file)
@@ -266,35 +267,35 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
   let summaries: Document[] | undefined
 
   if (existsSync(pathSummary)) {
-    sseSend('push:notif', { message: `file json exists... ${fileSummary}`, status: 'info' })
+    sseSend('push:notif', { message: `file json exists... ${clampCharacters(fileSummary)}`, status: 'info' })
 
     const json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
 
     if (docs.length !== json.length) {
-      sseSend('push:notif', { message: `file json exists but document length is different... ${fileSummary}`, status: 'info' })
+      sseSend('push:notif', { message: `file json exists but document length is different... ${clampCharacters(fileSummary)}`, status: 'info' })
       summaries = await getDocumentSummary(docs, ids)
 
       const content = JSON.stringify(summaries)
 
       writeFile(pathSummary, content, (err) => {
-        sseSend('push:notif', { message: `rewriting file... ${fileSummary}`, status: 'info' })
+        sseSend('push:notif', { message: `rewriting file... ${clampCharacters(fileSummary)}`, status: 'info' })
 
         if (err) {
           console.error({ message: err, content })
         }
       })
     } else {
-      sseSend('push:notif', { message: `retrieve exisiting file... ${fileSummary}`, status: 'info' })
+      sseSend('push:notif', { message: `retrieve exisiting file... ${clampCharacters(fileSummary)}`, status: 'info' })
       summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
     }
   } else {
-    sseSend('push:notif', { message: `file doesnt exists... ${fileSummary}`, status: 'info' })
+    sseSend('push:notif', { message: `file doesnt exists... ${clampCharacters(fileSummary)}`, status: 'info' })
     summaries = await getDocumentSummary(docs, ids)
 
     const content = JSON.stringify(summaries)
 
     writeFile(pathSummary, content, (err) => {
-      sseSend('push:notif', { message: `writing new file... ${fileSummary}`, status: 'info' })
+      sseSend('push:notif', { message: `writing new file... ${clampCharacters(fileSummary)}`, status: 'info' })
       if (err) {
         console.error({ message: err, content })
       }
@@ -443,7 +444,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
   const filename = basename(filepath, extension)
 
-  sseSend('push:notif', { message: `getting ids from database... ${filename}`, status: 'info' })
+  sseSend('push:notif', { message: `getting ids from database... ${clampCharacters(filename)}`, status: 'info' })
 
   const { data, error } = await supabase
     .from('documents')
@@ -452,13 +453,13 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
   if (error) {
     console.error('Failed to get documents from database', error)
-    sseSend('push:notif', { message: `error getting ids from database... ${filename}`, status: 'error' })
+    sseSend('push:notif', { message: `error getting ids from database... ${clampCharacters(filename)}`, status: 'error' })
   }
 
   if (data?.length) {
-    sseSend('push:notif', { message: `file exists in database... ${filename}`, status: 'info' })
+    sseSend('push:notif', { message: `file exists in database... ${clampCharacters(filename)}`, status: 'info' })
   } else {
-    sseSend('push:notif', { message: `file not exists in database... ${filename}`, status: 'info' })
+    sseSend('push:notif', { message: `file not exists in database... ${clampCharacters(filename)}`, status: 'info' })
 
     const ids = {
       docIds: docs.map((_, i) => `${filename}_${i}`),
@@ -482,14 +483,14 @@ export const setVectorStore = async (filepath: string, documentData: { category_
     // const summaries = await generateSummaries(docs, ids, filepath)
 
     // if (summaries) {
-    //     sseSend("push:notif", { message: `adding data to vector store... ${filename}`, status: 'info' })
+    //     sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
 
     //     await vectorstore.addDocuments(summaries);
     // } else {
-    //     sseSend("push:notif", { message: `no summaries generated... ${filename}`, status: 'error' })
+    //     sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
     // }
   }
-  sseSend('push:notif', { message: `success adding to vector store... ${filename}`, status: 'success' })
+  sseSend('push:notif', { message: `success adding to vector store... ${clampCharacters(filename)}`, status: 'success' })
 
   return vectorstore
 }
@@ -525,7 +526,7 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
   const { category_id, division_id, filename, fileId } = data
 
-  sseSend('push:notif', { message: `generating title and summary... ${filename}`, status: 'info' })
+  sseSend('push:notif', { message: `generating title and summary... ${clampCharacters(filename)}`, status: 'info' })
 
   const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
@@ -561,11 +562,11 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   if (docerror) {
     console.error('Failed to insert document to database', docerror)
 
-    sseSend('push:notif', { message: `error creating new data... ${filename}`, status: 'error' })
+    sseSend('push:notif', { message: `error creating new data... ${clampCharacters(filename)}`, status: 'error' })
   }
 
   if (docResponse) {
-    sseSend('push:notif', { message: `success creating new data... ${filename}`, status: 'info' })
+    sseSend('push:notif', { message: `success creating new data... ${clampCharacters(filename)}`, status: 'info' })
     // insert to relation table
     const relationResponse = await modifyRelation({ document: docResponse[0], categories: category_id, divisions: division_id }, 'edit')
 
