@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { formatBytes } from '#imports';
-import type { Document, Category, Division, Results } from '~/types';
+import { formatBytes } from '#imports'
+import type { Document, Category, Division, Results } from '~/types'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 
 const { smallerThanLg } = useTailwindBreakpoints()
 
 const { isFileDetailsSlideoverOpen } = useDashboard()
-
 
 const props = defineProps<{
   document: Document
@@ -41,22 +40,26 @@ const edit = computed(() => state.shouldEdit)
 
 const toast = useToast()
 
+const config = useRuntimeConfig()
+
+const documentPath = config.public.documentPath
+
 const schema = z.object({
   document: z.custom<Document>(),
   categories: z.custom<Category>().array(),
   divisions: z.custom<Division>().array(),
   shouldEdit: z.boolean().optional(),
-  shouldDelete: z.boolean().optional(),
+  shouldDelete: z.boolean().optional()
 })
 
 type Schema = z.infer<typeof schema>
 
-let state = reactive<Partial<Schema>>({
+const state = reactive<Partial<Schema>>({
   document: undefined,
   categories: undefined,
   divisions: undefined,
   shouldEdit: false,
-  shouldDelete: false,
+  shouldDelete: false
 })
 
 const emits = defineEmits(['update:document'])
@@ -67,13 +70,12 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
       method: 'post',
-      body: state,
+      body: state
     })
 
     emits('update:document')
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
-
   } catch (error) {
     console.log(error)
   } finally {
@@ -91,12 +93,11 @@ const onDelete = async () => {
       body: {
         document: state.document,
         shouldDelete: true
-      },
+      }
     })
     emits('update:document')
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
-
   } catch (error) {
     console.log(error)
   } finally {
@@ -104,75 +105,115 @@ const onDelete = async () => {
     isFileDetailsSlideoverOpen.value = false
   }
 }
-
 </script>
 
 <template>
-  <UDrawer inset :direction="smallerThanLg ? 'bottom' : 'right'" :dismissible="false" :handle="false" :overlay="false"
-    :modal="false" v-model:open="isFileDetailsSlideoverOpen" title="File Details" description="File description"
-    :ui="{ header: 'flex justify-between items-center' }">
-
+  <UDrawer
+    v-model:open="isFileDetailsSlideoverOpen"
+    inset
+    :direction="smallerThanLg ? 'bottom' : 'right'"
+    :dismissible="false"
+    :handle="false"
+    :overlay="false"
+    :modal="false"
+    title="File Details"
+    description="File description"
+    :ui="{ header: 'flex justify-between items-center' }"
+  >
     <UTooltip text="Tutup Panel Detail Berkas">
-      <UButton color="neutral" variant="solid" class="fixed bottom-10 right-10"
+      <UButton
+        color="neutral"
+        variant="solid"
+        class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
-        label="Open File" :ui="{
+        label="Open File"
+        :ui="{
           trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-        }" />
+        }"
+      />
     </UTooltip>
 
     <template #header>
-      <p class="text-highlighted max-w-full sm:max-w-60 font-semibold">{{ toTitleCase(document.title) }}
+      <p class="text-highlighted max-w-full sm:max-w-60 font-semibold">
+        {{ toTitleCase(document.title) }}
       </p>
 
       <div class="flex justify-between items-center space-x-1">
-        <UButton color="neutral" variant="ghost" :icon="edit ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
-          @click="onEdit" />
-        <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
-
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="edit ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
+          @click="onEdit"
+        />
+        <UButton
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-x"
+          @click="isFileDetailsSlideoverOpen = false"
+        />
       </div>
     </template>
 
     <template #body>
       <div class="flex flex-col px-2 overflow-y-auto max-w-full max-h-40 sm:max-h-full sm:max-w-84">
-        <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-
-          <img :src="`/documents/${document.metadata.thumbnailSrc}`"
-            class="w-full sm:w-60 h-48 sm:h-32 object-cover rounded" alt="File Thumbnail" />
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          @submit="onSubmit"
+        >
+          <img
+            :src="`${documentPath}/${document.metadata.thumbnailSrc}`"
+            class="w-full sm:w-60 h-48 sm:h-32 object-cover rounded"
+            alt="File Thumbnail"
+          >
 
           <UFormField v-if="edit" label="Judul File" name="title">
-            <UTextarea class="w-full" :rows="2" v-model="document.title" />
+            <UTextarea v-model="document.title" class="w-full" :rows="2" />
           </UFormField>
 
           <UFormField v-if="edit" label="Ringkasan" name="summary">
-            <UTextarea class="w-full" v-model="document.metadata.summary" :rows="4" />
+            <UTextarea v-model="document.metadata.summary" class="w-full" :rows="4" />
           </UFormField>
 
-          <p v-if="!edit" class="line-clamp-4 text-md"> {{ document.metadata.summary }}</p>
+          <p v-if="!edit" class="line-clamp-4 text-md">
+            {{ document.metadata.summary }}
+          </p>
 
-          <FormDivision :edit="edit" v-model="state.divisions" />
+          <FormDivision v-model="state.divisions" :edit="edit" />
 
-          <FormCategory :edit="edit" v-model="state.categories" />
+          <FormCategory v-model="state.categories" :edit="edit" />
 
-
-          <div class="flex justify-between items-center pt-4" v-if="edit">
-            <UButton label="Hapus File" color="error" icon="i-lucide-save" @click="onDelete" />
+          <div v-if="edit" class="flex justify-between items-center pt-4">
+            <UButton
+              label="Hapus File"
+              color="error"
+              icon="i-lucide-save"
+              @click="onDelete"
+            />
             <UButton label="Simpan Perubahan" icon="i-lucide-save" type="submit" />
           </div>
 
           <ul v-else class="flex flex-col space-y-1">
-            <li class="text-xs"><strong>Nama File:</strong></li>
+            <li class="text-xs">
+              <strong>Nama File:</strong>
+            </li>
             <li> {{ document.metadata.filename }} </li>
-            <li class="text-xs"><strong>Ukuran File:</strong></li>
-            <li> {{ formatBytes(document.metadata.filesize || 0) }} </li>
-            <li class="text-xs"><strong>Tipe File:</strong></li>
+            <li class="text-xs">
+              <strong>Ukuran File:</strong>
+            </li>
+            <li> {{ formatBytes(document.metadata.fileSize || 0) }} </li>
+            <li class="text-xs">
+              <strong>Tipe File:</strong>
+            </li>
             <li> {{ document.metadata.extension }} </li>
-            <li class="text-xs"><strong>Tanggal Unggah:</strong></li>
+            <li class="text-xs">
+              <strong>Tanggal Unggah:</strong>
+            </li>
             <li> {{ dateToLocale(document.metadata.createdAt) }} </li>
           </ul>
         </UForm>
-
       </div>
     </template>
   </UDrawer>
-
 </template>

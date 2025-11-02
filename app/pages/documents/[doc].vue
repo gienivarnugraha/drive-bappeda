@@ -6,10 +6,8 @@ const param = router.params.doc
 console.log(router.params.doc)
 
 const path = `/documents/${param}`
-
 </script>
 
 <template>
-    <div :style="{ width: '1028px', height: '700px' }">
-    </div>
+  <div :style="{ width: '1028px', height: '700px' }" />
 </template>

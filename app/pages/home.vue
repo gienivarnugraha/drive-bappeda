@@ -2,6 +2,11 @@
 import type { Category, Division, Results } from '~/types'
 import { toTitleCase } from '#imports'
 
+definePageMeta({
+  layout: 'home',
+  middleware: 'auth'
+})
+
 const { categories, divisions } = await useItems()
 
 const selectedCategory = ref<number[]>([])
@@ -14,24 +19,42 @@ const perPage: Ref<number> = ref(10)
 
 const layoutView: Ref<'grid' | 'table'> = ref('grid')
 
-const currentPage: Ref<number> = ref(1)
+const page: Ref<number> = ref(1)
 
-const { data: documentData, pending: documentPending, refresh } = await useLazyFetch<{ count: number, data: Results[] }>('/api/documents',
+const count: Ref<number> = ref(0)
+
+// const documentData: Ref<Results[]> = ref([])
+
+callOnce(async () => {
+  const response = await $fetch<{ count: number }>('/api/count')
+
+  console.log(response)
+  if (response) {
+    count.value = response.count
+  }
+})
+
+const { data: documentData, pending: documentPending, execute } = await useAsyncData<{ data: Results[] }>('documents', () =>
+  $fetch<{ data: Results[] }>('/api/documents',
+    {
+      query: {
+        perPage: perPage.value,
+        page: page.value,
+        category: selectedCategory.value,
+        division: selectedDivision.value
+      }
+    }),
   {
-    params: {
-      category: selectedCategory.value.includes(0) ? [] : selectedCategory.value,
-      division: selectedDivision.value.includes(0) ? [] : selectedDivision.value,
-      perPage: perPage.value,
-      page: currentPage.value,
-    },
-    watch: [selectedCategory, selectedDivision, perPage, currentPage],
+    watch: [selectedCategory, selectedDivision, perPage, page]
   }
 )
 
+const availableDivisions: Ref<Division[]> = ref([])
+const availableCategories: Ref<Category[]> = ref([])
 
-let availableDivisions: Ref<Division[]> = ref([])
-let availableCategories: Ref<Category[]> = ref([])
+const showMoreCategories: Ref<boolean> = ref(false)
 
+const showAvailableCategories: ComputedRef<Category[]> = computed(() => showMoreCategories.value ? availableCategories.value : availableCategories.value.slice(0, 5))
 
 onMounted(() => {
   if (availableCategories.value) {
@@ -45,23 +68,19 @@ onMounted(() => {
   }
 })
 
-const documentUpdated = () => {
-  refresh()
+const documentUpdated = async () => {
+  await execute()
 }
-
-
 </script>
 
 <template>
   <div class="flex flex-row">
     <div class="flex flex-col gap-4 ">
       <div class="my-2">
-
         <div v-if="divisions.length > 0">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" legend="Bidang" :items="availableDivisions"
-            value-key="id" label-key="name" orientation="horizontal" v-model="selectedDivision"
+          <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
+            :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
             :ui="{ fieldset: 'flex flex-wrap gap-x-2' }" />
-
         </div>
 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -70,12 +89,16 @@ const documentUpdated = () => {
       </div>
 
       <div class="my-2 flex flex-wrap">
+        <div v-if="categories.length > 0" class="flex flex-col space-y-2">
+          <UTooltip text="Tampilkan Semua Kategori">
+            <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs"
+              :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              @click="showMoreCategories = !showMoreCategories" />
+          </UTooltip>
 
-        <div v-if="categories.length > 0">
-          <UCheckboxGroup indicator="hidden" size="sm" variant="card" legend="Kategori" :items="availableCategories"
-            value-key="id" label-key="name" orientation="horizontal" v-model="selectedCategory"
+          <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
+            :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
             :ui="{ fieldset: 'flex flex-wrap gap-x-2' }" />
-
         </div>
 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -83,13 +106,12 @@ const documentUpdated = () => {
         </div>
       </div>
 
-
       <div class="flex flex-col gap-4">
         <div class="flex flex-row justify-between items-center">
-          <p class="text-xs">Ditemukan {{ documentData?.count }} Dokumen</p>
           <div class="flex flex-row space-x-2">
-            <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" />
-            <UInputMenu v-model="perPage" :items="[10, 25, 50, 75]" />
+            <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
+            <UPagination v-model:page="page" :total="count" />
+            <UInputMenu v-model="perPage" class="max-w-16" :items="[10, 25, 50, 75]" />
           </div>
           <div class="flex flex-row space-x-2">
             <UButton icon="i-lucide-layout-grid" :variant="layoutView === 'grid' ? 'subtle' : 'ghost'"
@@ -104,19 +126,19 @@ const documentUpdated = () => {
         </div>
 
         <div v-else>
-          <FileGridView v-if="layoutView === 'grid'" :document="documentData?.data" v-model="selected" />
+          <FileGridView v-if="layoutView === 'grid'" v-model="selected" :document="documentData?.data" />
 
-          <FileTableView v-if="layoutView === 'table'" :document="documentData?.data" v-model="selected" />
+          <FileTableView v-if="layoutView === 'table'" v-model="selected" :document="documentData?.data" />
         </div>
 
+        <p class="text-xs">
+          Ditemukan {{ count }} Dokumen
+        </p>
       </div>
-
-
 
       <div class="h-12 w-8 relative">
         <FileDetails v-if="selected" :document="selected" @update:document="documentUpdated" />
       </div>
-
     </div>
   </div>
 </template>

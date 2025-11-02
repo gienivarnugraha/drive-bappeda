@@ -1,5 +1,3 @@
-
-
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
@@ -12,13 +10,25 @@ export function dateToLocale(date: string) {
   return new Date(date).toLocaleDateString()
 }
 
-export const stringToNumberArray = (input: string[] | string): number[] => {
-  if (!Array.isArray(input)) {
+export const stringToNumberArray = (input: string[] | string): number[] | null => {
+  // 1. Handle null input immediately
+  if (input === undefined || input.length === 0 || input.includes('0')) {
+    return null
+  }
+  // 2. Handle single string input
+  if (typeof input === 'string') {
     return [parseInt(input)]
   }
-  return input.map((item) => parseInt(item))
-}
+  // Map and parse the array of strings
+  const numberArray = input.map(item => parseInt(item))
 
+  // Optional: Filter out NaNs if you only want valid numbers.
+  // If you want to strictly convert ALL strings, you can remove this check.
+  // For robustness, filtering is generally better.
+  const filteredArray = numberArray.filter(item => !isNaN(item))
+
+  return filteredArray
+}
 
 export function toTitleCase(str: string): string {
   // The regex \w\S* matches:
@@ -26,13 +36,13 @@ export function toTitleCase(str: string): string {
   // \S* - followed by zero or more non-whitespace characters (like 'ello' or 'ORLD')
   return str.replace(/\w\S*/g, function (txt) {
     // 1. Capitalize the first character.
-    const firstChar = txt.charAt(0).toUpperCase();
+    const firstChar = txt.charAt(0).toUpperCase()
 
     // 2. Take the rest of the string (substr(1)) and leave it AS IS.
-    const restOfString = txt.substr(1);
+    const restOfString = txt.substr(1)
 
-    return firstChar + restOfString;
-  });
+    return firstChar + restOfString
+  })
 }
 /**
  * Extracts the first standard UUID (Universally Unique Identifier) found in a string (like a filename).
@@ -44,30 +54,30 @@ export function getUuidFromFilename(filename: string): string {
   // Regex explanation:
   // [0-9a-fA-F]: Matches any hex character (0-9, a-f, A-F).
   // {8}-{4}-{4}-{4}-{12}: Defines the 8-4-4-4-12 pattern of a standard UUID.
-  const uuidRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
+  const uuidRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/
 
   // The .match() method returns an array of results or null if no match is found.
-  const match = filename.match(uuidRegex);
+  const match = filename.match(uuidRegex)
 
   // If a match is found, the full matched string (the UUID) is at index 1
   // because we used capturing parentheses () around the entire pattern.
   // If no match is found, match is null.
-  return match ? match[1] as string : filename;
+  return match ? match[1] as string : filename
 }
 
 export function base64ToArrayBuffer(data: string) {
-  var input = data.substring(data.indexOf(',') + 1);
-  var binaryString = window.atob(input);
-  var binaryLen = binaryString.length;
-  var bytes = new Uint8Array(binaryLen);
-  for (var i = 0; i < binaryLen; i++) {
-    var ascii = binaryString.charCodeAt(i);
-    bytes[i] = ascii;
+  const input = data.substring(data.indexOf(',') + 1)
+  const binaryString = window.atob(input)
+  const binaryLen = binaryString.length
+  const bytes = new Uint8Array(binaryLen)
+  for (let i = 0; i < binaryLen; i++) {
+    const ascii = binaryString.charCodeAt(i)
+    bytes[i] = ascii
   }
-  return bytes;
+  return bytes
 };
 
-export const deepClone = (object: any) => JSON.parse(JSON.stringify(object));
+export const deepClone = (object: any) => JSON.parse(JSON.stringify(object))
 
 export function getFilenameWithoutExtension(file: string) {
   return file.toLowerCase()
@@ -77,15 +87,15 @@ export function getFilenameWithoutExtension(file: string) {
 }
 
 export function getFileExtension(filename: string) {
-  const lastDot = filename.lastIndexOf('.');
+  const lastDot = filename.lastIndexOf('.')
 
   // Check for edge cases: no dot found, or filename starts with a dot (like ".gitignore")
   if (lastDot === -1 || lastDot === 0) {
-    return ""; // Return empty string for no extension or hidden files
+    return '' // Return empty string for no extension or hidden files
   }
 
   // Extracts the substring starting from the character after the last dot
-  return filename.substring(lastDot + 1);
+  return filename.substring(lastDot + 1)
 }
 /**
  * Converts a number of bytes into a human-readable file size string.
@@ -95,16 +105,16 @@ export function getFileExtension(filename: string) {
  */
 export function formatBytes(bytes: number, decimals = 2) {
   // 1. Handle edge case of 0 bytes
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 Bytes'
 
   // 2. Define constants for calculation
-  const k = 1024; // Base unit for binary prefixes (KiB, MiB, etc. or KB, MB, etc. based on convention)
-  const dm = decimals < 0 ? 0 : decimals; // Ensure decimals is not negative
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const k = 1024 // Base unit for binary prefixes (KiB, MiB, etc. or KB, MB, etc. based on convention)
+  const dm = decimals < 0 ? 0 : decimals // Ensure decimals is not negative
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
   // 3. Calculate the index for the appropriate unit (logarithm base 1024)
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   // 4. Calculate the formatted value and append the unit
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }

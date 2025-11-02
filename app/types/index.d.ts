@@ -46,21 +46,20 @@ export interface DocumentMetadata {
   extension: string
   fileSize: number
   fileId: string
-  fileUrl?: string
   uploadedAt: date
   createdAt: date
 }
 
 export interface FilteredData {
-  documents: Document,
-  categories: Category,
+  documents: Document
+  categories: Category
   divisions: Division
 }
 
 type OmitFilteredData = Omit<FilteredData, 'categories' | 'divisions'>
 
 export type Results = Document & {
-  categories: Category[],
+  categories: Category[]
   divisions: Division[]
 }
 

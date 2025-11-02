@@ -12,10 +12,9 @@ const _useDashboard = () => {
     //   'g-i': () => router.push('/inbox'),
     //   'g-c': () => router.push('/customers'),
     //   'g-s': () => router.push('/settings'),
-    'o': () => isSidebarSlideOverOpen.value = !isSidebarSlideOverOpen.value,
-    'n': () => isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value
+    o: () => isSidebarSlideOverOpen.value = !isSidebarSlideOverOpen.value,
+    n: () => isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value
   })
-
 
   const watcher = watch(() => route.fullPath, () => {
     isNotificationsSlideoverOpen.value = false
@@ -28,7 +27,7 @@ const _useDashboard = () => {
   return {
     isNotificationsSlideoverOpen,
     isFileDetailsSlideoverOpen,
-    isSidebarSlideOverOpen,
+    isSidebarSlideOverOpen
   }
 }
 

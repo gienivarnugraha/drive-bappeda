@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
 import type { Category, Division } from '~/types'
-import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index';
-import { generateThumbnail } from '~/utils/pdf';
+import { getFilenameWithoutExtension, getFileExtension } from '~/utils/index'
+import { generateThumbnail } from '~/utils/pdf'
 import { v4 as uuid } from 'uuid'
-import type { StepperItem } from '@nuxt/ui'
+
 import { useItems } from '~/composables/useItems'
 
 const addModalOpen: Ref<boolean> = ref(false)
@@ -21,7 +21,7 @@ const isProcessing = ref(false)
 const schema = z.object({
   files: z.instanceof(File).array(),
   categories: z.number().array(),
-  divisions: z.number().array(),
+  divisions: z.number().array()
 })
 
 const thumbnails: Ref<{ filename: string, blob: Blob }[]> = ref([])
@@ -31,7 +31,7 @@ type Schema = z.infer<typeof schema>
 const state = reactive<Partial<Schema>>({
   files: undefined,
   categories: undefined,
-  divisions: undefined,
+  divisions: undefined
 })
 
 let ids: string[] = []
@@ -39,16 +39,16 @@ let ids: string[] = []
 async function upload(files: File[]) {
   fileUploading.value = true
 
-  const formData = new FormData();
+  const formData = new FormData()
 
-  ids = files.map((_) => uuid())
+  ids = files.map(_ => uuid())
 
   files.forEach((file, index) => {
-    formData.append('file', file);
+    formData.append('file', file, `${getFilenameWithoutExtension(file.name)}.${getFileExtension(file.name)}`)
 
     if (thumbnails.value) {
       // @ts-ignore
-      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`);
+      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`)
     }
   })
 
@@ -59,7 +59,6 @@ async function upload(files: File[]) {
     })
 
     return filenames
-
   } catch (error: any) {
     console.log(error)
     toast.add({ title: 'Error', description: `${error.statusMessage}`, color: 'error' })
@@ -74,11 +73,10 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
   try {
     const response = await $fetch('/api/documents', {
       method: 'post',
-      body: data,
+      body: data
     })
 
     toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
-
   } catch (error) {
     console.log(error)
   } finally {
@@ -89,29 +87,22 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
 const onChange = () => {
   const shouldGenerateThumbnails = ['application/pdf']
 
-  state.files?.forEach(file => {
-
+  state.files?.forEach((file) => {
     if (shouldGenerateThumbnails.includes(file.type)) {
-
-
       file.arrayBuffer().then(async (buff) => {
-
         // const thumbnail = await generateThumbnail(new Uint8Array(buff))
         const thumbnail = await generateThumbnail(new Uint8Array(buff))
 
         thumbnail?.toBlob(function (blob) {
           thumbnails.value.push({
             filename: getFilenameWithoutExtension(file.name),
-            //@ts-ignore
+            // @ts-ignore
             blob
           })
         }, 'image/png', 1)
-
       })
-
     }
   })
-
 }
 
 let eventSource: EventSource | null = null
@@ -122,7 +113,6 @@ onUnmounted(() => {
   }
   isProcessing.value = false
 })
-
 
 const stepperItems = ref<StepperItem[]>([
   {
@@ -177,12 +167,11 @@ const processStepsStyle = (index: number, data: any) => {
 const stepActive = ref(0)
 
 const stream = async () => {
-
-  eventSource = new EventSource('api/push-notif');
+  eventSource = new EventSource('api/push-notif')
 
   // Listen for messages from the server
   eventSource.onmessage = function (event) {
-    let data = JSON.parse(event.data)
+    const data = JSON.parse(event.data)
 
     if (data.status === 'success') {
       stepActive.value = 2
@@ -192,7 +181,6 @@ const stream = async () => {
       if (eventSource) {
         eventSource.close()
       }
-
     }
 
     stepActive.value = 1
@@ -200,7 +188,7 @@ const stream = async () => {
     if (!processSteps.value.includes(data)) {
       processSteps.value.push(data)
     }
-  };
+  }
 
   // Log connection error
   eventSource.onerror = function (event) {
@@ -211,8 +199,7 @@ const stream = async () => {
     }
 
     toast.add({ title: 'Error', description: `${event} `, color: 'error' })
-  };
-
+  }
 }
 
 const backFromProcess = () => {
@@ -240,82 +227,144 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   }
 
   return
-
 }
 </script>
 
 <template>
   <UModal v-model:open="addModalOpen" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
-
-    <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
+    <UButton
+      color="neutral"
+      variant="ghost"
+      square
+      icon="i-lucide-plus"
+    />
 
     <template #body>
-
       <div v-if="isProcessing" class="flex mb-4 justify-between items-center">
         <p> Progress </p>
 
-        <UButton @click="backFromProcess" icon="i-lucide-arrow-left" label="Back" />
-
+        <UButton icon="i-lucide-arrow-left" label="Back" @click="backFromProcess" />
       </div>
 
-      <UStepper v-if="isProcessing" disabled orientation="vertical" :items="stepperItems" v-model="stepActive"
-        class="w-full">
-
+      <UStepper
+        v-if="isProcessing"
+        v-model="stepActive"
+        disabled
+        orientation="vertical"
+        :items="stepperItems"
+        class="w-full"
+      >
         <template #process>
           <div class="w-full h-48 flex flex-col items-center justify-start pb-4">
-            <div class="my-4 w-full flex flex-row items-center justify-start space-x-4"
-              v-for="(step, index) in processSteps" :key="index">
-              <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"
-                class="h-4 w-4 flex-none" color=" primary" />
-              <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
-                class="flex-1 text-left text-xs">{{ step.message }}</p>
+            <div
+              v-for="(step, index) in processSteps"
+              :key="index"
+              class="my-4 w-full flex flex-row items-center justify-start space-x-4"
+            >
+              <UIcon
+                :name="processStepsStyle(index, step).icon"
+                :class="processStepsStyle(index, step).class"
+                class="h-4 w-4 flex-none"
+                color=" primary"
+              />
+              <p
+                :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
+                class="flex-1 text-left text-xs"
+              >
+                {{ step.message }}
+              </p>
             </div>
           </div>
         </template>
-
       </UStepper>
 
-
-      <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-
+      <UForm
+        v-else
+        :schema="schema"
+        :state="state"
+        class="space-y-4"
+        @submit="onSubmit"
+      >
         <UFormField>
-          <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
-            @change="onChange" description="PDF, Word files" layout="list" multiple class="w-full min-h-48">
-
+          <UFileUpload
+            v-model="state.files"
+            icon="i-lucide-files"
+            reset
+            label="Drop file anda disini"
+            description="PDF, Word files"
+            layout="list"
+            multiple
+            class="w-full min-h-48"
+            @change="onChange"
+          >
             <template #actions="{ open }">
-              <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
+              <UButton
+                label="Pilih File"
+                icon="i-lucide-upload"
+                color="neutral"
+                variant="outline"
+                @click="open()"
+              />
             </template>
 
             <template #files-top="{ open, files }">
               <div v-if="files?.length" class="my-2 w-full flex items-center justify-between">
-                <p class="font-bold">Files ({{ files?.length }})</p>
+                <p class="font-bold">
+                  Files ({{ files?.length }})
+                </p>
 
-                <UButton icon="i-lucide-plus" label="Add more" color="neutral" variant="outline" @click="open()" />
+                <UButton
+                  icon="i-lucide-plus"
+                  label="Add more"
+                  color="neutral"
+                  variant="outline"
+                  @click="open()"
+                />
               </div>
             </template>
-
           </UFileUpload>
         </UFormField>
 
-
-        <UFormField name="divisions" label="Bidang"
-          description="Your unique division for logging in and your profile URL.">
-          <UCheckboxGroup v-if="availableDivisions" indicator="hidden" size="sm" variant="card"
-            :items="availableDivisions" value-key="id" label-key="name" v-model="state.divisions" name="divisions"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+        <UFormField
+          name="divisions"
+          label="Bidang"
+          description="Your unique division for logging in and your profile URL."
+        >
+          <UCheckboxGroup
+            v-if="availableDivisions"
+            v-model="state.divisions"
+            indicator="hidden"
+            size="sm"
+            variant="card"
+            :items="availableDivisions"
+            value-key="id"
+            label-key="name"
+            name="divisions"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }"
+          />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
           </div>
-
         </UFormField>
 
-        <UFormField name="categories" label="Kategori"
-          description="Your unique division for logging in and your profile URL.">
-
-          <UCheckboxGroup v-if="availableCategories" indicator="hidden" size="sm" variant="card"
-            :items="availableCategories" value-key="id" label-key="name" v-model="state.categories" name="categories"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+        <UFormField
+          name="categories"
+          label="Kategori"
+          description="Your unique division for logging in and your profile URL."
+        >
+          <UCheckboxGroup
+            v-if="availableCategories"
+            v-model="state.categories"
+            indicator="hidden"
+            size="sm"
+            variant="card"
+            :items="availableCategories"
+            value-key="id"
+            label-key="name"
+            name="categories"
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }"
+          />
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
@@ -323,8 +372,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="addModalOpen = false" />
-          <UButton label="Create" color="primary" variant="solid" type="submit" />
+          <UButton
+            label="Cancel"
+            color="neutral"
+            variant="subtle"
+            @click="addModalOpen = false"
+          />
+          <UButton
+            label="Create"
+            color="primary"
+            variant="solid"
+            type="submit"
+          />
         </div>
       </UForm>
     </template>

@@ -1,25 +1,24 @@
-import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from "@langchain/core/prompts";
-import { ChatMessageHistory } from "langchain/stores/message/in_memory";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } from "@langchain/core/runnables";
-import { formatDocumentsAsString } from "langchain/util/document";
-import { getVectorStore, getModel } from './ai';
-import { MultiQueryRetriever } from "langchain/retrievers/multi_query";
-import z from "zod";
+import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from '@langchain/core/prompts'
+import { ChatMessageHistory } from 'langchain/stores/message/in_memory'
+import { StringOutputParser } from '@langchain/core/output_parsers'
+import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } from '@langchain/core/runnables'
+import { formatDocumentsAsString } from 'langchain/util/document'
+import { getVectorStore, getModel } from './ai'
+import { MultiQueryRetriever } from 'langchain/retrievers/multi_query'
+import z from 'zod'
 
-let messageHistories: { [sessionId: string]: ChatMessageHistory } = {};
+const messageHistories: { [sessionId: string]: ChatMessageHistory } = {}
 
 const getMessageHistoryForSession = (sessionId: string) => {
-    if (messageHistories[sessionId] !== undefined) {
-        return messageHistories[sessionId];
-    }
-    const newChatSessionHistory = new ChatMessageHistory();
+  if (messageHistories[sessionId] !== undefined) {
+    return messageHistories[sessionId]
+  }
+  const newChatSessionHistory = new ChatMessageHistory()
 
-    messageHistories[sessionId] = newChatSessionHistory;
+  messageHistories[sessionId] = newChatSessionHistory
 
-    return newChatSessionHistory;
-};
-
+  return newChatSessionHistory
+}
 
 /**
  * Returns a MultiVectorRetriever instance that is used to search for similar
@@ -28,25 +27,25 @@ const getMessageHistoryForSession = (sessionId: string) => {
  * neighbors to retrieve for child and parent documents.
  * @returns {MultiVectorRetriever} - An instance of MultiVectorRetriever that can be used to search for similar documents.
  */
-//export const getRetriever = (): MultiVectorRetriever => {
+// export const getRetriever = (): MultiVectorRetriever => {
 export const getRetriever = (): MultiQueryRetriever => {
-    const vectorstore = getVectorStore()
-    const model = getModel('google')
+  const vectorstore = getVectorStore()
+  const model = getModel('google')
 
-    return MultiQueryRetriever.fromLLM({
-        llm: model,
-        retriever: vectorstore.asRetriever(),
-    });
+  return MultiQueryRetriever.fromLLM({
+    llm: model,
+    retriever: vectorstore.asRetriever()
+  })
 }
 
 const getContextChain = async () => {
-    const retriever = getRetriever()
+  const retriever = getRetriever()
 
-    return RunnableSequence.from([
-        (input) => input.question,
-        retriever,
-        formatDocumentsAsString
-    ])
+  return RunnableSequence.from([
+    input => input.question,
+    retriever,
+    formatDocumentsAsString
+  ])
 }
 //    - if the context contains a chart, add the answer format as <Chart> component in new line
 const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant. 
@@ -72,78 +71,75 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
 
     Answer:
     Source:
-    `;
+    `
 
 const answerPrompt = ChatPromptTemplate.fromMessages([
-    ["system", ANSWER_TEMPLATE],
-    // new MessagesPlaceholder("history"),
-    new MessagesPlaceholder("question"),
-    new MessagesPlaceholder("context"),
-]);
-
+  ['system', ANSWER_TEMPLATE],
+  // new MessagesPlaceholder("history"),
+  new MessagesPlaceholder('question'),
+  new MessagesPlaceholder('context')
+])
 
 export function generateAnswerFromDocument() {
+  const model = getModel('google')
 
-    const model = getModel('google')
+  // Use z.discriminatedUnion for the best performance and type inference in TypeScript
+  const OutputSchema = z.array(z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('text'),
+      text: z.string()
+    }).describe('text answer'),
+    z.object({
+      type: z.literal('image'),
+      src: z.string().url() // Assuming src should be a URL
+    }).describe('display image attachment'),
+    z.object({
+      type: z.literal('chart'),
+      data: z.object({
+        value: z.array(z.number()),
+        label: z.array(z.string())
+      })
+    }).describe('display chart attachment'),
+    z.object({
+      type: z.literal('formula'),
+      name: z.string(),
+      formula: z.string()
+    }).describe('display formula attachment'),
+    z.object({
+      type: z.literal('start')
+    }).describe('start of conversation'),
+    z.object({
+      type: z.literal('end')
+    }).describe('end of conversation')
+  ])
+  )
 
+  const schema = z.object({
+    type: z.enum(['text', 'chart', 'formula']),
+    text: z.string().describe('provide answer')
+  })
 
-    // Use z.discriminatedUnion for the best performance and type inference in TypeScript
-    const OutputSchema = z.array(z.discriminatedUnion('type', [
-        z.object({
-            type: z.literal('text'),
-            text: z.string(),
-        }).describe('text answer'),
-        z.object({
-            type: z.literal('image'),
-            src: z.string().url(), // Assuming src should be a URL
-        }).describe('display image attachment'),
-        z.object({
-            type: z.literal('chart'),
-            data: z.object({
-                value: z.array(z.number()),
-                label: z.array(z.string()),
-            }),
-        }).describe('display chart attachment'),
-        z.object({
-            type: z.literal('formula'),
-            name: z.string(),
-            formula: z.string(),
-        }).describe('display formula attachment'),
-        z.object({
-            type: z.literal('start'),
-        }).describe('start of conversation'),
-        z.object({
-            type: z.literal('end'),
-        }).describe('end of conversation'),
-    ])
-    )
+  const answerChain = RunnableSequence.from([
+    {
+      question: new RunnablePassthrough()
+    },
+    RunnablePassthrough.assign({
+      context: getContextChain
+    }),
+    ChatPromptTemplate.fromTemplate(ANSWER_TEMPLATE),
+    // model.withStructuredOutput(schema),
+    model,
+    new StringOutputParser()
+  ])
 
-    const schema = z.object({
-        type: z.enum(['text', 'chart', 'formula']),
-        text: z.string().describe('provide answer'),
-    })
+  return answerChain
 
-    const answerChain = RunnableSequence.from([
-        {
-            question: new RunnablePassthrough(),
-        },
-        RunnablePassthrough.assign({
-            context: getContextChain,
-        }),
-        ChatPromptTemplate.fromTemplate(ANSWER_TEMPLATE),
-        // model.withStructuredOutput(schema),
-        model,
-        new StringOutputParser
-    ])
+  // const finalRetrievalChain = new RunnableWithMessageHistory({
+  //     runnable: answerChain,
+  //     getMessageHistory: getMessageHistoryForSession,
+  //     inputMessagesKey: "question",
+  //     historyMessagesKey: "history",
+  // }).pipe(new StringOutputParser())
 
-    return answerChain
-
-    // const finalRetrievalChain = new RunnableWithMessageHistory({
-    //     runnable: answerChain,
-    //     getMessageHistory: getMessageHistoryForSession,
-    //     inputMessagesKey: "question",
-    //     historyMessagesKey: "history",
-    // }).pipe(new StringOutputParser())
-
-    // return finalRetrievalChain;
+  // return finalRetrievalChain;
 }

@@ -1,5 +1,5 @@
-import { Document } from "@langchain/core/documents";
-import { BufferLoader } from "langchain/document_loaders/fs/buffer";
+import { Document } from '@langchain/core/documents'
+import { BufferLoader } from 'langchain/document_loaders/fs/buffer'
 
 /**
  * A class that extends the `BufferLoader` class. It represents a document
@@ -12,31 +12,31 @@ import { BufferLoader } from "langchain/document_loaders/fs/buffer";
  * ```
  */
 export class PDFLoader extends BufferLoader {
-    private splitPages: boolean;
+  private splitPages: boolean
 
-    private pdfjs: typeof PDFLoaderImports;
+  private pdfjs: typeof PDFLoaderImports
 
-    protected parsedItemSeparator: string;
+  protected parsedItemSeparator: string
 
-    protected metadata?: any;
+  protected metadata?: any
 
-    constructor(
-        filePathOrBlob: string | Blob,
-        {
-            splitPages = true,
-            pdfjs = PDFLoaderImports,
-            parsedItemSeparator = "",
-            metadata = {},
-        } = {}
-    ) {
-        super(filePathOrBlob);
-        this.splitPages = splitPages;
-        this.metadata = metadata;
-        this.pdfjs = pdfjs;
-        this.parsedItemSeparator = parsedItemSeparator;
-    }
+  constructor(
+    filePathOrBlob: string | Blob,
+    {
+      splitPages = true,
+      pdfjs = PDFLoaderImports,
+      parsedItemSeparator = '',
+      metadata = {}
+    } = {}
+  ) {
+    super(filePathOrBlob)
+    this.splitPages = splitPages
+    this.metadata = metadata
+    this.pdfjs = pdfjs
+    this.parsedItemSeparator = parsedItemSeparator
+  }
 
-    /**
+  /**
      * A method that takes a `raw` buffer and `metadata` as parameters and
      * returns a promise that resolves to an array of `Document` instances. It
      * uses the `getDocument` function from the PDF.js library to load the PDF
@@ -53,97 +53,97 @@ export class PDFLoader extends BufferLoader {
      * @param metadata The metadata of the document.
      * @returns A promise that resolves to an array of `Document` instances.
      */
-    public async parse(
-        raw: Buffer,
-        metadata: Document["metadata"]
-    ): Promise<Document[]> {
-        const { getDocument, } = await this.pdfjs();
-        const pdf = await getDocument({
-            data: new Uint8Array(raw.buffer),
-            useWorkerFetch: false,
-            isEvalSupported: false,
-            useSystemFonts: true,
-        }).promise;
+  public async parse(
+    raw: Buffer,
+    metadata: Document['metadata']
+  ): Promise<Document[]> {
+    const { getDocument } = await this.pdfjs()
+    const pdf = await getDocument({
+      data: new Uint8Array(raw.buffer),
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
+    }).promise
 
-        const documents: Document[] = [];
+    const documents: Document[] = []
 
-        for (let i = 1; i <= pdf.numPages; i += 1) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
+    for (let i = 1; i <= pdf.numPages; i += 1) {
+      const page = await pdf.getPage(i)
+      const content = await page.getTextContent()
 
-            if (content.items.length === 0) {
-                continue;
+      if (content.items.length === 0) {
+        continue
+      }
+
+      // Eliminate excessive newlines
+      // Source: https://github.com/albertcui/pdf-parse/blob/7086fc1cc9058545cdf41dd0646d6ae5832c7107/lib/pdf-parse.js#L16
+      let lastY
+      const textItems: string[] = []
+      for (const item of content.items) {
+        if ('str' in item) {
+          if (lastY === item.transform[5] || !lastY) {
+            textItems.push(item.str)
+          } else {
+            textItems.push(`\n${item.str}`)
+          }
+
+          lastY = item.transform[5]
+        }
+      }
+
+      const text = textItems.join(this.parsedItemSeparator)
+
+      documents.push(
+        new Document({
+          pageContent: text,
+          metadata: {
+            ...this.metadata,
+            ...metadata,
+            pdf: {
+              totalPages: pdf.numPages
+            },
+            loc: {
+              pageNumber: i
             }
-
-            // Eliminate excessive newlines
-            // Source: https://github.com/albertcui/pdf-parse/blob/7086fc1cc9058545cdf41dd0646d6ae5832c7107/lib/pdf-parse.js#L16
-            let lastY;
-            const textItems: string[] = [];
-            for (const item of content.items) {
-                if ("str" in item) {
-                    if (lastY === item.transform[5] || !lastY) {
-                        textItems.push(item.str);
-                    } else {
-                        textItems.push(`\n${item.str}`);
-                    }
-                    // eslint-disable-next-line prefer-destructuring
-                    lastY = item.transform[5];
-                }
-            }
-
-            const text = textItems.join(this.parsedItemSeparator);
-
-            documents.push(
-                new Document({
-                    pageContent: text,
-                    metadata: {
-                        ...this.metadata,
-                        ...metadata,
-                        pdf: {
-                            totalPages: pdf.numPages,
-                        },
-                        loc: {
-                            pageNumber: i,
-                        },
-                    },
-                })
-            );
-        }
-
-        if (this.splitPages) {
-            return documents;
-        }
-
-        if (documents.length === 0) {
-            return [];
-        }
-
-        return [
-            new Document({
-                pageContent: documents.map((doc) => doc.pageContent).join("\n\n"),
-                metadata: {
-                    ...metadata,
-                    ...this.metadata,
-                    pdf: {
-                        totalPages: pdf.numPages,
-                    },
-                },
-            }),
-        ];
+          }
+        })
+      )
     }
+
+    if (this.splitPages) {
+      return documents
+    }
+
+    if (documents.length === 0) {
+      return []
+    }
+
+    return [
+      new Document({
+        pageContent: documents.map(doc => doc.pageContent).join('\n\n'),
+        metadata: {
+          ...metadata,
+          ...this.metadata,
+          pdf: {
+            totalPages: pdf.numPages
+          }
+        }
+      })
+    ]
+  }
 }
 
 async function PDFLoaderImports() {
-    try {
-        const { default: mod } = await import(
-            "pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js"
-        );
-        const { getDocument, } = mod;
-        return { getDocument, };
-    } catch (e) {
-        console.error(e);
-        throw new Error(
-            "Failed to load pdf-parse. Please install it with eg. `npm install pdf-parse`."
-        );
-    }
+  try {
+    const { default: mod } = await import(
+      'pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js'
+    )
+    const { getDocument } = mod
+    return { getDocument }
+  } catch (e) {
+    console.error(e)
+    throw new Error(
+      'Failed to load pdf-parse. Please install it with eg. `npm install pdf-parse`.'
+    )
+  }
 }

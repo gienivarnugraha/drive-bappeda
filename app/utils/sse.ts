@@ -1,19 +1,17 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter } from 'node:events'
 import { v4 as uuid } from 'uuid'
 
-export const sseEvent = new EventEmitter();
+export const sseEvent = new EventEmitter()
 
 type Data = {
-    message: string,
-    id: string,
-    status: | 'info' | 'error' | 'success'
+  message: string
+  id: string
+  status: | 'info' | 'error' | 'success'
 }
 
 export const sseSend = function (event: string, data?: Omit<Data, 'id'>) {
-
-    sseEvent.emit<Data>(event, {
-        id: uuid(),
-        ...data
-    });
-
+  sseEvent.emit<Data>(event, {
+    id: uuid(),
+    ...data
+  })
 }

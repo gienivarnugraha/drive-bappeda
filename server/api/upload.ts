@@ -1,69 +1,64 @@
-import { sseSend } from '~/utils/sse';
+import { sseSend } from '~/utils/sse'
 
 const allowedTypes = [
-    "image/jpeg", "image/png", "image/gif", "application/pdf", "text/plain",];
-
+  'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
 
 export default eventHandler(async (event) => {
-    const formData = await readMultipartFormData(event);
+  const formData = await readMultipartFormData(event)
 
-    if (!formData || formData.length === 0) {
-        throw new Error('No files uploaded.');
+  if (!formData || formData.length === 0) {
+    throw new Error('No files uploaded.')
+  }
+
+  sseSend('push:notif', { message: 'File upload started', status: 'info' })
+
+  const filenames: string[] = []
+
+  const filenamesExists: string[] = []
+
+  const storage = useStorage('blobs') // 'uploads' is a bucket defined in nuxt.config.ts
+
+  for (const file of formData) {
+    if (!file.type || !allowedTypes.includes(file.type)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+                    `File type ${file.type || 'unknown'} not allowed. 
+              Allowed types: ${allowedTypes.join(', ')}`
+      })
     }
 
-    sseSend("push:notif", { message: "File upload started", status: 'info' })
+    const filename = file.filename as string
 
-    let filenames: string[] = []
+    if (await storage.hasItem(filename)) {
+      if (file.name === 'file') {
+        filenamesExists.push(filename)
+      }
 
-    let filenamesExists: string[] = []
-
-    const storage = useStorage('blobs'); // 'uploads' is a bucket defined in nuxt.config.ts
-
-    for (const file of formData) {
-
-        if (!file.type || !allowedTypes.includes(file.type)) {
-            throw createError({
-                statusCode: 400,
-                statusMessage:
-                    `File type ${file.type || "unknown"} not allowed. 
-              Allowed types: ${allowedTypes.join(", ")}`,
-            });
-        }
-
-        const filename = file.filename as string
-
-        if (await storage.hasItem(filename)) {
-            if (file.name === 'file') {
-                filenamesExists.push(filename)
-            }
-
-            sseSend("push:notif", { message: `file exists in storage... ${filename}`, status: 'info' })
-
-        } else {
-            const data = await storage.setItemRaw(filename, file.data)
-
-            console.log(data)
-
-            if (file.name === 'file') {
-                filenames.push(filename)
-            }
-
-
-            sseSend("push:notif", { message: `File ${filename} uploaded `, status: 'info' })
-
-        }
-    }
-
-    if (filenames.length > 0) {
-        sseSend("push:notif", { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
-
-        return { message: `${filenames.length} files uploaded successfully`, filenames };
+      sseSend('push:notif', { message: `file exists in storage... ${filename}`, status: 'info' })
     } else {
-        sseSend("push:notif", { message: `${filenamesExists.join(', ')} exists in storage...`, status: 'error' })
+      const data = await storage.setItemRaw(filename, file.data)
 
-        throw createError({
-            statusCode: 400,
-            statusMessage: `${filenamesExists.join(', ')} exists in storage...`,
-        });
+      console.log(data)
+
+      if (file.name === 'file') {
+        filenames.push(filename)
+      }
+
+      sseSend('push:notif', { message: `File ${filename} uploaded `, status: 'info' })
     }
+  }
+
+  if (filenames.length > 0) {
+    sseSend('push:notif', { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
+
+    return { message: `${filenames.length} files uploaded successfully`, filenames }
+  } else {
+    sseSend('push:notif', { message: `${filenamesExists.join(', ')} exists in storage...`, status: 'error' })
+
+    throw createError({
+      statusCode: 400,
+      statusMessage: `${filenamesExists.join(', ')} exists in storage...`
+    })
+  }
 })

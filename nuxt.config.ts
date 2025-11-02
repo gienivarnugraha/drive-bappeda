@@ -2,31 +2,21 @@
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
-    '@nuxtjs/mdc',
     '@nuxt/ui',
-    '@vueuse/nuxt',
+    '@vueuse/nuxt'
   ],
 
   devtools: {
-    enabled: true
-  },
-  debug: false,
-
-  nitro: {
-    storage: {
-      documents: {
-        driver: "fs",
-        base: process.env.DOCUMENT_PATH,
-      },
-      blobs: {
-        driver: 'vercelBlob',
-        access: 'public', // Optional, depends on your needs
-        // Other Vercel Blob driver options
-      },
-    },
+    // enabled:  process.env.NODE_ENV === 'development'
+    enabled: false
   },
 
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    public: {
+      documentPath: process.env.DOCUMENT_PATH
+    }
+  },
 
   routeRules: {
     '/api/**': {
@@ -35,6 +25,21 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-11',
+
+  nitro: {
+    storage: {
+      documents: {
+        driver: 'fs',
+        base: process.env.DOCUMENT_PATH
+      },
+      blobs: {
+        driver: 'vercelBlob',
+        access: 'public' // Optional, depends on your needs
+        // Other Vercel Blob driver options
+      }
+    }
+  },
+  debug: false,
 
   eslint: {
     config: {
