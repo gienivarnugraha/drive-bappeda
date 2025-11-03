@@ -9,7 +9,7 @@ export default eventHandler(async (event) => {
     console.log(session)
   });
 
-  const { data, error } = await supabase.from('users').select('*')
+  const { data, error } = await supabase.auth.getUser()
 
   if (error) {
     console.error('Error fetching users', error)

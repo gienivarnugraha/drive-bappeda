@@ -4,19 +4,19 @@ export default defineEventHandler(async (event) => {
   const { question, uuid } = await readBody(event)
 
   console.log(question)
-  // setHeaders(event, {
-  //     "cache-control": "no-cache",
-  //     "connection": "keep-alive",
-  //     "content-type": "text/event-stream"
-  // });
+
+  // Create abort controller for this request
+  const controller = new AbortController()
+  const signal = controller.signal
 
   event.node.req.on('close', () => {
     console.log('Client disconnected')
+    controller.abort()
   })
 
   event.node.req.on('aborted', () => {
     console.log('Request aborted')
-    // reject(new Error('Aborted')); // Reject the promise on abort
+    controller.abort()
   })
 
   try {
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
     // });
 
     // return readable
-    const answer = await response.invoke(question)
+    const answer = await response.invoke(question, { signal })
 
     return {
       type: 'text',
@@ -57,8 +57,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (err: any) {
     if (err.message === 'Aborted') {
-      setResponseStatus(event, 400, 'Streaming Error')
-      console.error('Streaming error:', err, typeof err)
+      console.error('Streaming aborted:', err, typeof err)
       return {
         type: 'error',
         text: 'Aborted'

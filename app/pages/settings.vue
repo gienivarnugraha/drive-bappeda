@@ -82,7 +82,7 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
         <UButton form="settings" label="Save changes" color="neutral" type="submit" class="w-fit lg:ms-auto" />
       </UPageCard>
 
-      <UPageCard variant="subtle">
+      <UPageCard variant="subtle" class="bg-linear-to-tl from-primary/10 from-5% to-default">
         <UFormField name="name" label="Name" description="Will appear on receipts, invoices, and other communication."
           required class="flex max-sm:flex-col justify-between items-start gap-4">
           <UInput v-model="profile.name" autocomplete="off" />
@@ -115,7 +115,8 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
       </UPageCard>
     </UForm>
 
-    <UPageCard title="Password" description="Confirm your current password before setting a new one." variant="subtle">
+    <UPageCard title="Password" description="Confirm your current password before setting a new one." variant="subtle"
+      class="bg-linear-to-tl from-secondary/10 from-5% to-default">
       <UForm :schema="passwordSchema" :state="password" :validate="validate" class="flex flex-col gap-4 max-w-xs">
         <UFormField name="current">
           <UInput v-model="password.current" type="password" placeholder="Current password" class="w-full" />
@@ -132,13 +133,5 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
     <SettingsCategory />
 
     <SettingsDivision />
-
-    <UPageCard title="Account"
-      description="No longer want to use our service? You can delete your account here. This action is not reversible. All information related to this account will be deleted permanently."
-      class="bg-linear-to-tl from-error/10 from-5% to-default">
-      <template #footer>
-        <UButton label="Delete account" color="error" />
-      </template>
-    </UPageCard>
   </div>
 </template>

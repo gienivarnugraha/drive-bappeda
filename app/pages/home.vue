@@ -26,11 +26,11 @@ const count: Ref<number> = ref(0)
 // const documentData: Ref<Results[]> = ref([])
 
 callOnce(async () => {
-  const response = await $fetch<{ count: number }>('/api/count')
+  const response = await $fetch<number>('/api/count')
 
   console.log(response)
   if (response) {
-    count.value = response.count
+    count.value = response
   }
 })
 

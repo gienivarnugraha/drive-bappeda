@@ -21,7 +21,7 @@ const state = reactive<Schema>({
 
 const addView = ref(false)
 
-const divisionSubmit = async (item: Schema, shouldDelete = false) => {
+const submit = async (item: Schema, shouldDelete = false) => {
   const { data, message } = await $fetch<{ message: string, data: Division }>('/api/divisions', {
     method: 'POST',
     body: {
@@ -53,66 +53,35 @@ const divisionSubmit = async (item: Schema, shouldDelete = false) => {
 </script>
 
 <template>
-  <UPageCard title="divisions" description="Edit divisions." variant="subtle">
-    <div class="flex flex-row space-x-2 space-y-2 flex-wrap ">
-      <div
-        v-for="division in divisions"
-        :key="division.id"
-        class="flex flex-row space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1"
-      >
-        <p> {{ division.name }}</p>
-
-        <UTooltip :text="`Hapus ${division.name}`">
-          <UButton
-            color="error"
-            variant="ghost"
-            size="sm"
-            icon="i-lucide-trash"
-            @click="divisionSubmit(division, true)"
-          />
+  <UPageCard title="Bidang" description="Rubah bidang" variant="subtle">
+    <div class="flex flex-row space-y-1 flex-wrap ">
+      <div v-for="item in divisions" :key="item.id"
+        class="flex flex-row items-center justify-between space-x-1 px-2 py-1">
+        <UTooltip :text="item.name">
+          <UBadge class="font-bold rounded-full">
+            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.name), 20) }}</p>
+            <template #trailing>
+              <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(item, true)" />
+            </template>
+          </UBadge>
         </UTooltip>
       </div>
     </div>
 
     <UTooltip text="Tambah Bidang">
-      <UButton
-        variant="subtle"
-        label="Tambah Bidang"
-        color="primary"
-        size="sm"
-        :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        @click="addView = !addView"
-      />
+      <UButton variant="subtle" label="Tambah Bidang" color="primary" size="sm"
+        :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" @click="addView = !addView" />
     </UTooltip>
 
-    <UForm
-      v-if="addView"
-      :schema="schema"
-      :state="state"
-      class="flex flex-col gap-4 max-w-md "
-      @submit="divisionSubmit(state)"
-    >
-      <UFormField
-        name="name"
-        label="Name"
-        description="Nama Bidang"
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
+    <UForm v-if="addView" :schema="schema" :state="state" class="flex flex-col gap-4 max-w-md " @submit="submit(state)">
+      <UFormField name="name" label="Name" description="Nama Bidang"
+        class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="state.name" placeholder="New Division Name" class="w-full" />
       </UFormField>
 
-      <UFormField
-        name="description"
-        label="Description"
-        description="Deskripsi Bidang"
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
-        <UTextarea
-          v-model="state.description"
-          :rows="2"
-          placeholder="Description of division"
-          class="w-full"
-        />
+      <UFormField name="description" label="Description" description="Deskripsi Bidang"
+        class="flex max-sm:flex-col justify-between items-start gap-4">
+        <UTextarea v-model="state.description" :rows="2" placeholder="Description of division" class="w-full" />
       </UFormField>
 
       <UButton label="Add" class="w-fit" type="submit" />

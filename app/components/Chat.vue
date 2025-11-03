@@ -55,8 +55,7 @@ onMounted(() => {
   )
 })
 
-const controller = new AbortController()
-const signal = controller.signal
+let controller: AbortController | null = null
 
 const exampleMessage: string[] = [
   'Jumlah Sampah Yang Dihasilkan Di Kota Semarang',
@@ -64,13 +63,16 @@ const exampleMessage: string[] = [
 ]
 
 const submitExampleMessage = (e: Event) => {
-  question.value = e.target?.value
+  question.value = (e.target as HTMLButtonElement)?.value || ''
   handleSubmit(e)
 }
 
 const handleSubmit = async (e: Event) => {
   e.preventDefault()
   status.value = 'submitted'
+
+  // Create new controller for this request
+  controller = new AbortController()
 
   messages.value.push({
     id: uuid(),
@@ -79,15 +81,13 @@ const handleSubmit = async (e: Event) => {
   })
 
   try {
-    // const response = await $fetch<ReadableStream>('/api/chat', {
     const { type, text } = await $fetch<{ type: string, text: string }>('/api/chat', {
       method: 'post',
       body: {
         question: question.value,
         uuid: threadId
       },
-      signal
-      // responseType: 'stream',
+      signal: controller.signal
     })
 
     messages.value.push({
@@ -104,45 +104,64 @@ const handleSubmit = async (e: Event) => {
     })
 
     console.log(messages.value[lastMessageIndex])
-  } catch (error) {
-    console.error(error)
-    status.value = 'error'
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.log('Request aborted')
+    } else {
+      console.error(error)
+      status.value = 'error'
+    }
   } finally {
+    controller = null
     question.value = ''
     if (status.value !== 'error') {
       status.value = 'ready'
     }
   }
-
-  // const reader = response.pipeThrough(new TextDecoderStream()).getReader()
-
-  // let markdownMessage = ''
-
-  // while (true) {
-  //     const { value, done } = await reader.read();
-
-  //     if (done) {
-  //         //@ts-ignore
-  //         messages.value[lastMessageIndex]?.parts.push(markdownMessage)
-
-  //         status.value = 'ready'
-  //         break
-  //     }
-
-  //     status.value = 'streaming'
-
-  //     markdownMessage += value
-
-  //     //@ts-ignore
-  //     messages.value[lastMessageIndex]?.parts.push(markdownMessage)
-
-  // }
 }
+
+const abortRequest = (e: Event) => {
+  console.log('aborted:', e)
+  if (controller) {
+    controller.abort()
+    status.value = 'ready'
+  }
+}
+
+onUnmounted(() => {
+  if (controller) {
+    controller.abort()
+  }
+})
+
+// const reader = response.pipeThrough(new TextDecoderStream()).getReader()
+
+// let markdownMessage = ''
+
+// while (true) {
+//     const { value, done } = await reader.read();
+
+//     if (done) {
+//         //@ts-ignore
+//         messages.value[lastMessageIndex]?.parts.push(markdownMessage)
+
+//         status.value = 'ready'
+//         break
+//     }
+
+//     status.value = 'streaming'
+
+//     markdownMessage += value
+
+//     //@ts-ignore
+//     messages.value[lastMessageIndex]?.parts.push(markdownMessage)
+
+// }
 </script>
 
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
-    <UChatMessages :messages="messages" :status="status" :user="{
+    <UChatMessages :messages="messages" :status="status" :stop="abortRequest" :user="{
       side: 'left',
       variant: 'solid',
       avatar: {

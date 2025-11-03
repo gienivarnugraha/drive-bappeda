@@ -1,119 +1,148 @@
 <template>
-    <UCard class="w-full h-full flex flex-col p-0">
-        <template #header>
-            <div class="flex items-center justify-between gap-4 p-2">
-                <div class="flex items-center space-x-2">
-                    <UButton icon="i-heroicons-arrow-left" :disabled="!pageControl || pageControl.currentPage === 1"
-                        color="primary" variant="ghost" @click="previousePage" />
-                    <UInput :model-value="pageControl?.currentPage ?? 1" type="number" :min="1"
-                        :max="pageControl?.totalPages ?? 1" class="w-16 text-center" @change="goToPage" />
-                    <span class="text-gray-500">of {{ pageControl?.totalPages ?? '-' }}</span>
-                    <UButton icon="i-heroicons-arrow-right"
-                        :disabled="!pageControl || pageControl.currentPage === pageControl.totalPages" color="primary"
-                        variant="ghost" @click="nextPage" />
-                </div>
+    <div class="flex flex-col items-center p-4 bg-gray-100 min-h-screen">
+        <div class="flex items-center space-x-4 p-3 bg-white shadow-lg rounded-lg mb-6 w-full max-w-4xl">
 
-                <div class="flex items-center space-x-2">
-                    <UButton icon="i-heroicons-magnifying-glass-minus" color="primary" variant="ghost"
-                        @click="handleZoom('out')" />
-                    <span class="text-sm font-semibold w-12 text-center">{{ currentZoomPercentage }}</span>
-                    <UButton icon="i-heroicons-magnifying-glass-plus" color="primary" variant="ghost"
-                        @click="handleZoom('in')" />
-
-                    <UButton icon="i-heroicons-arrow-down-tray" color="primary" variant="soft"
-                        @click="downloadControl?.download()">
-                        Download
-                    </UButton>
-                </div>
+            <div class="flex items-center space-x-2">
+                <label for="zoom" class="text-gray-700 font-medium">Zoom:</label>
+                <select id="zoom" v-model="currentScale" @change="updateZoom"
+                    class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                    <option value="0.75">75%</option>
+                    <option value="1">100%</option>
+                    <option value="1.25">125%</option>
+                    <option value="1.5">150%</option>
+                    <option value="2">200%</option>
+                </select>
             </div>
-        </template>
 
-        <div class="grow overflow-auto min-h-[500px]">
-            <VPdfViewer ref="vpvRef" :src="pdfUrl" :toolbar-options="false" class="w-full h-full" />
+            <div v-if="numPages > 0" class="ml-auto text-gray-600">
+                <span class="font-semibold text-blue-600">{{ numPages }}</span> Pages Total
+            </div>
         </div>
-    </UCard>
+
+        <div ref="" class=" w-full max-w-4xl max-h-[80vh] overflow-y-auto p-4 bg-gray-200 shadow-inner rounded-xl">
+            <div v-for="n in numPages" :key="n" :id="`page-${n}`"
+                class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center">
+                <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
+            </div>
+            <div v-if="numPages === 0" class="text-center text-gray-500 p-8">
+                Loading PDF...
+            </div>
+        </div>
+    </div>
 </template>
 
-<script setup lang="ts">
-import { VPdfViewer } from '@vue-pdf-viewer/viewer';
+<script setup>
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
-// Define Props for the PDF URL
-const props = defineProps<{
-    pdfUrl: string;
-    page?: number
-}>();
+const props = defineProps({
+    pdfUrl: {
+        type: String,
+        required: true
+    },
+    page: Number
+});
+
+// --- State Variables ---
+let pdfDocument = undefined;
+
+const numPages = ref(0);
+
+// **Zoom state (currentScale)**
+const currentScale = ref(1.0);
+
+// --- Rendering Logic ---
+
+/**
+ * Renders a specific page onto a newly created canvas.
+ * @param {number} pageNum The page number to render.
+ */
+const renderPage = async (pageNum) => {
+    if (!pdfDocument) return;
+
+    const page = await pdfDocument.getPage(pageNum);
+    // Use the reactive currentScale for the viewport calculation
+    const viewport = page.getViewport({ scale: parseFloat(currentScale.value) });
+
+    // 1. Check/Get Wrapper Element and Clear Existing Content (for re-render on zoom)
+    const pageWrapper = document.getElementById(`page-${pageNum}`);
+    if (!pageWrapper) return;
+
+    // Important: Clear previous canvas/content before re-rendering
+    pageWrapper.innerHTML = `<p class="text-sm text-gray-500 mb-2">Page ${pageNum}</p>`;
+
+    // 2. Create and Configure Canvas Element
+    const canvas = document.createElement('canvas');
+    canvas.className = 'shadow-xl border border-gray-300 transition-all duration-300 ease-in-out mx-auto';
+    const context = canvas.getContext('2d');
+
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // 3. Prepare Render Context
+    const renderContext = {
+        canvasContext: context,
+        viewport: viewport,
+    };
+
+    // 4. Render and Append
+    await page.render(renderContext).promise;
+    pageWrapper.appendChild(canvas);
+};
+
+/**
+ * Loads the PDF and initiates rendering for all pages.
+ */
+const loadPDF = async () => {
+    try {
+        const loadingTask = pdfjsLib.getDocument(props.pdfUrl);
+        const pdf = await loadingTask.promise;
+
+        pdfDocument = pdf;
+        numPages.value = pdf.numPages;
+
+        // Initial render of all pages
+        await renderAllPages();
+
+    } catch (error) {
+        console.error('Error loading or rendering PDF:', error);
+    }
+};
+
+/**
+ * Renders all pages based on the current scale.
+ */
+const renderAllPages = async () => {
+    if (pdfDocument) {
+        // Render sequentially
+        for (let i = 1; i <= numPages.value; i++) {
+            await renderPage(i);
+        }
+    }
+};
+
+// --- Zoom Function ---
+
+const updateZoom = () => {
+    // Trigger a full re-render when the zoom level changes
+    renderAllPages();
+};
+
+
+// --- Initialization ---
 
 onMounted(() => {
-    props.page && pageControl.value?.goToPage(props.page)
-    console.log(props.page, pageControl.value)
-})
-// Refs for the viewer instance
-const vpvRef: any = useTemplateRef('vpvRef');
+    loadPDF();
 
-// --- Viewer API Control (Controls are accessed via the ref) ---
-
-// Page Control
-const pageControl = computed(() => (vpvRef.value as any)?.pageControl);
-
-const previousePage = () => {
-    if (pageControl.value) {
-        pageControl.value.goToPage(pageControl.value.currentPage - 1);
+    if (props.page) {
+        const pageElement = document.getElementById(`page-${props.page}`);
+        if (pageElement) {
+            pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
-};
-
-const nextPage = () => {
-    if (pageControl.value) {
-        pageControl.value.goToPage(pageControl.value.currentPage + 1);
-    }
-};
-
-const goToPage = (event: Event) => {
-    const pageNumber = parseInt((event.target as HTMLInputElement).value);
-    if (pageNumber > 0 && pageControl.value) {
-        pageControl.value.goToPage(pageNumber);
-    }
-};
-
-console.log(vpvRef)
-
-// Zoom Control
-const zoomControl = computed(() => (vpvRef.value as any)?.zoomControl);
-const currentScale = computed(() => zoomControl.value?.scale || 1);
-const currentZoomPercentage = computed(() => `${Math.round(currentScale.value * 100)}%`);
-
-const handleZoom = (type: 'in' | 'out') => {
-    if (!zoomControl.value) return;
-    const current = currentScale.value;
-    let newScale = current;
-
-    if (type === 'in') {
-        newScale = current < 3.0 ? current + 0.25 : 3.0; // Max zoom
-    } else if (type === 'out') {
-        newScale = current > 0.5 ? current - 0.25 : 0.5; // Min zoom
-    }
-
-    zoomControl.value.zoom(newScale);
-};
-
-// Download Control
-const downloadControl = computed(() => (vpvRef.value as any)?.downloadControl);
-
+});
 </script>
 
 <style scoped>
-/* Optional: Ensure the card content fills the space correctly */
-.u-card {
-    --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    box-shadow: var(--tw-shadow);
-    border-radius: var(--rounded-lg);
-}
-
-.u-card :deep(.p-0) {
-    padding: 0 !important;
-}
-
-.u-card :deep(.vpv-viewer-main) {
-    /* This targets the internal viewer container to ensure it takes full height */
-    height: 100%;
-}
+/* No scoped styles needed as Tailwind handles everything, but keep it for structure */
 </style>

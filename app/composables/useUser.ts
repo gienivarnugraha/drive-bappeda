@@ -5,6 +5,7 @@ export const useUser = async () => {
 
   try {
     const userData = await $fetch<User>('/api/user')
+    console.log('user', userData)
 
     return userData
 

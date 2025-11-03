@@ -40,25 +40,19 @@ const cta = {
   <div class="min-h-screen flex flex-col">
     <UContainer>
       <UHeader
-        :links="[{ label: 'Features', to: '#features' }, { label: 'Pricing', to: '#' }, { label: 'Contact', to: '#' }]"
-      >
+        :links="[{ label: 'Features', to: '#features' }, { label: 'Pricing', to: '#' }, { label: 'Contact', to: '#' }]">
         <template #left>
           <Logo />
         </template>
         <template #right>
-          <UButton
-            label="Login"
-            icon="i-heroicons-arrow-right-end-on-rectangle-20-solid"
-            color="primary"
-            variant="solid"
-            to="/login"
-          />
+          <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
+            variant="solid" to="/login" />
         </template>
       </UHeader>
     </UContainer>
 
     <UMain>
-      <UContainer class="py-24 sm:py-32 text-center">
+      <UContainer class="py-24 sm:py-32 text-center bg-linear-to-tl from-primary/10 from-5% to-default">
         <div class="relative max-w-4xl mx-auto">
           <h1 class="text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl leading-tight">
             <span class="text-gray-900 dark:text-white block">Intelligent Conversations,</span>
@@ -71,31 +65,16 @@ const cta = {
           </p>
 
           <div class="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-            <UButton
-              :label="cta.buttonText"
-              size="xl"
-              color="primary"
-              variant="solid"
-              icon="i-heroicons-chat-bubble-left-right-20-solid"
-              :to="cta.buttonLink"
-            />
-            <UButton
-              label="Learn More"
-              size="xl"
-              color="secondary"
-              variant="ghost"
-              icon="i-heroicons-question-mark-circle-20-solid"
-              to="#features"
-            />
+            <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid"
+              icon="i-heroicons-chat-bubble-left-right-20-solid" :to="cta.buttonLink" />
+            <UButton label="Learn More" size="xl" color="secondary" variant="ghost"
+              icon="i-heroicons-question-mark-circle-20-solid" to="#features" />
           </div>
 
           <div
-            class="mt-16 relative aspect-video md:aspect-2/1 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8"
-          >
-            <UIcon
-              name="i-heroicons-computer-desktop-20-solid"
-              class="text-primary-400 text-9xl absolute inset-0 m-auto opacity-10"
-            />
+            class="mt-16 relative aspect-video md:aspect-2/1 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8">
+            <UIcon name="i-heroicons-computer-desktop-20-solid"
+              class="text-primary-400 text-9xl absolute inset-0 m-auto opacity-10" />
             <div class="relative z-10 text-gray-500 dark:text-gray-400 text-lg">
               <p>Imagine your chatbot interface here!</p>
               <p class="text-sm mt-2">
@@ -123,10 +102,8 @@ const cta = {
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <UCard v-for="(feature, index) in features" :key="index" :ui="{ body: 'flex-grow' }">
             <template #header>
-              <UIcon
-                :name="feature.icon"
-                :class="`w-10 h-10 text-${feature.color}-500 dark:text-${feature.color}-400 mb-2`"
-              />
+              <UIcon :name="feature.icon"
+                :class="`w-10 h-10 text-${feature.color}-500 dark:text-${feature.color}-400 mb-2`" />
               <h3 class="mt-2 text-xl font-semibold">
                 {{ feature.title }}
               </h3>
@@ -147,14 +124,8 @@ const cta = {
           {{ cta.description }}
         </p>
         <div class="mt-10">
-          <UButton
-            :label="cta.buttonText"
-            size="xl"
-            color="primary"
-            variant="solid"
-            icon="i-heroicons-sparkles-20-solid"
-            :to="cta.buttonLink"
-          />
+          <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid"
+            icon="i-heroicons-sparkles-20-solid" :to="cta.buttonLink" />
         </div>
       </UContainer>
     </UMain>
@@ -167,22 +138,10 @@ const cta = {
       </template>
 
       <template #right>
-        <UButton
-          aria-label="Privacy Policy"
-          to="#"
-          target="_blank"
-          color="secondary"
-          variant="ghost"
-          label="Privacy Policy"
-        />
-        <UButton
-          aria-label="Terms of Service"
-          to="#"
-          target="_blank"
-          color="secondary"
-          variant="ghost"
-          label="Terms of Service"
-        />
+        <UButton aria-label="Privacy Policy" to="#" target="_blank" color="secondary" variant="ghost"
+          label="Privacy Policy" />
+        <UButton aria-label="Terms of Service" to="#" target="_blank" color="secondary" variant="ghost"
+          label="Terms of Service" />
       </template>
     </UFooter>
   </div>

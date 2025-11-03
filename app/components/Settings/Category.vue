@@ -21,6 +21,7 @@ const state = reactive<Schema>({
 const addView = ref(false)
 
 const submit = async (item: Schema, shouldDelete = false) => {
+
   const { data, message } = await $fetch<{ message: string, data: Category }>('/api/categories', {
     method: 'POST',
     body: {
@@ -28,12 +29,9 @@ const submit = async (item: Schema, shouldDelete = false) => {
       ...item
     }
   })
-  console.log(data)
 
   if (shouldDelete) {
     const index = categories.value.findIndex((category: Category) => category.id === data.id)
-
-    console.log(index)
 
     if (index !== -1) {
       categories.value.splice(index, 1)
@@ -52,15 +50,18 @@ const submit = async (item: Schema, shouldDelete = false) => {
 </script>
 
 <template>
-  <UPageCard title="Categories" description="Edit categories." variant="subtle">
-    <div class="flex flex-row space-x-2 space-y-2 flex-wrap ">
+  <UPageCard title="Kategori" description="Rubah kategori" variant="subtle">
+    <div class="flex flex-row space-y-1 flex-wrap ">
       <div v-for="category in categories" :key="category.id"
-        class="flex flex-row items-center justify-between space-x-4 rounded-lg border border-primary pl-4 pr-2 py-1">
+        class="flex flex-row items-center justify-between space-x-1 px-2 py-1">
         <UTooltip :text="category.name">
-          <p class="text-xs"> {{ clampCharacters(toTitleCase(category.name), 20) }}</p>
+          <UBadge class="font-bold rounded-full">
+            <p class="text-xs"> {{ clampCharacters(toTitleCase(category.name), 20) }}</p>
+            <template #trailing>
+              <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(category, true)" />
+            </template>
+          </UBadge>
         </UTooltip>
-
-        <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(category, true)" />
       </div>
     </div>
 

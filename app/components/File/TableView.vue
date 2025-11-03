@@ -18,7 +18,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex">
-    <UTable :data="state" class="max-w-full" />
+  <div class="grid grid-cols-1">
+    <UTable :data="state" />
   </div>
 </template>

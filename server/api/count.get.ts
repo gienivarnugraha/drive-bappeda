@@ -1,18 +1,20 @@
 import supabase from '~/utils/supabase'
 
-export default defineEventHandler(async (event) => {
-  const { data, error } = await supabase
+export default eventHandler(async (event) => {
+  const { count, error } = await supabase
     .from('documents')
     .select('*', { count: 'exact', head: true })
 
-  console.log('count:', data)
+  console.log('count: ', count)
 
   if (error) {
+    console.error('error fetching categories', error)
+
     throw createError({
       statusCode: 400,
-      statusMessage: `Error counting documents:  ${error}`
+      statusMessage: `Error fetching categories:  ${error.message}`
     })
   }
 
-  return data
+  return count
 })

@@ -12,6 +12,17 @@ export default defineNuxtConfig({
     enabled: false
   },
 
+  routeRules: {
+    '/documents/*': { ssr: false },
+    '/home': { ssr: false },
+    '/settings': { ssr: false },
+    '/': { prerender: true },
+    '/login': { prerender: true },
+    '/api/**': {
+      cors: true
+    }
+  },
+
   // supabase: {
   //   redirect: process.env.NODE_ENV === 'development' ? false : true,
   //   key: process.env.SUPABASE_PRIVATE_KEY,
@@ -22,12 +33,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       documentPath: process.env.DOCUMENT_PATH
-    }
-  },
-
-  routeRules: {
-    '/api/**': {
-      cors: true
     }
   },
 

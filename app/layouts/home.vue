@@ -28,6 +28,9 @@ onMounted(async () => {
   // })
 })
 const { smAndLarger } = useTailwindBreakpoints()
+const route = useRoute()
+const isHome = computed(() => route.name === 'home')
+
 </script>
 
 <template>
@@ -46,6 +49,7 @@ const { smAndLarger } = useTailwindBreakpoints()
         <div v-else class=" flex flex-col justify-center gap-2">
           <UDashboardSidebarCollapse icon="i-lucide-message-circle" />
         </div>
+
       </template>
 
       <template #footer="{ collapsed }">
@@ -58,6 +62,9 @@ const { smAndLarger } = useTailwindBreakpoints()
         <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
           <template #leading>
             <UDashboardSidebarCollapse />
+            <UTooltip text="Kembali">
+              <UButton v-if="!isHome" variant="ghost" color="neutral" icon="i-lucide-chevron-left" to="/home" />
+            </UTooltip>
             <!-- <UButton variant="ghost" color="neutral" icon="i-lucide-home" to="/" /> -->
           </template>
 

@@ -126,7 +126,7 @@ export class PDFLoader extends BufferLoader {
           ...this.metadata,
           pdf: {
             totalPages: pdf.numPages
-          }
+          },
         }
       })
     ]
@@ -136,7 +136,7 @@ export class PDFLoader extends BufferLoader {
 async function PDFLoaderImports() {
   try {
     const { default: mod } = await import(
-      'pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js'
+      'pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js' as string
     )
     const { getDocument } = mod
     return { getDocument }
