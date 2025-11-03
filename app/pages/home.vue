@@ -28,7 +28,6 @@ const count: Ref<number> = ref(0)
 callOnce(async () => {
   const response = await $fetch<number>('/api/count')
 
-  console.log(response)
   if (response) {
     count.value = response
   }

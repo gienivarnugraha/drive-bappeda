@@ -1,31 +1,81 @@
 <template>
-    <div class="flex flex-col items-center p-4 bg-gray-100 min-h-screen">
-        <div class="flex items-center space-x-4 p-3 bg-white shadow-lg rounded-lg mb-6 w-full max-w-4xl">
+    <div class="flex flex-col items-center p-4 min-h-screen">
+        <div class="flex flex-row items-center p-4 justify-between shadow-lg rounded-lg mb-6 w-full max-w-6xl ">
 
-            <div class="flex items-center space-x-2">
-                <label for="zoom" class="text-gray-700 font-medium">Zoom:</label>
-                <select id="zoom" v-model="currentScale" @change="updateZoom"
-                    class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
-                    <option value="0.75">75%</option>
-                    <option value="1">100%</option>
-                    <option value="1.25">125%</option>
-                    <option value="1.5">150%</option>
-                    <option value="2">200%</option>
-                </select>
-            </div>
+            <UButton icon="i-lucide-list" :variant="showThumbnails ? 'solid' : 'outline'" color="primary"
+                @click="showThumbnails = !showThumbnails" size="xs" />
 
-            <div v-if="numPages > 0" class="ml-auto text-gray-600">
-                <span class="font-semibold text-blue-600">{{ numPages }}</span> Pages Total
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+
+            <UFieldGroup>
+                <UButton icon="i-lucide-chevron-up" :disabled="currentPage === 1" @click="goToPrevPage" color="primary"
+                    variant="outline" size="xs" />
+                <UInput :model-value="currentPage" class="w-12 text-center" color="primary" />
+                <UButton icon="i-lucide-chevron-down" :disabled="currentPage === numPages" @click="goToNextPage"
+                    color="primary" variant="outline" size="xs" />
+            </UFieldGroup>
+            <p class="text-md"> / {{ numPages }} </p>
+
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+
+
+            <UFieldGroup>
+                <UButton icon="i-lucide-zoom-in" :disabled="currentPage === 1" @click="zoom('in')" color="primary" />
+                <USelect v-model="currentScale" label-key="label" value-key="value" :options="zoomOptions"
+                    variant="ghost" @change="updateZoom" size="sm" class="w-16" />
+                <UButton icon="i-lucide-zoom-out" :disabled="currentPage === 1" @click="zoom('out')" color="primary" />
+            </UFieldGroup>
+
+            <div class="flex items-center space-x-2 ml-auto">
+                <UFieldGroup>
+                    <UInput v-model="searchTerm" placeholder="Search text..." @keydown.enter="performSearch"
+                        class="w-48" size="sm">
+                        <template #trailing>
+                            <UButton icon="i-lucide-search" color="primary" variant="ghost" size="sm"
+                                :disabled="!searchTerm" />
+                        </template>
+                    </UInput>
+                    <UButton icon="i-lucide-chevron-up" @click="navigateSearchResult(-1)"
+                        :disabled="!searchResults.length || currentSearchResultIndex === 0" color="gray"
+                        variant="outline" size="sm" />
+                    <UButton icon="i-lucide-chevron-down" @click="navigateSearchResult(1)"
+                        :disabled="!searchResults.length || currentSearchResultIndex === searchResults.length - 1"
+                        color="gray" variant="outline" size="sm" />
+                </UFieldGroup>
+                <span v-if="searchResults.length" class="text-sm text-gray-600 whitespace-nowrap">
+                    {{ currentSearchResultIndex + 1 }} / {{ searchResults.length }}
+                </span>
             </div>
         </div>
 
-        <div ref="" class=" w-full max-w-4xl max-h-[80vh] overflow-y-auto p-4 bg-gray-200 shadow-inner rounded-xl">
-            <div v-for="n in numPages" :key="n" :id="`page-${n}`"
-                class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center">
-                <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
+        <div class="flex w-full max-w-6xl max-h-[85vh]">
+            <div v-if="showThumbnails" class="w-48 bg-white shadow-lg rounded-lg p-3 mr-4 overflow-y-auto shrink-0"
+                :class="{ 'border-r border-gray-200': showThumbnails }">
+                <h3 class="font-bold text-lg text-gray-800 mb-3">Thumbnails</h3>
+                <div v-for="n in numPages" :key="`thumb-${n}`" :class="[
+                    'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
+                    { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
+                ]" @click="scrollToPage(n)">
+                    <p class="text-xs text-gray-500 mb-1">Page {{ n }}</p>
+                    <div :id="`thumbnail-canvas-${n}`"
+                        class="thumbnail-canvas-container flex justify-center items-center">
+                    </div>
+                </div>
             </div>
-            <div v-if="numPages === 0" class="text-center text-gray-500 p-8">
-                Loading PDF...
+
+            <div ref="pages-container"
+                class=" grow max-h-[85vh] overflow-y-scroll p-4 bg-gray-200 shadow-inner rounded-xl relative"
+                @scroll="updateCurrentPageOnScroll">
+                <div v-for="n in numPages" :key="`main-page-${n}`" :id="`page-${n}`"
+                    class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center relative">
+                    <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
+                </div>
+                <div v-if="numPages === 0 && !loadingError" class="text-center text-gray-500 p-8">
+                    Loading PDF...
+                </div>
+                <div v-if="loadingError" class="text-center text-red-600 p-8 font-semibold">
+                    Error loading PDF: {{ loadingError }}
+                </div>
             </div>
         </div>
     </div>
@@ -33,67 +83,160 @@
 
 <script setup>
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+
+// Make sure to import pdf.worker.min.js and pdf.js for text layer functionality
+// import 'pdfjs-dist/web/pdf_viewer.css'; // Basic PDF.js viewer CSS for text layer
+import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
+
+// --- Props Definition ---
 const props = defineProps({
     pdfUrl: {
         type: String,
-        required: true
+        required: true,
     },
-    page: Number
+    page: {
+        type: [Number, String],
+        default: 1,
+    }
 });
 
 // --- State Variables ---
-let pdfDocument = undefined;
-
+const pagesContainer = useTemplateRef('pages-container');
+const currentPage = ref(1);
+const thumbnailCurrentPage = ref(1); // Separate state for thumbnail highlight
 const numPages = ref(0);
+let pdfDocument = undefined;
+const loadingError = ref(null);
 
-// **Zoom state (currentScale)**
-const currentScale = ref(1.0);
+// Zoom State
+const currentScale = ref('1.0');
+const zoomOptions = [
+    { label: '75%', value: '0.75' },
+    { label: '100%', value: '1.0' },
+    { label: '125%', value: '1.25' },
+    { label: '150%', value: '1.5' },
+    { label: '200%', value: '2.0' },
+];
+
+const zoom = (type) => {
+    // 1. Find the current index based on the currentScale's value
+    let currentZoomIndex = zoomOptions.findIndex((option) => currentScale.value === option.value);
+
+    // If the current scale is not found (shouldn't happen), default to 100% (index 1)
+    if (currentZoomIndex === -1) {
+        currentZoomIndex = 1;
+    }
+
+    let newIndex = currentZoomIndex;
+
+    // 2. Calculate the new index
+    if (type === 'in') {
+        newIndex += 1;
+    } else if (type === 'out') {
+        newIndex -= 1;
+    }
+
+    // 3. Constrain the new index within the array bounds
+    const maxIndex = zoomOptions.length - 1;
+    const constrainedIndex = Math.min(Math.max(0, newIndex), maxIndex);
+
+    // 4. Update the reactive currentScale value
+    currentScale.value = zoomOptions[constrainedIndex].value;
+
+    updateZoom()
+};
+
+// Thumbnail State
+const showThumbnails = ref(true);
+const thumbnailScale = 0.2; // Smaller scale for thumbnails
+
+// Search State
+const searchTerm = ref('');
+const searchResults = ref([]); // Stores { pageNum: N, rects: [] }
+const currentSearchResultIndex = ref(0);
+const findController = ref(null); // PDF.js find controller instance
+
 
 // --- Rendering Logic ---
 
-/**
- * Renders a specific page onto a newly created canvas.
- * @param {number} pageNum The page number to render.
- */
-const renderPage = async (pageNum) => {
+const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
     if (!pdfDocument) return;
 
     const page = await pdfDocument.getPage(pageNum);
-    // Use the reactive currentScale for the viewport calculation
-    const viewport = page.getViewport({ scale: parseFloat(currentScale.value) });
+    const viewport = page.getViewport({ scale: parseFloat(scale) });
 
-    // 1. Check/Get Wrapper Element and Clear Existing Content (for re-render on zoom)
-    const pageWrapper = document.getElementById(`page-${pageNum}`);
+    const pageWrapper = document.getElementById(containerId);
     if (!pageWrapper) return;
 
-    // Important: Clear previous canvas/content before re-rendering
-    pageWrapper.innerHTML = `<p class="text-sm text-gray-500 mb-2">Page ${pageNum}</p>`;
+    // Clear previous content but preserve page label for main pages
+    if (!isThumbnail) {
+        pageWrapper.innerHTML = `<p class="text-sm text-gray-500 mb-2">Page ${pageNum}</p>`;
+    } else {
+        pageWrapper.innerHTML = ''; // Clear completely for thumbnails, label is outside
+    }
 
-    // 2. Create and Configure Canvas Element
+    // Create Canvas Element
     const canvas = document.createElement('canvas');
-    canvas.className = 'shadow-xl border border-gray-300 transition-all duration-300 ease-in-out mx-auto';
+    canvas.className = isThumbnail ? 'block w-full h-auto border border-gray-200' : 'shadow-xl border border-gray-300 transition-all duration-300 ease-in-out mx-auto';
     const context = canvas.getContext('2d');
 
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    // 3. Prepare Render Context
-    const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-    };
+    const renderContext = { canvasContext: context, viewport: viewport };
 
-    // 4. Render and Append
     await page.render(renderContext).promise;
     pageWrapper.appendChild(canvas);
+
+    // --- Text Layer for Main Pages (Required for Search) ---
+    if (!isThumbnail) {
+        const textContent = await page.getTextContent();
+        const textLayerDiv = document.createElement('div');
+        textLayerDiv.className = 'textLayer absolute top-0 left-0 right-0 bottom-0 overflow-hidden opacity-0'; // Hidden by default
+
+        // Set styles for text layer to match viewport
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+
+        pageWrapper.appendChild(textLayerDiv);
+
+        const textLayer = new TextLayerBuilder({
+            pdfPage: textContent,
+        });
+        // textLayer.setTextContent(textContent);
+        textLayer.render({
+            viewport
+        });
+    }
 };
 
-/**
- * Loads the PDF and initiates rendering for all pages.
- */
+const renderAllPages = async () => {
+    if (pdfDocument) {
+        for (let i = 1; i <= numPages.value; i++) {
+            await renderPage(i, `page-${i}`, currentScale.value, false);
+            if (showThumbnails.value) {
+                await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
+            }
+        }
+    }
+};
+
 const loadPDF = async () => {
+    loadingError.value = null;
+    pdfDocument = null;
+    numPages.value = 0;
+    currentPage.value = 1;
+    thumbnailCurrentPage.value = 1;
+    searchResults.value = [];
+    currentSearchResultIndex.value = 0;
+
+    // Clear previous content in containers
+    // if (pagesContainer.value) pagesContainer.value.innerHTML = '';
+
+
     try {
         const loadingTask = pdfjsLib.getDocument(props.pdfUrl);
         const pdf = await loadingTask.promise;
@@ -101,48 +244,281 @@ const loadPDF = async () => {
         pdfDocument = pdf;
         numPages.value = pdf.numPages;
 
-        // Initial render of all pages
+        // Wait for Vue to render the v-for elements before trying to append canvases
+        await nextTick();
         await renderAllPages();
+
+        const pageNum = Math.min(Math.max(1, parseInt(props.page)), numPages.value);
+        scrollToPage(pageNum, 'instant');
 
     } catch (error) {
         console.error('Error loading or rendering PDF:', error);
+        loadingError.value = error.message || 'Could not load the PDF document.';
     }
 };
 
-/**
- * Renders all pages based on the current scale.
- */
-const renderAllPages = async () => {
-    if (pdfDocument) {
-        // Render sequentially
-        for (let i = 1; i <= numPages.value; i++) {
-            await renderPage(i);
+// --- Navigation Functions (Scroll Logic) ---
+
+const scrollToPage = (pageNum, behavior = 'smooth') => {
+    if (pageNum < 1 || pageNum > numPages.value || !pagesContainer.value) return;
+
+    const pageElement = document.getElementById(`page-${pageNum}`);
+    const container = pagesContainer.value;
+
+    if (pageElement && container) {
+        const scrollPosition = pageElement.offsetTop - container.offsetTop;
+
+        container.scrollTo({
+            top: scrollPosition,
+            behavior: behavior,
+        });
+        currentPage.value = pageNum;
+        thumbnailCurrentPage.value = pageNum; // Sync thumbnail highlight
+    }
+};
+
+const goToNextPage = () => {
+    if (currentPage.value < numPages.value) {
+        scrollToPage(currentPage.value + 1);
+    }
+};
+
+const goToPrevPage = () => {
+    if (currentPage.value > 1) {
+        scrollToPage(currentPage.value - 1);
+    }
+};
+
+const updateZoom = async () => {
+    await renderAllPages();
+    // After re-render, scroll back to the current page
+    setTimeout(() => scrollToPage(currentPage.value, 'instant'), 50);
+};
+
+const updateCurrentPageOnScroll = () => {
+    const container = pagesContainer.value;
+    if (!container || numPages.value === 0) return;
+
+    const scrollThreshold = 50;
+    let foundPage = 1;
+
+    for (let i = 1; i <= numPages.value; i++) {
+        const pageElement = document.getElementById(`page-${i}`);
+        if (pageElement) {
+            const pageTopRelativeToContainer = pageElement.offsetTop - container.scrollTop;
+            if (pageTopRelativeToContainer <= scrollThreshold) {
+                foundPage = i;
+            } else {
+                break;
+            }
         }
     }
+    currentPage.value = foundPage;
+    thumbnailCurrentPage.value = foundPage; // Sync thumbnail highlight
 };
 
-// --- Zoom Function ---
+// --- Search Logic ---
+const clearHighlights = () => {
+    const highlightElements = pagesContainer.value.querySelectorAll('.highlight');
+    highlightElements.forEach(el => el.remove());
+};
 
-const updateZoom = () => {
-    // Trigger a full re-render when the zoom level changes
-    renderAllPages();
+const performSearch = async () => {
+    if (!searchTerm.value || !pdfDocument) {
+        searchResults.value = [];
+        currentSearchResultIndex.value = 0;
+        clearHighlights();
+        return;
+    }
+
+    clearHighlights();
+    searchResults.value = [];
+    currentSearchResultIndex.value = 0;
+
+    for (let pageNum = 1; pageNum <= numPages.value; pageNum++) {
+        const page = await pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const findMatches = [];
+
+        // Simple case-insensitive search
+        const regex = new RegExp(searchTerm.value, 'gi');
+
+        textContent.items.forEach(item => {
+            let match;
+            while ((match = regex.exec(item.str)) !== null) {
+                // We found a match in this text item
+                // For highlighting, we'll draw a div over the text item's position
+                findMatches.push({
+                    page: pageNum,
+                    transform: item.transform, // Matrix for position/scale
+                    width: item.width,
+                    height: item.height,
+                    offset: match.index, // Start of match within item.str
+                    length: match[0].length, // Length of the matched string
+                    textItem: item // Keep reference to original text item for more accurate highlighting
+                });
+            }
+        });
+        searchResults.value.push(...findMatches);
+    }
+
+    if (searchResults.value.length > 0) {
+        displaySearchResult(0);
+    } else {
+        alert('No results found.');
+    }
+};
+
+const displaySearchResult = (index) => {
+    if (searchResults.value.length === 0) return;
+
+    clearHighlights(); // Clear previous highlights before showing new one
+    currentSearchResultIndex.value = index;
+    const result = searchResults.value[index];
+
+    scrollToPage(result.page, 'smooth');
+
+    nextTick(async () => {
+        // Wait for scroll and page rendering to complete
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+
+        const pageWrapper = document.getElementById(`page-${result.page}`);
+        if (!pageWrapper) return;
+
+        // Get the current viewport for the page to correctly position highlights
+        const page = await pdfDocument.getPage(result.page);
+        const scaleValue = parseFloat(currentScale.value);
+        const viewport = page.getViewport({ scale: scaleValue });
+
+        // Create a highlight div
+        const highlightDiv = document.createElement('div');
+        highlightDiv.className = 'highlight absolute bg-yellow-300 opacity-70 rounded pointer-events-none z-20';
+
+        // PDF.js text item transform is [scaleX, skewY, skewX, scaleY, offsetX, offsetY]
+        // To get the actual position on the rendered canvas/div, we need to transform.
+        // This is simplified and might need adjustment for perfect alignment
+        const textItemTransform = result.textItem.transform;
+        const itemX = textItemTransform[4];
+        const itemY = textItemTransform[5];
+        const itemWidth = result.textItem.width;
+        const itemHeight = result.textItem.height;
+
+        // Adjust for the matched portion if the text item is longer than the match
+        const charWidth = itemWidth / result.textItem.str.length;
+        const matchStartX = itemX + (result.offset * charWidth);
+        const matchWidth = result.length * charWidth;
+
+        // Apply viewport scale and position
+        highlightDiv.style.left = `${matchStartX * scaleValue}px`;
+        highlightDiv.style.top = `${(viewport.height - itemY - itemHeight) * scaleValue}px`; // PDF Y-coordinates are inverted
+        highlightDiv.style.width = `${matchWidth * scaleValue}px`;
+        highlightDiv.style.height = `${itemHeight * scaleValue}px`;
+
+        pageWrapper.appendChild(highlightDiv);
+        highlightDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll highlight into view
+    });
+};
+
+const navigateSearchResult = (direction) => {
+    let newIndex = currentSearchResultIndex.value + direction;
+    if (newIndex >= 0 && newIndex < searchResults.value.length) {
+        displaySearchResult(newIndex);
+    }
 };
 
 
-// --- Initialization ---
+// --- Lifecycle and Watchers ---
 
 onMounted(() => {
     loadPDF();
+});
 
-    if (props.page) {
-        const pageElement = document.getElementById(`page-${props.page}`);
-        if (pageElement) {
-            pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// Re-render thumbnails if showThumbnails changes (only applies if PDF is already loaded)
+watch(showThumbnails, async (newValue) => {
+    if (newValue && pdfDocument && numPages.value > 0) {
+        await nextTick(); // Ensure the thumbnail divs are in the DOM
+        for (let i = 1; i <= numPages.value; i++) {
+            await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
         }
     }
 });
 </script>
 
 <style scoped>
-/* No scoped styles needed as Tailwind handles everything, but keep it for structure */
+/* Scoped styles for .textLayer and .highlight */
+
+/* Base styles for the TextLayer (from pdf.viewer.css, but customized for visibility) */
+.textLayer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.2;
+    /* Make it slightly visible for debugging, or 0 for hidden */
+    line-height: 1;
+    font-family: sans-serif;
+    user-select: text;
+    /* Allow text selection */
+    -webkit-user-select: text;
+    -moz-user-select: text;
+}
+
+.textLayer>div {
+    color: transparent;
+    /* Hide the actual text but keep its structure */
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+}
+
+/* Highlight style for search results */
+.highlight {
+    position: absolute;
+    background-color: #f7e75e;
+    /* Yellow highlight */
+    opacity: 0.6;
+    border-radius: 2px;
+    pointer-events: none;
+    /* Allows interaction with elements beneath */
+    z-index: 20;
+}
+
+/* Highlight style for currently active search result */
+.highlight.current {
+    background-color: #ff9600;
+    /* Orange for active highlight */
+}
+
+/* Add some basic styles for the thumbnail wrapper */
+.thumbnail-wrapper {
+    border: 1px solid #e2e8f0;
+}
+
+.thumbnail-wrapper.bg-blue-100 {
+    background-color: #eff6ff;
+    /* Tailwind blue-100 */
+}
+
+.thumbnail-wrapper.ring-2 {
+    --tw-ring-color: #3b82f6;
+    /* Tailwind blue-500 */
+}
+
+.thumbnail-canvas-container {
+    /* Ensure canvas is centered within its div */
+    min-height: 50px;
+    /* Placeholder height if canvas not loaded yet */
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.thumbnail-canvas-container canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    /* Remove extra space below canvas */
+}
 </style>

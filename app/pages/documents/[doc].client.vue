@@ -60,15 +60,10 @@ onMounted(async () => {
 
 <template>
   <ClientOnly>
-    <div class="p-4 h-screen">
-      <!-- <h1 class="text-3xl font-bold mb-6">{{ filename }} 📄</h1> -->
+    <div class="h-[calc(100%-20px)]">
+      <USkeleton v-if="isFetching" class="w-full h-[700px]" />
 
-      <div class="h-[calc(100%-20px)]">
-        <USkeleton v-if="isFetching" class="w-full h-[700px]" />
-
-        <PdfViewer v-else :pdf-url="pdfSource" :page="page" />
-      </div>
-
+      <PdfViewer v-else :pdf-url="pdfSource" :page="page" />
     </div>
   </ClientOnly>
 </template>
