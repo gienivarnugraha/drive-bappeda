@@ -2,45 +2,44 @@
 // Define data for the Features section
 const features = [
   {
-    icon: 'i-heroicons-chat-bubble-left-right-20-solid',
-    title: 'Instant Responses',
-    description: 'Our AI chatbot provides immediate answers to user queries, reducing wait times and improving satisfaction.',
+    icon: 'i-heroicons-folder-open-20-solid',
+    title: 'Integrated File Management',
+    description: 'Centralize and organize all your regional development documents, reports, and data files securely.',
     color: 'primary'
   },
   {
-    icon: 'i-heroicons-cog-6-tooth-20-solid',
-    title: 'Customizable Workflows',
-    description: 'Tailor the chatbot\'s responses and conversational flows to perfectly match your brand and specific needs.',
-    color: 'orange'
-  },
-  {
-    icon: 'i-heroicons-chart-bar-20-solid',
-    title: 'Actionable Insights',
-    description: 'Gain valuable data on user interactions, popular questions, and areas for improvement with built-in analytics.',
+    icon: 'i-heroicons-chat-bubble-left-right-20-solid',
+    title: 'Chatbot for PDF Interaction',
+    description: 'Instantly get answers and insights by querying your PDF documents through an intelligent chatbot.',
     color: 'emerald'
   },
   {
-    icon: 'i-heroicons-user-group-20-solid',
-    title: '24/7 Availability',
-    description: 'Ensure your customers always have support, day or night, without the need for human intervention.',
+    icon: 'i-heroicons-magnifying-glass-20-solid',
+    title: 'Advanced Data Search',
+    description: 'Quickly find specific information across vast datasets with powerful search and filtering capabilities.',
+    color: 'orange'
+  },
+  {
+    icon: 'i-heroicons-cloud-arrow-up-20-solid',
+    title: 'Secure Data Ingestion',
+    description: 'Safely upload and integrate diverse data sources into the datalake for comprehensive analysis.',
     color: 'purple'
   }
 ]
 
 // Define data for the CTA section
 const cta = {
-  title: 'Ready to Transform Your Customer Support?',
-  description: 'Experience the power of AI-driven conversations. Try our chatbot today and see the difference.',
-  buttonText: 'Try Our Chatbot Now',
-  buttonLink: '#' // Link to your chatbot application or sign-up
+  title: 'Empower Your Regional Development with Data',
+  description: 'Unlock the full potential of your BAPPEDA data. Explore our Datalake and PDF Chatbot today.',
+  buttonText: 'Explore the Datalake',
+  buttonLink: '#' // Link to your datalake application or demo
 }
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col">
     <UContainer>
-      <UHeader
-        :links="[{ label: 'Features', to: '#features' }, { label: 'Pricing', to: '#' }, { label: 'Contact', to: '#' }]">
+      <UHeader :toggle="false">
         <template #left>
           <Logo />
         </template>

@@ -30,6 +30,21 @@ export const stringToNumberArray = (input: string[] | string): number[] | null =
   return filteredArray
 }
 
+/**
+ * Sanitizes a URL by removing double slashes, but preserves the ones in the protocol (e.g., "http://").
+ * @param {string} url The URL to sanitize.
+ * @returns {string} The sanitized URL.
+ */
+export function sanitizeUrl(url: string): string {
+  if (!url) {
+    return url
+  }
+  // Replace multiple slashes with a single slash, but not after a colon (to preserve http://).
+  // This uses a negative lookbehind `(?<!:)` to ensure the slashes are not preceded by a colon.
+  return url.replace(/(?<!:)\/{2,}/g, '/')
+}
+
+
 export function toTitleCase(str: string): string {
   // The regex \w\S* matches:
   // \w - one word character (like 'h' or 'W')
@@ -39,7 +54,7 @@ export function toTitleCase(str: string): string {
     const firstChar = txt.charAt(0).toUpperCase()
 
     // 2. Take the rest of the string (substr(1)) and leave it AS IS.
-    const restOfString = txt.substr(1)
+    const restOfString = txt.substring(1)
 
     return firstChar + restOfString
   })

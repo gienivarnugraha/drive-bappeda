@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { formatBytes, dateToLocale } from '#imports'
+import { formatBytes, dateToLocale, sanitizeUrl } from '~/utils'
 import type { DocumentMetadata, FilteredData, Results } from '~/types'
 
 const props = defineProps({
@@ -29,7 +29,7 @@ const config = useRuntimeConfig()
 
 const documentPath = config.public.documentPath
 
-const thumbnail = (item: DocumentMetadata) => new URL(`${documentPath}/${item.thumbnailSrc}`).href
+const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`${documentPath}/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {
   if (selected.value?.id === data.id) {
@@ -55,7 +55,7 @@ const selectDocument = (data: Results) => {
               <p class="text-gray text-xs"> Nama File: {{ clampCharacters(item.filename) }} </p>
               <UTooltip :text="`Buka ${item.filename}`">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
-                  :to="`/documents/${item.filename}?page=3`" />
+                  :to="`/show?filename=${item.filename}&page=3`" />
 
               </UTooltip>
             </div>

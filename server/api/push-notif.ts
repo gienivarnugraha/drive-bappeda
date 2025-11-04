@@ -12,8 +12,6 @@ export default eventHandler(async (event) => {
   clients.push(event.node.req)
 
   sseEvent.on('push:notif', (data) => {
-    console.log('SSE send event:', data)
-
     event.node.res.write(`data: ${JSON.stringify(data)}\n\n`)
     event.node.res.flushHeaders()
   })

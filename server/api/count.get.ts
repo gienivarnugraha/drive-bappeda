@@ -5,8 +5,6 @@ export default eventHandler(async (event) => {
     .from('documents')
     .select('*', { count: 'exact', head: true })
 
-  console.log('count: ', count)
-
   if (error) {
     console.error('error fetching categories', error)
 

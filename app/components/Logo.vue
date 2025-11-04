@@ -3,8 +3,8 @@
     <img src="/icon.png" class="h-10 w-auto shrink-0">
 
     <div v-if="!collapsed" class="grid grid-rows-2 gap-2 ml-2">
-      <span class="text-md leading-2 font-bold tracking-widest">DATA WAREHOUSE</span>
-      <span class="text-md leading-2 font-light">BAPPEDA Kota Semarang</span>
+      <span class="text-xs md:text-md leading-2 font-bold tracking-widest">DATA WAREHOUSE</span>
+      <span class="text-xs md:text-md leading-2 font-light">BAPPEDA Kota Semarang</span>
     </div>
   </div>
 </template>

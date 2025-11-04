@@ -11,6 +11,8 @@ export default eventHandler(async (event) => {
     throw new Error('No files uploaded.')
   }
 
+  console.log('set item', formData)
+
   sseSend('push:notif', { message: 'File upload started', status: 'info' })
 
   const filenames: string[] = []
@@ -39,8 +41,6 @@ export default eventHandler(async (event) => {
       sseSend('push:notif', { message: `file exists in storage... ${clampCharacters(filename)}`, status: 'info' })
     } else {
       const data = await storage.setItemRaw(filename, file.data)
-
-      console.log(data)
 
       if (file.name === 'file') {
         filenames.push(filename)

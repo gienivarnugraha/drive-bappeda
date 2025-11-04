@@ -496,7 +496,7 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 }
 
 const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
-  sseSend('push:notif', { message: `getting meta data... ${filePath}`, status: 'info' })
+  sseSend('push:notif', { message: `getting meta data... ${clampCharacters(filePath)}`, status: 'info' })
 
   const url = new URL(filePath)
   const pathname = url.pathname.slice(1)

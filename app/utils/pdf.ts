@@ -1,7 +1,7 @@
 export const generateThumbnail = async (data: Uint8Array) => {
-  const pdfjsLib = await import('pdfjs-dist')
-
   try {
+    const pdfjsLib = await import('pdfjs-dist')
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
     const worker = new pdfjsLib.PDFWorker()

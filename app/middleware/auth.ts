@@ -3,17 +3,23 @@ import { useUser } from '#imports'
 import { useStorage } from '@vueuse/core'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
+  if (import.meta.server) {
+    return
+  }
+
   console.log('middleware called')
-  const user = useUser()
+  const { isAuthenticated } = await useUser()
 
-  console.log('user in middleware', user)
+  console.log('user in middleware: ', isAuthenticated.value)
 
-  // const user = await supabase.auth.getUser()
-  // console.log(user)
-  //  const user = useSupabaseUser()
-
-  // if (!user.value) {
-  //   return navigateTo('/login')
-  // }
-  return
+  if (isAuthenticated.value) {
+    // if (to.path === '/login' || to.path === '/') {
+    //   return navigateTo('/home')
+    // } else {
+    //   return
+    // }
+    return
+  } else {
+    return navigateTo('/login')
+  }
 })

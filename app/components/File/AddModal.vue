@@ -46,7 +46,9 @@ async function upload(files: File[]) {
   files.forEach((file, index) => {
     formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
 
-    if (thumbnails.value) {
+    console.log(thumbnails.value.length)
+
+    if (thumbnails.value.length > 0) {
       // @ts-ignore
       formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`)
     }
@@ -85,6 +87,7 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
 }
 
 const onChange = () => {
+  console.log('file changed')
   const shouldGenerateThumbnails = ['application/pdf']
 
   state.files?.forEach((file) => {
@@ -103,6 +106,8 @@ const onChange = () => {
       })
     }
   })
+
+  console.log('thumbnails:', thumbnails.value.length)
 }
 
 let eventSource: EventSource | null = null
