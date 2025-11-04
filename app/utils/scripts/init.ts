@@ -31,11 +31,30 @@ import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
 import type { StorageMeta } from 'unstorage'
 import { clampCharacters } from '~/utils'
+import { file } from 'zod/v4'
 
 const model = getModel('google')
 const documentPath = process.env.DOCUMENT_PATH as string
 
-const documentWhiteList = ['.md', '.docx', '.csv', '.txt', '.pdf']
+const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
+
+const MIME_TYPE_MAP: { [key: string]: string } = {
+  // --- DOCUMENTS & TEXT ---
+  '.txt': 'text/plain',
+  '.pdf': 'application/pdf',
+  '.csv': 'text/csv',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+
+  // --- IMAGES ---
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+};
 
 const idKey = 'doc_id'
 
@@ -147,7 +166,7 @@ const listDocuments = (folderPath: string): Promise<string[]> => {
 
       files
         .filter(file =>
-          documentWhiteList.includes(extname(file).toLowerCase())
+          ALLOWED_TYPES.includes(extname(file).toLowerCase())
         )
         .map(file => join(folderPath, file))
         .forEach(file => result.push(file))
@@ -500,14 +519,15 @@ const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
 
   const url = new URL(filePath)
   const pathname = url.pathname.slice(1)
+  const extension = extname(filePath) as string
+  const fileType = MIME_TYPE_MAP[extension] as string
 
   return {
     filename: pathname as string,
-    extension: extname(filePath),
+    extension,
+    fileType,
     thumbnailSrc: `${sanitizeFileName(pathname)}.png`,
     fileSize: meta.size as number,
-    createdAt: meta.mtime as Date,
-    uploadedAt: meta.uploadedAt as Date
   }
 }
 

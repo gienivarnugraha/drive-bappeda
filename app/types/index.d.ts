@@ -47,8 +47,7 @@ export interface DocumentMetadata {
   extension: string
   fileSize: number
   fileId: string
-  uploadedAt: date
-  createdAt: date
+  fileType: string
 }
 
 

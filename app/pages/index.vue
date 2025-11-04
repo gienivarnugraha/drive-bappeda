@@ -71,7 +71,7 @@ const cta = {
           </div>
 
           <div
-            class="mt-16 relative aspect-video md:aspect-2/1 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8">
+            class="mt-16 relative aspect-video md:aspect-2/1 bg-gray-200 dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8">
             <UIcon name="i-heroicons-computer-desktop-20-solid"
               class="text-primary-400 text-9xl absolute inset-0 m-auto opacity-10" />
             <div class="relative z-10 text-gray-500 dark:text-gray-400 text-lg">

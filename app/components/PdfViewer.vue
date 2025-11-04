@@ -2,9 +2,9 @@
     <UDashboardGroup unit="rem">
         <UDashboardSidebar id="default" v-model:open="showThumbnails" collapsible class="bg-elevated/25 min-h-full "
             :collapsed-size="0" :default-size="10" :ui="{
-            header: 'lg:border-b lg:border-default h-auto',
-            footer: 'lg:border-t lg:border-default'
-        }">
+                header: 'lg:border-b lg:border-default h-auto',
+                footer: 'lg:border-t lg:border-default'
+            }">
             <template #header="{ collapsed }">
                 <Logo :collapsed="collapsed" />
             </template>
@@ -14,9 +14,9 @@
                     :class="{ 'border-r border-gray-200': !collapsed }">
                     <h3 class="font-bold text-lg text-gray-800 mb-3">Thumbnails</h3>
                     <div v-for="n in numPages" :key="`thumb-${n}`" :class="[
-            'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
-            { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
-        ]" @click="scrollToPage(n)">
+                        'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
+                        { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
+                    ]" @click="scrollToPage(n)">
                         <p class="text-xs text-gray-500 mb-1">Page {{ n }}</p>
                         <div :id="`thumbnail-canvas-${n}`"
                             class="thumbnail-canvas-container flex justify-center items-center">
@@ -60,9 +60,8 @@
                     </template>
 
                     <template #trailing>
-                        <p class="">
+                        <p v-if="smAndLarger" class="">
                             {{ clampCharacters(filename, smAndLarger ? 25 : 10) }}
-
                         </p>
                     </template>
 
