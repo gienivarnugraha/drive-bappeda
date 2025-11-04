@@ -90,8 +90,8 @@
                         <UFieldGroup v-if="smAndLarger">
                             <UButton icon="i-lucide-zoom-in" @click="zoom('in')" :disabled="currentScale === '2.0'"
                                 variant="ghost" />
-                            <USelect v-model="currentScale" :options="zoomOptions" @change="updateZoom" size="sm"
-                                class="w-16" variant="ghost" />
+                            <USelect v-model="currentScale" :items="zoomOptions" @change="updateZoom" size="sm"
+                                class="w-16" variant="ghost" :ui="{ content: 'min-w-fit' }" />
                             <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'" @click="zoom('out')"
                                 variant="ghost" />
                         </UFieldGroup>

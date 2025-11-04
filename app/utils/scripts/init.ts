@@ -31,7 +31,6 @@ import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
 import type { StorageMeta } from 'unstorage'
 import { clampCharacters } from '~/utils'
-import { file } from 'zod/v4'
 
 const model = getModel('google')
 const documentPath = process.env.DOCUMENT_PATH as string
@@ -57,33 +56,6 @@ const MIME_TYPE_MAP: { [key: string]: string } = {
 };
 
 const idKey = 'doc_id'
-
-const convertToMarkdown = async (command: string) => {
-  const sourceDirectory = './pdfs_to_convert'
-  const pythonScript = 'markdown.py'
-
-  const scriptPath = join(__dirname, pythonScript)
-
-  // Pass the source and output directories as arguments
-  const pythonProcess = spawn('python', [scriptPath, sourceDirectory])
-
-  pythonProcess.stdout.on('data', (data) => {
-    sseSend('push:notif', { message: `Python stdout: ${data}`, status: 'info' })
-  })
-
-  pythonProcess.stderr.on('data', (data) => {
-    console.error(`Python stderr: ${data}`)
-  })
-
-  pythonProcess.on('close', (code) => {
-    sseSend('push:notif', { message: `Python process exited with code ${code}`, status: 'info' })
-    if (code !== 0) {
-      console.error('PDF conversion failed.')
-    } else {
-      sseSend('push:notif', { message: 'PDF conversion completed successfully.', status: 'info' })
-    }
-  })
-}
 
 const createTable = async () => {
   // const sql = postgres(process.env.SUPABASE_PG_URL as string, {
@@ -499,15 +471,15 @@ export const setVectorStore = async (filepath: string, documentData: { category_
 
     await storeToDB(docs.slice(0, 5), data)
 
-    // const summaries = await generateSummaries(docs, ids, filepath)
+    const summaries = await getDocumentSummary(docs, ids)
 
-    // if (summaries) {
-    //     sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
+    if (summaries) {
+      sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
 
-    //     await vectorstore.addDocuments(summaries);
-    // } else {
-    //     sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
-    // }
+      await vectorstore.addDocuments(summaries);
+    } else {
+      sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
+    }
   }
   sseSend('push:notif', { message: `success adding to vector store... ${clampCharacters(filename)}`, status: 'success' })
 
@@ -551,9 +523,9 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
 
-            - Summarize in indonesian language the following document with no more than 5 sentence
+            - Summarize in indonesian language the following document
             - Give context with no more than 5 words what is it about based on the content,
-            - and provide additional information from metadata like the title of the document, filename information
+            - and provide additional information from metadata like the title of the document, filename information, page range and line range
 
             Content:
             {content}
@@ -561,9 +533,9 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
   const content = formatDocumentsAsString(doc)
 
-  // const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
-  const title = 'test title'
-  const summary = 'test summary'
+  const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
+  // const title = 'test title'
+  // const summary = 'test summary'
 
   const { data: docResponse, error: docerror } = await supabase
     .from('documents')

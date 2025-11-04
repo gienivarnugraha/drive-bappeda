@@ -19,6 +19,11 @@ export default defineEventHandler(async (event) => {
     controller.abort()
   })
 
+  event.node.res.on('aborted', () => {
+    console.log('response aborted')
+    controller.abort()
+  })
+
   try {
     // @ts-ignore
     // const response = await generateAnwserFromDB()
@@ -49,7 +54,9 @@ export default defineEventHandler(async (event) => {
     // });
 
     // return readable
-    const answer = await response.invoke(question, { signal })
+    const answer = await response.invoke(question, { signal, configurable: { sessionId: uuid } })
+
+    console.log(answer, uuid)
 
     return {
       type: 'text',

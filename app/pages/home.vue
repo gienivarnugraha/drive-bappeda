@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '~/types'
 import { toTitleCase, clampCharacters } from '#imports'
+import type { SelectItem } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'home',
@@ -15,7 +16,7 @@ const selectedDivision = ref<number[]>([])
 
 const selected: Ref<Results | undefined> = ref(undefined)
 
-const perPage: Ref<number> = ref(10)
+const perPage: Ref<number> = ref(3)
 
 const layoutView: Ref<'grid' | 'table'> = ref('grid')
 
@@ -23,15 +24,19 @@ const page: Ref<number> = ref(1)
 
 const count: Ref<number> = ref(0)
 
+const orderOptions: Ref<SelectItem[]> = ref([
+  { label: 'ID', value: 'id' },
+  { label: 'Tanggal', value: 'created_at' },
+  { label: 'Nama File', value: 'filename' },
+  { label: 'Judul', value: 'title' },
+])
+
+const orderBy = ref('id')
+
+const orderDir: Ref<'asc' | 'desc'> = ref('desc')
+
 // const documentData: Ref<Results[]> = ref([])
 
-callOnce(async () => {
-  const response = await $fetch<number>('/api/count')
-
-  if (response) {
-    count.value = response
-  }
-})
 
 const { data: documentData, pending: documentPending, execute } = await useAsyncData<{ data: Results[] }>('documents', () =>
   $fetch<{ data: Results[] }>('/api/documents',
@@ -40,11 +45,13 @@ const { data: documentData, pending: documentPending, execute } = await useAsync
         perPage: perPage.value,
         page: page.value,
         category: selectedCategory.value,
-        division: selectedDivision.value
+        division: selectedDivision.value,
+        orderBy: orderBy.value,
+        orderDir: orderDir.value
       }
     }),
   {
-    watch: [selectedCategory, selectedDivision, perPage, page]
+    watch: [selectedCategory, selectedDivision, perPage, page, orderBy, orderDir]
   }
 )
 
@@ -55,7 +62,7 @@ const showMoreCategories: Ref<boolean> = ref(false)
 
 const showAvailableCategories: ComputedRef<Category[]> = computed(() => showMoreCategories.value ? availableCategories.value : availableCategories.value.slice(0, 5))
 
-onMounted(() => {
+onMounted(async () => {
   if (availableCategories.value) {
     availableCategories.value = deepClone(categories.value)
     availableCategories.value.unshift({ id: 0, name: 'Semua Kategori' })
@@ -65,6 +72,10 @@ onMounted(() => {
     availableDivisions.value = deepClone(divisions.value)
     availableDivisions.value.unshift({ id: 0, name: 'Semua Bidang' })
   }
+
+  const countResponse = await $fetch<number>('/api/count')
+  count.value = countResponse
+  console.log(count.value)
 })
 
 const documentUpdated = async () => {
@@ -122,8 +133,14 @@ const documentUpdated = async () => {
         <div class="flex flex-row justify-between items-center">
           <div class="flex flex-row space-x-2">
             <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
-            <UPagination v-model:page="page" :total="count" />
-            <UInputMenu v-model="perPage" class="max-w-16" :items="[10, 25, 50, 75]" label="Per halaman" />
+            <UPagination v-model:page="page" :total="count" :items-per-page="perPage" />
+            <USelect v-model="perPage" class="max-w-16" :items="[3, 10, 25, 50, 75]" label="Per halaman" />
+            <UFieldGroup>
+              <USelect v-model="orderBy" :items="orderOptions" :ui="{ content: 'min-w-fit' }" />
+              <UButton :icon="orderDir === 'asc' ? 'i-lucide-arrow-up-a-z' : 'i-lucide-arrow-down-z-a'"
+                @click="orderDir = orderDir === 'asc' ? 'desc' : 'asc'"></UButton>
+
+            </UFieldGroup>
           </div>
           <div class="flex flex-row space-x-2">
             <UButton icon="i-lucide-layout-grid" :variant="layoutView === 'grid' ? 'subtle' : 'ghost'"
@@ -133,7 +150,7 @@ const documentUpdated = async () => {
           </div>
         </div>
 
-        <div v-if="documentPending" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div v-if="documentPending" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
           <USkeleton v-for="value in 6" class="h-24 w-full" />
         </div>
 

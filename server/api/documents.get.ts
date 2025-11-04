@@ -3,10 +3,21 @@ import { stringToNumberArray } from '~/utils'
 import { inspect } from 'node:util'
 import supabase from '~/utils/supabase'
 
-export default defineEventHandler(async (event) => {
-  const query = getQuery<{ category: string[], division: string[], search: string, perPage: string, page: string }>(event)
+type Schema = {
+  category: string[]
+  division: string[]
+  search: string
+  perPage: string
+  page: string
+  orderBy: string
+  orderDir: string
 
-  const { category, division, perPage, page } = query
+}
+
+export default defineEventHandler(async (event) => {
+  const query = getQuery<Schema>(event)
+
+  const { category, division, perPage, page, orderBy, orderDir } = query
 
   console.log('documents query:', query)
 
@@ -14,7 +25,9 @@ export default defineEventHandler(async (event) => {
     filter_category_ids: stringToNumberArray(category),
     filter_division_ids: stringToNumberArray(division),
     page_size: parseInt(perPage),
-    page_number: parseInt(page)
+    page_number: parseInt(page),
+    order_by_column: orderBy,
+    order_direction: orderDir,
   })
 
   const { data: response, error } = await request

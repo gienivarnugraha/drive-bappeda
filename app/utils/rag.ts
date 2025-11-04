@@ -5,7 +5,6 @@ import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } fro
 import { formatDocumentsAsString } from 'langchain/util/document'
 import { getVectorStore, getModel } from './ai'
 import { MultiQueryRetriever } from 'langchain/retrievers/multi_query'
-import z from 'zod'
 
 const messageHistories: { [sessionId: string]: ChatMessageHistory } = {}
 
@@ -55,7 +54,7 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
     if you are not sure with the answer, you can ask the user again to confirm the question
 
     - Return the answer with markdown format
-    - Return the source of information at the end of the answer like document file name or location
+    - Always attach source of information at the end of the answer like document file name, page number, and line location in markdown link with url format: ${process.env.BASE_URL}/show?filename=document-filename&page=page-number&line=line-number as markdown link
     - if the context contains a table, add the answer format as table in Markdown use title case for heading in new line
     - if the context contains a formula, add the answer format as formula in Markdown katex in new line
     - if the context contains a list, add the answer format as Markdown lists in new line
@@ -83,42 +82,6 @@ const answerPrompt = ChatPromptTemplate.fromMessages([
 export function generateAnswerFromDocument() {
   const model = getModel('google')
 
-  // Use z.discriminatedUnion for the best performance and type inference in TypeScript
-  const OutputSchema = z.array(z.discriminatedUnion('type', [
-    z.object({
-      type: z.literal('text'),
-      text: z.string()
-    }).describe('text answer'),
-    z.object({
-      type: z.literal('image'),
-      src: z.string().url() // Assuming src should be a URL
-    }).describe('display image attachment'),
-    z.object({
-      type: z.literal('chart'),
-      data: z.object({
-        value: z.array(z.number()),
-        label: z.array(z.string())
-      })
-    }).describe('display chart attachment'),
-    z.object({
-      type: z.literal('formula'),
-      name: z.string(),
-      formula: z.string()
-    }).describe('display formula attachment'),
-    z.object({
-      type: z.literal('start')
-    }).describe('start of conversation'),
-    z.object({
-      type: z.literal('end')
-    }).describe('end of conversation')
-  ])
-  )
-
-  const schema = z.object({
-    type: z.enum(['text', 'chart', 'formula']),
-    text: z.string().describe('provide answer')
-  })
-
   const answerChain = RunnableSequence.from([
     {
       question: new RunnablePassthrough()
@@ -135,11 +98,11 @@ export function generateAnswerFromDocument() {
   return answerChain
 
   // const finalRetrievalChain = new RunnableWithMessageHistory({
-  //     runnable: answerChain,
-  //     getMessageHistory: getMessageHistoryForSession,
-  //     inputMessagesKey: "question",
-  //     historyMessagesKey: "history",
-  // }).pipe(new StringOutputParser())
+  //   runnable: answerChain,
+  //   getMessageHistory: getMessageHistoryForSession,
+  //   inputMessagesKey: "question",
+  //   historyMessagesKey: "history",
+  // })
 
   // return finalRetrievalChain;
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '~/types'
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import type { TableColumn, DropdownMenuItem, TableRow } from '@nuxt/ui'
 import type { ColumnDef } from '@tanstack/vue-table'
 import { h, resolveComponent } from 'vue'
 
@@ -12,6 +12,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const emits = defineEmits(['update:modelValue'])
 
 const columns: TableColumn<Results>[] = [
   {
@@ -26,7 +28,6 @@ const columns: TableColumn<Results>[] = [
     accessorKey: 'metadata',
     header: 'Ukuran',
     cell: ({ row }) => {
-      console.log(row);
       return formatBytes(row.original.metadata.fileSize || 0)
     }
   },
@@ -92,6 +93,11 @@ const splitItems = (items: Category[] | Division[], limit: number = 1) => {
   return { shouldSplit, restItems, beginningItems };
 };
 
+function onSelect(e: Event, row: TableRow<Results>) {
+  emits('update:modelValue', row.original as Results)
+}
+
+
 onMounted(() => {
   if (props.document) {
     state.value = props.document
@@ -101,8 +107,9 @@ onMounted(() => {
 
 <template>
   <div class="grid grid-cols-1">
-    <UTable :data="state" :columns="columns" :ui="{ separator: 'divide-y divide-gray-200 dark:divide-gray-800' }"
-      :empty-state="{ icon: 'i-lucide-file-text', label: 'No files.' }">
+    <UTable :data="state" :columns="columns" @select="onSelect" :ui="{
+      separator: 'divide-y divide-gray-200 dark:divide-gray-800'
+    }" :empty-state="{ icon: 'i-lucide-file-text', label: 'No files.' }">
 
       <template #title-cell="{ row }">
         <UTooltip :text="row.getValue('title')">

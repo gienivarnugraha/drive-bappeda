@@ -2,7 +2,7 @@
 import { useItems } from '~/composables/useItems'
 import type { Category } from '~/types'
 
-defineProps({
+const props = defineProps({
   edit: {
     type: Boolean,
     default: false,
@@ -32,9 +32,9 @@ const watcher = watch(category_id, (newVal) => {
 //     category_id.value = data.map((category: Category) => category.id)
 // }
 
-// onMounted(() => {
-//     setData(props.modelValue)
-// })
+onMounted(() => {
+  console.log(props.modelValue)
+})
 
 onUnmounted(() => {
   watcher()

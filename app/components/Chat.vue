@@ -23,36 +23,7 @@ type ChatMessage = {
 const messages = ref<ChatMessage[]>([])
 
 onMounted(() => {
-  messages.value.push(
-    {
-      id: uuid(),
-      role: 'user',
-      parts: [
-        {
-          type: 'text',
-          text: 'Hello AI!'
 
-        },
-        {
-          type: 'text',
-          text: 'How are you today?'
-
-        }
-      ]
-
-    },
-    {
-      id: uuid(),
-      role: 'assistant',
-      parts: [
-        {
-          type: 'text',
-          text: '##Hello, Im Fine'
-
-        }
-      ]
-    }
-  )
 })
 
 let controller: AbortController | null = null
@@ -64,11 +35,11 @@ const exampleMessage: string[] = [
 
 const submitExampleMessage = (e: Event) => {
   question.value = (e.target as HTMLButtonElement)?.value || ''
-  handleSubmit(e)
+  handleSubmit()
 }
 
-const handleSubmit = async (e: Event) => {
-  e.preventDefault()
+const handleSubmit = async () => {
+  // e.preventDefault()
   status.value = 'submitted'
 
   // Create new controller for this request
@@ -103,9 +74,8 @@ const handleSubmit = async (e: Event) => {
       text: await markdownToHtml(text)
     })
 
-    console.log(messages.value[lastMessageIndex])
   } catch (error: any) {
-    if (error.name === 'AbortError') {
+    if (error === 'AbortError') {
       console.log('Request aborted')
     } else {
       console.error(error)
@@ -120,10 +90,12 @@ const handleSubmit = async (e: Event) => {
   }
 }
 
-const abortRequest = (e: Event) => {
-  console.log('aborted:', e)
+const abortRequest = () => {
   if (controller) {
     controller.abort()
+
+    console.log(question.value)
+
     status.value = 'ready'
   }
 }
@@ -161,7 +133,13 @@ onUnmounted(() => {
 
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
-    <UChatMessages :messages="messages" :status="status" :stop="abortRequest" :user="{
+    <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
+      side: 'left',
+      variant: 'outline',
+      avatar: {
+        icon: 'i-lucide-bot'
+      },
+    }" :user="{
       side: 'left',
       variant: 'solid',
       avatar: {
@@ -181,7 +159,7 @@ onUnmounted(() => {
     </div>
 
     <UChatPrompt v-model="question" @submit="handleSubmit">
-      <UChatPromptSubmit :status="status" />
+      <UChatPromptSubmit :status="status" @stop="abortRequest" @reload="handleSubmit" />
     </UChatPrompt>
   </div>
 </template>
