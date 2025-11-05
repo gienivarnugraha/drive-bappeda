@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getPdfData } from '#imports'
+
 const route = useRoute()
 
 const filename = route.query.filename
@@ -10,48 +12,23 @@ const config = useRuntimeConfig()
 const documentPath = config.public.documentPath
 
 // https://hwhq1hnvu4gvftjq.public.blob.vercel-storage.com/1685513328242-laporan-akhir---kajian-kebijakan-pemerintah-kota-semarang-dalam-pengembangan-ekonomi-kreatif.jpg
-const pdfSource = `${documentPath}/${filename}`
+const pdfUrl = `${documentPath}/${filename}`
 
-console.log(filename, pdfSource, page)
+console.log(filename, pdfUrl, page)
 
 let pdf: Ref<string> = ref('')
 
 const isFetching = ref(true)
 
-async function getPdfData(url: string) {
+onMounted(async () => {
     isFetching.value = true
     try {
-        const response = await fetch(url);
-
-        // 1. Check for success status
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // 2. Get the response body as a Blob (binary data)
-        const pdfBlob = await response.blob();
-
-        // 3. Create a local URL for the Blob object
-        const blobUrl = URL.createObjectURL(pdfBlob);
-
-        pdf.value = blobUrl as string
-
-        // You can now use the blobUrl to set the src of an <iframe> or a <embed> tag:
-        // document.getElementById('pdf-viewer').src = blobUrl;
-
-        return blobUrl;
-
+        pdf.value = await getPdfData(pdfUrl) as string
     } catch (error) {
-        console.error('Failed to fetch PDF due to CORS or network error:', error);
-        // You might want to fall back to opening the link directly here
-        return null;
+        console.log(error)
     } finally {
         isFetching.value = false
     }
-}
-
-onMounted(async () => {
-    await getPdfData(pdfSource)
 })
 
 // either URL, Base64, binary, or document proxy
@@ -62,7 +39,7 @@ onMounted(async () => {
         <div class="h-[calc(100%-20px)]">
             <USkeleton v-if="isFetching" class="w-full h-[700px]" />
 
-            <PdfViewer v-else :pdf-url="pdfSource" :page="page" />
+            <PdfViewer v-else :pdf-url="pdfUrl" :page="page" />
         </div>
     </ClientOnly>
 </template>

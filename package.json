@@ -8,6 +8,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
+    "init": "npx tsx --tsconfig ./tsconfig.json ./index.ts",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {

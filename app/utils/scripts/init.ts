@@ -25,14 +25,14 @@ import supabase from '../supabase'
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio'
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
-import type { DocumentMetadata } from '~/types'
+import type { DocumentMetadata, StorageMeta } from '~/types'
 import { getFileExtension, sanitizeFileName } from '~/utils'
 import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
-import type { StorageMeta } from 'unstorage'
-import { clampCharacters } from '~/utils'
+import { clampCharacters, getPdfData } from '~/utils'
+import type { DocumentLoader } from '@langchain/core/document_loaders/base'
 
-const model = getModel('google')
+const model = getModel('openai')
 const documentPath = process.env.DOCUMENT_PATH as string
 
 const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
@@ -173,14 +173,28 @@ function isValidHttpURL(file: string) {
  * @returns {Promise<Document[]>} A promise that resolves to an array of loaded documents.
  */
 export const loadDocument = async (file: string): Promise<Document[]> => {
-  let loader
+  let loader: any
 
   sseSend('push:notif', { message: `loading document... ${clampCharacters(file)}`, status: 'info' })
 
-  if (isValidHttpURL(file)) {
-    loader = new CheerioWebBaseLoader(file)
+  const extension = extname(file)
+
+  if (isValidHttpURL(file) && extension === '.pdf') {
+    try {
+      let pdf = await getPdfData(file, true)
+
+      if (pdf) {
+        loader = new PDFLoader(pdf, {
+          parsedItemSeparator: ' '
+        })
+      }
+
+    } catch (error) {
+      console.log('Error fetching pdf file:', error)
+      sseSend('push:notif', { message: `Error fetching pdf file... ${clampCharacters(file)}`, status: 'error' })
+    }
+
   } else {
-    const extension = extname(file)
 
     switch (extension) {
       case '.pdf':
@@ -207,17 +221,6 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
         throw new Error(`Unsupported file extension: ${extension}`)
     }
   }
-
-  // const loader = new MultiFileLoader(files, {
-  //     ".pdf":(path)=> new PDFLoader(path, {
-  //         parsedItemSeparator: ' ',
-  //     }),
-  //     ".md":(path)=> new TextLoader(path),
-  //     ".txt":(path)=> new TextLoader(path),
-  //     ".csv":(path)=> new CSVLoader(path),
-  //     ".doc":(path)=> new DocxLoader(path, { type: 'doc' }),
-  //     ".docx":(path)=> new DocxLoader(path)
-  // })
 
   return await loader.load()
 }
@@ -309,47 +312,47 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
   const queryOutput = z.object({
     title: z.string().describe('Title of the document'),
     summary: z.string().describe('Summary of the document'),
-    attachment: z.optional(z.object({
-      formulas: z.optional(z.object({
-        name: z.string().describe('Formula name'),
-        formula: z.string().describe('Formula'),
-        lines: z.object({
-          from: z.number().describe('Start line number'),
-          to: z.number().describe('End line number')
-        })
-          .describe('Line number of the formula to insert later')
-      })).describe('Formulas'),
-      images: z.optional(z.object({
-        name: z.string().describe('image name'),
-        image_link: z.string().describe('image'),
-        lines: z.object({
-          from: z.number().describe('Start line number'),
-          to: z.number().describe('End line number')
-        })
-          .describe('Line number of the image to insert later')
-      })),
-      charts: z.optional(z.object({
-        name: z.string().describe('chart name'),
-        data: z.array(
-          z.object({
-            labels: z.string().describe('labels'),
-            datasets: z.array(
-              z.object({
-                label: z.string().describe('label of dataset'),
-                data: z.array(
-                  z.number().describe('data in number')
-                )
-              })
-            )
-          })
-        ).describe('chart'),
-        lines: z.object({
-          from: z.number().describe('Start line number'),
-          to: z.number().describe('End line number')
-        })
-          .describe('Line number of the chart to insert later')
-      }))
-    })),
+    // attachment: z.object({
+    //   formulas: z.object({
+    //     name: z.string().describe('Formula name'),
+    //     formula: z.string().describe('Formula'),
+    //     lines: z.object({
+    //       from: z.number().describe('Start line number'),
+    //       to: z.number().describe('End line number')
+    //     })
+    //       .describe('Line number of the formula to insert later')
+    //   }).describe('Formulas'),
+    //   images: z.object({
+    //     name: z.string().describe('image name'),
+    //     image_link: z.string().describe('image'),
+    //     lines: z.object({
+    //       from: z.number().describe('Start line number'),
+    //       to: z.number().describe('End line number')
+    //     })
+    //       .describe('Line number of the image to insert later')
+    //   }),
+    //   charts: z.object({
+    //     name: z.string().describe('chart name'),
+    //     data: z.array(
+    //       z.object({
+    //         labels: z.string().describe('labels'),
+    //         datasets: z.array(
+    //           z.object({
+    //             label: z.string().describe('label of dataset'),
+    //             data: z.array(
+    //               z.number().describe('data in number')
+    //             )
+    //           })
+    //         )
+    //       })
+    //     ).describe('chart'),
+    //     lines: z.object({
+    //       from: z.number().describe('Start line number'),
+    //       to: z.number().describe('End line number')
+    //     })
+    //       .describe('Line number of the chart to insert later')
+    //   })
+    // }),
     loc: z.object({
       pageNumber: z.object({
         from: z.number().describe('Start page number'),
@@ -422,7 +425,10 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const setVectorStore = async (filepath: string, documentData: { category_id: number[], division_id: number[], storageMeta: StorageMeta }) => {
+export const setVectorStore = async (filepath: string, documentData: {
+  category_id: number[],
+  division_id: number[]
+} & StorageMeta) => {
   const vectorstore = getVectorStore()
 
   const documents = await loadDocument(filepath)
@@ -453,23 +459,18 @@ export const setVectorStore = async (filepath: string, documentData: { category_
     sseSend('push:notif', { message: `file not exists in database... ${clampCharacters(filename)}`, status: 'info' })
 
     const ids = {
-      docIds: docs.map((_, i) => `${filename}_${i}`),
+      docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
       fileId: `${filename}_${uuid()}`
     }
 
-    const { storageMeta, ...restData } = documentData
-
-    const metadata = getBasicMetadata(filepath, storageMeta)
-
-    const data = {
+    const fileMetadata = {
       ...ids,
-      ...restData,
-      ...metadata
+      ...documentData,
     }
 
-    console.log('data ', inspect(data, true, 1, true))
+    const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
 
-    await storeToDB(docs.slice(0, 5), data)
+    await storeToDB(slicedDocuments, fileMetadata)
 
     const summaries = await getDocumentSummary(docs, ids)
 
@@ -486,22 +487,6 @@ export const setVectorStore = async (filepath: string, documentData: { category_
   return vectorstore
 }
 
-const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
-  sseSend('push:notif', { message: `getting meta data... ${clampCharacters(filePath)}`, status: 'info' })
-
-  const url = new URL(filePath)
-  const pathname = url.pathname.slice(1)
-  const extension = extname(filePath) as string
-  const fileType = MIME_TYPE_MAP[extension] as string
-
-  return {
-    filename: pathname as string,
-    extension,
-    fileType,
-    thumbnailSrc: `${sanitizeFileName(pathname)}.png`,
-    fileSize: meta.size as number,
-  }
-}
 
 /**
  * Stores the given documents to the database with the given metadata.
@@ -513,7 +498,7 @@ const getBasicMetadata = (filePath: string, meta: StorageMeta) => {
 const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
   const queryOutput = z.object({
     title: z.string().describe('Title of the document'),
-    summary: z.string().describe('Summary of the document')
+    summary: z.string().describe('Summary of the document'),
   })
 
   const { category_id, division_id, filename, fileId } = data
@@ -523,17 +508,17 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
 
-            - Summarize in indonesian language the following document
-            - Give context with no more than 5 words what is it about based on the content,
-            - and provide additional information from metadata like the title of the document, filename information, page range and line range
+            - Summarize in indonesian language the following content of the document dont describe the object but the content
+            - and provide title of the document after you summarize
 
             Content:
             {content}
             `)
-
   const content = formatDocumentsAsString(doc)
 
   const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
+
+  console.log('title and summary result:', title, summary)
   // const title = 'test title'
   // const summary = 'test summary'
 
@@ -568,47 +553,4 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   }
 
   sseSend('push:notif', { message: 'success adding document...', status: 'success' })
-}
-
-async function run() {
-  try {
-    // await createTable()
-
-    const folderpath = resolve(documentPath)
-
-    const docs = await listDocuments(folderpath)
-
-    // sseSend("push:notif",{message: 'found documents:', doc}, status:'info's)
-
-    // for (let doc of docs) {
-    //     console.warn('initiating document:', doc)
-    //     await setVectorStore(doc)
-    // }
-
-    // const path = `${process.env.DOCUMENT_PATH}/rispam.md`
-
-    // await setVectorStore(path)
-
-    // const retriever = getRetriever()
-
-    // const result = await retriever.invoke('jumlah sampah dan jumlah orang di semarang')
-
-    // sseSend("push:notif",{message: result.length, inspect(result, false, null, true}, status:'info'))
-
-    // const model = getModel('google')
-
-    // const summaries = await summarize(split)
-
-    // const retriever = getRetriever()
-
-    // await retriever.addDocuments(docs);
-
-    // const generate = generateAnswerFromDocument()
-
-    // const result = await generate.invoke('skenario dan proyeksi pengurangan sampah yang optimal dengan gambar dan tabel')
-
-    // sseSend("push:notif",{message: inspect(result, false, null, true}, status:'info'))
-  } catch (error) {
-    console.error('error database', error)
-  }
 }

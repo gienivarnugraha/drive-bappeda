@@ -1,3 +1,5 @@
+import type { Results } from "~/types"
+
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
@@ -102,12 +104,49 @@ export function base64ToArrayBuffer(data: string) {
 
 export const deepClone = (object: any) => JSON.parse(JSON.stringify(object))
 
+export async function getPdfData(url: string, returnBlob: boolean = false): Promise<string | null | Blob> {
+  try {
+    const response = await fetch(url);
+
+    // 1. Check for success status
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // 2. Get the response body as a Blob (binary data)
+    const pdfBlob = await response.blob();
+
+    if (returnBlob) {
+      return pdfBlob
+    } else {
+      // 3. Create a local URL for the Blob object
+      const blobUrl = URL.createObjectURL(pdfBlob);
+
+      return blobUrl;
+
+    }
+
+  } catch (error) {
+    console.error('Failed to fetch PDF due to CORS or network error:', error);
+    // You might want to fall back to opening the link directly here
+    return null;
+  }
+}
+
+/**
+ * @param {string} e.g file object . pdf
+ * @return {string} e.g file-object
+ * sanitzie filenam, replace whitespace with - and remove extenstions
+ * 
+ */
 export function sanitizeFileName(file: string) {
   return file.toLowerCase()
     .replace(/\.[^/.]+$/, '')
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
+
+export const getClampedFileNameWithExtension = ((item: Results, limit: number = 20) => clampCharacters(sanitizeFileName(item.filename), limit) + item.metadata.extension)
 
 export function getFileExtension(filename: string) {
   const lastDot = filename.lastIndexOf('.')

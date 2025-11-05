@@ -15,9 +15,9 @@ export function getModel(model: 'google' | 'openai') {
       })
     case 'openai':
       return new ChatOpenAI({
-        temperature: 0,
+        temperature: 0.5,
         model: 'gpt-4o-mini',
-        streaming: true
+        // streaming: true
       })
   }
 }

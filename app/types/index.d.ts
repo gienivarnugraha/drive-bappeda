@@ -1,15 +1,10 @@
 import type { AvatarProps } from '@nuxt/ui'
 
-export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
-export type SaleStatus = 'paid' | 'failed' | 'refunded'
-
 export interface User {
   id: number
   name: string
   email: string
   avatar?: AvatarProps
-  status: UserStatus
-  location: string
 }
 
 export interface Category {
@@ -39,17 +34,21 @@ export interface Document {
   metadata: DocumentMetadata
 }
 
-export interface DocumentMetadata {
-  thumbnailSrc?: string
-  summary: string
+export interface StorageMeta {
   filename: string
-  filePath?: string
   extension: string
+  contentType: string
+  thumbnailSrc: string
   fileSize: number
-  fileId: string
-  fileType: string
 }
 
+export interface DocumentMetadata extends StorageMeta {
+  summary: string
+  fileId: string
+  docIds: string[]
+  category_id: number[]
+  division_id: number[]
+}
 
 export interface FilteredData {
   documents: Document
@@ -77,12 +76,4 @@ export type Period = 'daily' | 'weekly' | 'monthly'
 export interface Range {
   start: Date
   end: Date
-}
-
-/* SUPABASE USER */
-
-export interface User {
-  display_name: string;
-  avatar: string
-  uuid: string
 }

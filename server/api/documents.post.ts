@@ -1,10 +1,11 @@
 import { sseSend } from '../../app/utils/sse'
 import { setVectorStore } from '~/utils/scripts/init'
-import type { Document } from '~/types'
+import type { Document, DocumentMetadata } from '~/types'
 import { inspect } from 'node:util'
 import { modifyRelation } from '~/utils/db'
-import { clampCharacters } from '~/utils'
+import { clampCharacters, sanitizeFileName } from '~/utils'
 import supabase from '~/utils/supabase'
+import { join, resolve, extname, basename } from 'node:path'
 
 type BaseSchema = {
   categories: number[]
@@ -46,6 +47,13 @@ export default defineEventHandler(async (event) => {
         .eq('id', document.id) // Assuming document.id is the key
 
       await storage.remove(document.filename)
+
+      const thumbnailSrc = `${sanitizeFileName(document.filename)}.png`
+
+      if (await storage.hasItem(thumbnailSrc)) {
+        await storage.remove(thumbnailSrc)
+      }
+
     } else {
       // throw categories and division
       const { categories: cat, divisions: div, ...payload } = document
@@ -75,11 +83,21 @@ export default defineEventHandler(async (event) => {
     const { filenames, categories, divisions } = data as PostSchema
 
     for (const filename of filenames) {
-      const storageMeta = await storage.getMeta(filename)
+      const meta = await storage.getMeta(filename)
 
-      console.log('documents posts file metadata : ', storageMeta)
+      console.log('storage meta: ', meta)
 
-      await setVectorStore(`${storageMeta.url}`, { category_id: categories, division_id: divisions, storageMeta })
+      const metadata = {
+        category_id: categories,
+        division_id: divisions,
+        filename: meta.pathname as string,
+        fileSize: meta.size as number,
+        contentType: meta.contentType as string,
+        extension: extname(filename),
+        thumbnailSrc: `${sanitizeFileName(filename)}.png`,
+      } as DocumentMetadata
+
+      await setVectorStore(`${meta.url}`, metadata)
     }
 
     sseSend('close')

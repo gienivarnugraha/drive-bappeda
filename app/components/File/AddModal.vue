@@ -46,7 +46,7 @@ async function upload(files: File[]) {
   files.forEach((file, index) => {
     formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
 
-    console.log(thumbnails.value.length)
+    console.log('thumbnails length on upload:', thumbnails.value.length)
 
     if (thumbnails.value.length > 0) {
       // @ts-ignore
@@ -87,7 +87,6 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
 }
 
 const onChange = () => {
-  console.log('file changed')
   const shouldGenerateThumbnails = ['application/pdf']
 
   state.files?.forEach((file) => {
@@ -102,12 +101,14 @@ const onChange = () => {
             // @ts-ignore
             blob
           })
+
+          console.log('thumbnails:', thumbnails.value.length)
+
         }, 'image/png', 1)
       })
     }
-  })
 
-  console.log('thumbnails:', thumbnails.value.length)
+  })
 }
 
 let eventSource: EventSource | null = null
@@ -172,7 +173,7 @@ const processStepsStyle = (index: number, data: any) => {
 const stepActive = ref(0)
 
 const stream = async () => {
-  eventSource = new EventSource('api/push-notif')
+  eventSource = new EventSource('/api/push-notif')
 
   // Listen for messages from the server
   eventSource.onmessage = function (event) {
@@ -267,6 +268,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UFormField>
           <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
             description="PDF, Word files" layout="list" multiple class="w-full min-h-48" @change="onChange">
+
             <template #actions="{ open }">
               <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />
             </template>

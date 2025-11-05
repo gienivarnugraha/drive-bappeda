@@ -133,7 +133,7 @@ const documentUpdated = async () => {
         <div class="flex flex-row justify-between items-center">
           <div class="flex flex-row space-x-2">
             <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
-            <UPagination v-model:page="page" :total="count" :items-per-page="perPage" />
+            <UPagination v-model:page="page" :total="count" :sibling-count="0" :items-per-page="perPage" />
             <USelect v-model="perPage" class="max-w-16" :items="[3, 10, 25, 50, 75]" label="Per halaman" />
             <UFieldGroup>
               <USelect v-model="orderBy" :items="orderOptions" :ui="{ content: 'min-w-fit' }" />

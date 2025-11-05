@@ -11,8 +11,6 @@ export default eventHandler(async (event) => {
     throw new Error('No files uploaded.')
   }
 
-  console.log('set item', formData)
-
   sseSend('push:notif', { message: 'File upload started', status: 'info' })
 
   const filenames: string[] = []

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { formatBytes, dateToLocale, sanitizeUrl } from '~/utils'
+import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl } from '~/utils'
 import type { DocumentMetadata, FilteredData, Results } from '~/types'
+import { useItems } from '~/composables/useItems'
 
 const props = defineProps({
   document: {
@@ -18,6 +19,8 @@ onMounted(() => {
 })
 
 const { isFileDetailsSlideoverOpen, isSidebarSlideOverOpen } = useDashboard()
+
+const { divisions, categories } = await useItems()
 
 const selected = ref<Results | null>(null)
 
@@ -52,7 +55,8 @@ const selectDocument = (data: Results) => {
         <template #header>
           <div class="flex flex-col gap-4 ">
             <div class="flex justify-between align-center">
-              <p class="text-gray text-xs"> Nama File: {{ clampCharacters(item.filename) }} </p>
+              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item, 10) }}
+              </p>
               <UTooltip :text="`Buka ${item.filename}`">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
                   :to="`/show?filename=${item.filename}&page=3`" />
@@ -75,9 +79,8 @@ const selectDocument = (data: Results) => {
               {{ formatBytes(item.metadata.fileSize ?? 0) }}
             </p>
 
-            <FormDivision :key="item.id" v-model="item.divisions" />
-
-            <FormCategory :key="item.id" v-model="item.categories" />
+            <FormItemsSelector :key="item.id" v-model="item.divisions" :options="categories" title="Bidang" />
+            <FormItemsSelector :key="item.id" v-model="item.categories" :options="divisions" title="Kategori" />
           </div>
         </template>
       </UCard>
