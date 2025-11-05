@@ -9,8 +9,8 @@ type Schema = {
   search: string
   perPage: string
   page: string
-  orderBy: string
-  orderDir: string
+  orderBy: 'title' | 'id' | 'created_at' | 'filename'
+  orderDir: 'asc' | 'desc'
 
 }
 

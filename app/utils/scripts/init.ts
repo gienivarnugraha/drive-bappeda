@@ -312,47 +312,47 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
   const queryOutput = z.object({
     title: z.string().describe('Title of the document'),
     summary: z.string().describe('Summary of the document'),
-    // attachment: z.object({
-    //   formulas: z.object({
-    //     name: z.string().describe('Formula name'),
-    //     formula: z.string().describe('Formula'),
-    //     lines: z.object({
-    //       from: z.number().describe('Start line number'),
-    //       to: z.number().describe('End line number')
-    //     })
-    //       .describe('Line number of the formula to insert later')
-    //   }).describe('Formulas'),
-    //   images: z.object({
-    //     name: z.string().describe('image name'),
-    //     image_link: z.string().describe('image'),
-    //     lines: z.object({
-    //       from: z.number().describe('Start line number'),
-    //       to: z.number().describe('End line number')
-    //     })
-    //       .describe('Line number of the image to insert later')
-    //   }),
-    //   charts: z.object({
-    //     name: z.string().describe('chart name'),
-    //     data: z.array(
-    //       z.object({
-    //         labels: z.string().describe('labels'),
-    //         datasets: z.array(
-    //           z.object({
-    //             label: z.string().describe('label of dataset'),
-    //             data: z.array(
-    //               z.number().describe('data in number')
-    //             )
-    //           })
-    //         )
-    //       })
-    //     ).describe('chart'),
-    //     lines: z.object({
-    //       from: z.number().describe('Start line number'),
-    //       to: z.number().describe('End line number')
-    //     })
-    //       .describe('Line number of the chart to insert later')
-    //   })
-    // }),
+    attachment: z.object({
+      formulas: z.array(z.object({
+        name: z.string().describe('Formula name'),
+        formula: z.string().describe('Formula'),
+        lines: z.object({
+          from: z.number().describe('Start line number'),
+          to: z.number().describe('End line number')
+        })
+          .describe('Line number of the formula to insert later')
+      })).describe('Formulas'),
+      images: z.array(z.object({
+        name: z.string().describe('image name'),
+        image_link: z.string().describe('image'),
+        lines: z.object({
+          from: z.number().describe('Start line number'),
+          to: z.number().describe('End line number')
+        })
+          .describe('Line number of the image to insert later')
+      })).describe('images'),
+      charts: z.array(z.object({
+        name: z.string().describe('chart name'),
+        data: z.array(
+          z.object({
+            labels: z.string().describe('labels'),
+            datasets: z.array(
+              z.object({
+                label: z.string().describe('label of dataset'),
+                data: z.array(
+                  z.number().describe('data in number')
+                )
+              })
+            )
+          })
+        ).describe('chart'),
+        lines: z.object({
+          from: z.number().describe('Start line number'),
+          to: z.number().describe('End line number')
+        })
+          .describe('Line number of the chart to insert later')
+      })).describe('charts')
+    }),
     loc: z.object({
       pageNumber: z.object({
         from: z.number().describe('Start page number'),
@@ -453,36 +453,40 @@ export const setVectorStore = async (filepath: string, documentData: {
     sseSend('push:notif', { message: `error getting ids from database... ${clampCharacters(filename)}`, status: 'error' })
   }
 
-  if (data?.length) {
-    sseSend('push:notif', { message: `file exists in database... ${clampCharacters(filename)}`, status: 'info' })
-  } else {
-    sseSend('push:notif', { message: `file not exists in database... ${clampCharacters(filename)}`, status: 'info' })
+  // if (data?.length) {
+  //   sseSend('push:notif', { message: `file exists in database... ${clampCharacters(filename)}`, status: 'info' })
+  // } else {
+  sseSend('push:notif', { message: `file not exists in database... ${clampCharacters(filename)}`, status: 'info' })
 
-    const ids = {
-      docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
-      fileId: `${filename}_${uuid()}`
-    }
-
-    const fileMetadata = {
-      ...ids,
-      ...documentData,
-    }
-
-    const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
-
-    await storeToDB(slicedDocuments, fileMetadata)
-
-    const summaries = await getDocumentSummary(docs, ids)
-
-    if (summaries) {
-      sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
-
-      await vectorstore.addDocuments(summaries);
-    } else {
-      sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
-    }
+  const ids = {
+    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
+    fileId: `${filename}_${uuid()}`
   }
-  sseSend('push:notif', { message: `success adding to vector store... ${clampCharacters(filename)}`, status: 'success' })
+
+  const fileMetadata = {
+    ...ids,
+    ...documentData,
+  }
+
+  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
+
+  await storeToDB(slicedDocuments, fileMetadata)
+
+  const summaries = await getDocumentSummary(docs, ids)
+
+  if (summaries) {
+    sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
+
+    await vectorstore.addDocuments(summaries);
+
+    sseSend('push:notif', { message: `success adding to vector store... ${clampCharacters(filename)}`, status: 'success' })
+
+  } else {
+    sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
+
+  }
+
+  // }
 
   return vectorstore
 }
@@ -519,8 +523,6 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
   console.log('title and summary result:', title, summary)
-  // const title = 'test title'
-  // const summary = 'test summary'
 
   const { data: docResponse, error: docerror } = await supabase
     .from('documents')
