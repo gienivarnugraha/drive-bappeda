@@ -29,11 +29,13 @@ import type { DocumentMetadata, StorageMeta } from '~/types'
 import { getFileExtension, sanitizeFileName } from '~/utils'
 import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
-import { clampCharacters, getPdfData } from '~/utils'
+import { clampCharacters } from '~/utils'
 import type { DocumentLoader } from '@langchain/core/document_loaders/base'
+import useSupabaseStorage from '~/composables/useSupabaseStorage'
 
 const model = getModel('openai')
-const documentPath = process.env.DOCUMENT_PATH as string
+
+const storage = useSupabaseStorage('documents')
 
 const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
 
@@ -181,7 +183,7 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
 
   if (isValidHttpURL(file) && extension === '.pdf') {
     try {
-      let pdf = await getPdfData(file, true)
+      let pdf = await storage.getItem(file)
 
       if (pdf) {
         loader = new PDFLoader(pdf, {
@@ -254,30 +256,28 @@ export const documentSplitter = (file: string) => {
 }
 
 const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filepath: string) => {
-  const fileSummary = `${basename(filepath, extname(filepath))}_summary.json`
-
-  const pathSummary = join(documentPath, fileSummary)
+  const fileSummary = `${sanitizeFileName(filepath)}_summary.json`
 
   let summaries: Document[] | undefined
 
-  if (existsSync(pathSummary)) {
+  if (await storage.hasItem(fileSummary)) {
     sseSend('push:notif', { message: `file json exists... ${clampCharacters(fileSummary)}`, status: 'info' })
 
-    const json = JSON.parse(readFileSync(pathSummary, 'utf-8'))
+    const fileExists = await storage.getItem(fileSummary)
+
+    const json = JSON.parse(await fileExists?.text() as string)
 
     if (docs.length !== json.length) {
       sseSend('push:notif', { message: `file json exists but document length is different... ${clampCharacters(fileSummary)}`, status: 'info' })
       summaries = await getDocumentSummary(docs, ids)
 
-      const content = JSON.stringify(summaries)
+      const summariesContent = JSON.stringify(summaries)
 
-      writeFile(pathSummary, content, (err) => {
+      if (await storage.setItem(fileSummary, summariesContent)) {
         sseSend('push:notif', { message: `rewriting file... ${clampCharacters(fileSummary)}`, status: 'info' })
+      }
 
-        if (err) {
-          console.error({ message: err, content })
-        }
-      })
+
     } else {
       sseSend('push:notif', { message: `retrieve exisiting file... ${clampCharacters(fileSummary)}`, status: 'info' })
       summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
@@ -288,12 +288,9 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
     const content = JSON.stringify(summaries)
 
-    writeFile(pathSummary, content, (err) => {
+    if (await storage.setItem(fileSummary, content)) {
       sseSend('push:notif', { message: `writing new file... ${clampCharacters(fileSummary)}`, status: 'info' })
-      if (err) {
-        console.error({ message: err, content })
-      }
-    })
+    }
   }
 
   return summaries

@@ -1,5 +1,7 @@
 import { sseSend } from '~/utils/sse'
 import { clampCharacters } from '~/utils'
+import useSupabaseStorage from '~/composables/useSupabaseStorage'
+import supabase from '~/utils/supabase'
 
 const allowedTypes = [
   'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
@@ -11,13 +13,11 @@ export default eventHandler(async (event) => {
     throw new Error('No files uploaded.')
   }
 
-  sseSend('push:notif', { message: 'File upload started', status: 'info' })
-
   const filenames: string[] = []
 
   const filenamesExists: string[] = []
 
-  const storage = useStorage('blobs') // 'uploads' is a bucket defined in nuxt.config.ts
+  const storage = useSupabaseStorage('documents')
 
   for (const file of formData) {
     if (!file.type || !allowedTypes.includes(file.type)) {
@@ -38,7 +38,18 @@ export default eventHandler(async (event) => {
 
       sseSend('push:notif', { message: `file exists in storage... ${clampCharacters(filename)}`, status: 'info' })
     } else {
-      const data = await storage.setItemRaw(filename, file.data)
+      sseSend('push:notif', { message: 'File upload started', status: 'info' })
+
+      // const uploaded = await storage.setItem(filename, file.data)
+      const { error } = await supabase.storage.from('documents').upload(filename, file.data, {
+        upsert: true,
+      });
+
+
+      if (error) {
+        console.log('file upload error: ', error)
+        sseSend('push:notif', { message: `File ${clampCharacters(filename)} not uploaded `, status: 'error' })
+      }
 
       if (file.name === 'file') {
         filenames.push(filename)

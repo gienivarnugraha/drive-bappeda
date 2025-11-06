@@ -2,29 +2,18 @@ import type { User } from '~/types'
 
 export const useUser = async () => {
   const user = useState<User>('user', () => ({} as User))
-  const isAuthenticated = useState<boolean>('is-authenticated', () => false)
 
-  try {
-    const userStore = localStorage.getItem('user-store')
+  // Simply check if the user object exists (is not null)
+  const isAuthenticated = computed<boolean>(() => !!user.value)
 
-    if (userStore) {
-      user.value = JSON.parse(userStore) as User
+  const data = await $fetch<User>('/api/user')
 
-    } else {
-      const userData = await $fetch<User>('/api/user')
-      user.value = userData
-    }
-
-  } catch (error) {
-    console.log('fetch user error: ', error)
-  }
-
-  if (user.value) {
-    isAuthenticated.value = true
+  if (data) {
+    user.value = data
   }
 
   return {
     user,
-    isAuthenticated
+    isAuthenticated,
   }
 }

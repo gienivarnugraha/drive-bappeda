@@ -46,7 +46,7 @@ const toast = useToast()
 
 const config = useRuntimeConfig()
 
-const documentPath = config.public.documentPath
+const storageUrl = config.public.storageUrl
 
 const schema = z.object({
   document: z.custom<Document>(),
@@ -156,7 +156,7 @@ const deleteFile = async () => {
     <template #body>
       <div class="flex flex-col px-2 overflow-y-auto  max-w-full  lg:max-w-84">
         <UForm :schema="schema" :state="state" class="space-y-4 " @submit="onSubmit">
-          <img :src="`${documentPath}/${document.metadata.thumbnailSrc}`"
+          <img :src="`${storageUrl}/${document.metadata.thumbnailSrc}`"
             class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail">
 
           <UFormField v-if="isEditing" label="Judul File" name="title">

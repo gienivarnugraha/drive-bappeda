@@ -21,16 +21,10 @@ type PostSchema = {
   filenames: string[]
 } & BaseSchema
 
-const documentPath = process.env.DOCUMENT_PATH ?? ''
-
-if (!documentPath) {
-  throw new Error('DOCUMENT_PATH environment variable is not set.')
-}
-
 export default defineEventHandler(async (event) => {
   const data = await readBody<EditSchema | PostSchema>(event)
 
-  const storage = useStorage('blobs')
+  const storage = useStorage('documents-storage')
 
   if ('shouldEdit' in data || 'shouldDelete' in data) {
     const { document, shouldDelete, categories, divisions } = data as EditSchema

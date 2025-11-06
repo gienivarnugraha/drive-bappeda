@@ -1,9 +1,12 @@
 import supabase from '~/utils/supabase'
 
+import useSupabaseStorage from '~/composables/useSupabaseStorage'
+
 export default eventHandler(async (event) => {
   const { count, error } = await supabase
     .from('documents')
     .select('*', { count: 'exact', head: true })
+
 
   if (error) {
     console.error('error fetching categories', error)

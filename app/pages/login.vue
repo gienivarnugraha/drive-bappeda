@@ -41,7 +41,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     navigateTo('/home')
 
     // bind object
-    useStorage('user-store', data)
+    useStorage('auth-store', data)
   } catch (error: any) {
     console.log('login error', error)
     toast.add({ title: 'Error', description: error.statusMessage, color: 'error' })
@@ -52,13 +52,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 <template>
   <div class="flex flex-col h-screen items-center justify-center gap-4 p-4">
     <UPageCard class="w-full max-w-md">
-      <UAuthForm
-        :schema="schema"
-        :fields="fields"
-        title="Welcome back!"
-        icon="i-lucide-lock"
-        @submit="onSubmit"
-      >
+      <UAuthForm :schema="schema" :fields="fields" title="Welcome back!" icon="i-lucide-lock" @submit="onSubmit">
         <template #description>
           Don't have an account? <ULink to="#" class="text-primary font-medium">Sign up</ULink>.
         </template>

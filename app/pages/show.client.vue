@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPdfData } from '#imports'
+import supabaseStorage from '~/composables/useSupabaseStorage'
 
 const route = useRoute()
 
@@ -9,10 +9,10 @@ const page = route.query.page ? Number(route.query.page) : 1
 
 const config = useRuntimeConfig()
 
-const documentPath = config.public.documentPath
+const storageUrl = config.public.storageUrl
 
 // https://hwhq1hnvu4gvftjq.public.blob.vercel-storage.com/1685513328242-laporan-akhir---kajian-kebijakan-pemerintah-kota-semarang-dalam-pengembangan-ekonomi-kreatif.jpg
-const pdfUrl = `${documentPath}/${filename}`
+const pdfUrl = `${storageUrl}/${filename}`
 
 console.log(filename, pdfUrl, page)
 
@@ -23,7 +23,12 @@ const isFetching = ref(true)
 onMounted(async () => {
     isFetching.value = true
     try {
-        pdf.value = await getPdfData(pdfUrl) as string
+        const blob = await supabaseStorage('documents').getItem(pdfUrl)
+
+        if (blob) {
+            pdf.value = URL.createObjectURL(blob);
+        }
+
     } catch (error) {
         console.log(error)
     } finally {

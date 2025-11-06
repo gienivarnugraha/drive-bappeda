@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
         // 3. Read the PDF file content using useStorage
         // Assuming pdfFilePath is a key in your configured storage (e.g., 'my-uploaded-file.pdf')
         // We read it as a raw buffer (binary data)
-        const pdfBuffer = await storage.getItemRaw(pdfFilePath);
+        const pdfBuffer = await storage.getItem(pdfFilePath);
 
         if (!pdfBuffer || !(pdfBuffer instanceof Buffer)) {
             throw new Error(`Could not find PDF file at key: ${pdfFilePath} or data is invalid.`);

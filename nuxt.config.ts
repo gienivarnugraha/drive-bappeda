@@ -1,11 +1,3 @@
-import { pathToFileURL } from 'url';
-import { resolve } from 'path';
-
-const resolver = (path: string) => {
-  const absolutePath = resolve(path)
-  return pathToFileURL(absolutePath).toString()
-}
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -40,28 +32,11 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
-      documentPath: process.env.DOCUMENT_PATH
+      storageUrl: process.env.STORAGE_URL
     }
   },
 
   compatibilityDate: '2024-07-11',
-
-  nitro: {
-    storage: {
-      documents: {
-        driver: 'fs',
-        base: process.env.DOCUMENT_PATH
-      },
-      blobs: {
-        driver: 'vercelBlob',
-        access: 'public'
-      },
-      // supabase: {
-      //   driver: resolver('./server/plugins/storage.js')
-      // }
-
-    }
-  },
   debug: false,
 
   eslint: {

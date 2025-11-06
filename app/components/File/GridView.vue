@@ -30,9 +30,9 @@ const emits = defineEmits(['update:modelValue'])
 
 const config = useRuntimeConfig()
 
-const documentPath = config.public.documentPath
+const storageUrl = config.public.storageUrl
 
-const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`${documentPath}/${item.thumbnailSrc}`)
+const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`${storageUrl}/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {
   if (selected.value?.id === data.id) {
