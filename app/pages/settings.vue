@@ -8,6 +8,8 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const { categories, divisions } = await useItems()
+
 const fileRef = ref<HTMLInputElement>()
 
 const profileSchema = z.object({
@@ -130,8 +132,8 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
       </UForm>
     </UPageCard>
 
-    <SettingsCategory />
+    <SettingsItemsEditor :options="categories" type="category" :additional-fields="{ description: 'string' }" />
 
-    <SettingsDivision />
+    <SettingsItemsEditor :options="divisions" type="division" :additional-fields="{ icon: 'string' }" />
   </div>
 </template>

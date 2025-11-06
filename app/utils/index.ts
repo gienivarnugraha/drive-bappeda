@@ -134,15 +134,19 @@ export async function getPdfData(url: string, returnBlob: boolean = false): Prom
 }
 
 /**
- * @param {string} e.g file object . pdf
- * @return {string} e.g file-object
- * sanitzie filenam, replace whitespace with - and remove extenstions
+ * Sanitizes a filename by removing whitespace and replacing with hyphens (-),
+ * and removes the file extension.
  * 
+ * @param {string} file - The file name to sanitize, e.g. "file object.pdf"
+ * @returns {string} The sanitized filename, e.g. "file-object"
  */
-export function sanitizeFileName(file: string) {
+export function sanitizeFileName(file: string): string {
   return file.toLowerCase()
+    // Remove file extension
     .replace(/\.[^/.]+$/, '')
+    // Replace whitespace and other non-alphanumeric characters with hyphens (-)
     .replace(/[^a-z0-9-_]+/g, '-')
+    // Remove leading and trailing hyphens
     .replace(/^-+|-+$/g, '')
 }
 
@@ -179,4 +183,70 @@ export function formatBytes(bytes: number, decimals = 2) {
 
   // 4. Calculate the formatted value and append the unit
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+}
+
+import { z, type ZodRawShape, type ZodTypeAny } from 'zod';
+export function mergeZodAdditionalFields(baseState: any, additionalFields: any) {
+
+  // Defines the known Zod types we can support dynamically
+  type ZodTypeKey = 'string' | 'number' | 'boolean';
+
+  // Defines the expected structure for each field in additionalFields
+  type DynamicFieldConfig = {
+    zodType: ZodTypeKey;
+    defaultValue: any; // Used for state initialization
+  };
+
+  type DynamicFieldsProp = Record<string, DynamicFieldConfig>;
+
+  // --- Schema Definition ---
+
+  const baseSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters long'),
+  });
+
+  /**
+   * Converts the dynamic field configuration into the corresponding Zod schema shape
+   * by selecting the correct Zod type (string, number, boolean, etc.).
+   */
+  const buildDynamicSchemaShape = (fields: DynamicFieldsProp): ZodRawShape => {
+    const dynamicShape: ZodRawShape = {};
+
+    for (const key in fields) {
+      const config = fields[key];
+      let zodValidator: ZodTypeAny;
+
+      // Dynamically select the Zod validator based on the config.zodType
+      switch (config?.zodType) {
+        case 'number':
+          // Use z.coerce.number() to allow form inputs (which are strings) to be converted
+          zodValidator = z.coerce.number().optional();
+          break;
+        case 'boolean':
+          zodValidator = z.boolean().optional();
+          break;
+        case 'string':
+        default:
+          zodValidator = z.string().optional();
+          break;
+      }
+
+      // Assign the determined Zod validator to the dynamic shape
+      dynamicShape[key] = zodValidator;
+    }
+    return dynamicShape;
+  };
+
+  // 1. Get the shape for the dynamic part
+  const dynamicShape = buildDynamicSchemaShape(additionalFields);
+
+  // 2. Create  Zod object for the additional fields
+  const dynamicSchema = z.object(dynamicShape);
+
+  // 3. Merge the base and dynamic schemas statically
+  const finalSchema = baseSchema.merge(dynamicSchema);
+
+  // Infer the complete, correct type
+  return finalSchema;
+
 }

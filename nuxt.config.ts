@@ -1,3 +1,11 @@
+import { pathToFileURL } from 'url';
+import { resolve } from 'path';
+
+const resolver = (path: string) => {
+  const absolutePath = resolve(path)
+  return pathToFileURL(absolutePath).toString()
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -46,9 +54,12 @@ export default defineNuxtConfig({
       },
       blobs: {
         driver: 'vercelBlob',
-        access: 'public' // Optional, depends on your needs
-        // Other Vercel Blob driver options
-      }
+        access: 'public'
+      },
+      // supabase: {
+      //   driver: resolver('./server/plugins/storage.js')
+      // }
+
     }
   },
   debug: false,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '~/types'
-import type { TableColumn, DropdownMenuItem, TableRow } from '@nuxt/ui'
+import type { TableColumn, DropdownMenuItem, TableRow } from '#ui/types'
 import type { ColumnDef } from '@tanstack/vue-table'
 import { h, resolveComponent } from 'vue'
 
