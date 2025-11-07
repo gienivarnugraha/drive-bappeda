@@ -119,6 +119,20 @@ onMounted(() => {
         </UTooltip>
       </template>
 
+      <template #description-cell="{ row }">
+        <UTooltip>
+          <span class="max-w-lg">
+            {{ clampCharacters(toTitleCase(row.getValue('description')), 25) }}
+          </span>
+
+          <template #content>
+            <p class="text-xs max-w-lg">
+              {{ row.getValue('description') }}
+            </p>
+          </template>
+        </UTooltip>
+      </template>
+
       <template #categories-cell="{ row }">
         <div class="flex items-center gap-3">
           <UBadge v-for="item in getSplitData(row, 'categories').beginningItems" :key="item.id" color="primary"

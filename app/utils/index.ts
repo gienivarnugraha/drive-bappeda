@@ -47,21 +47,6 @@ export function sanitizeUrl(url: string): string {
 }
 
 
-export function toTitleCase(str: string): string {
-  // The regex \w\S* matches:
-  // \w - one word character (like 'h' or 'W')
-  // \S* - followed by zero or more non-whitespace characters (like 'ello' or 'ORLD')
-  return str.replace(/\w\S*/g, function (txt) {
-    // 1. Capitalize the first character.
-    const firstChar = txt.charAt(0).toUpperCase()
-
-    // 2. Take the rest of the string (substr(1)) and leave it AS IS.
-    const restOfString = txt.substring(1)
-
-    return firstChar + restOfString
-  })
-}
-
 export function clampCharacters(text: string, limit: number = 25) {
   if (!text || text.length <= limit) {
     return text;
@@ -122,7 +107,44 @@ export function sanitizeFileName(file: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-export const getClampedFileNameWithExtension = ((item: Results, limit: number = 20) => clampCharacters(sanitizeFileName(item.filename), limit) + item.metadata.extension)
+export const convertToKebabCase = (str: string) => {
+  if (!str) return str;
+
+  // 1. Normalize CamelCase/PascalCase: Insert a hyphen before any capital letter
+  //    that is followed by a lowercase letter, or not at the start of the string.
+  //    This breaks up "myVariableName" into "my-Variable-Name".
+  let tempStr = str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2');
+
+  // 2. Normalize Separators: Replace any remaining underscores or multiple
+  //    hyphens/spaces with a single hyphen.
+  //    This converts "my_variable_name" or "my--variable" to "my-variable".
+  tempStr = tempStr.replace(/[\s_]+/g, '-');
+
+  // 3. Convert the entire string to lowercase and clean up any leading/trailing hyphens.
+  return tempStr.toLowerCase().replace(/^-+|-+$/g, '');
+};
+
+export const toTitleCase = (str: string) => {
+  if (!str) return str;
+
+  // 1. Prepare for Spacing: Insert a space before capital letters that are not
+  //    at the start of the string, and convert all non-alphanumeric separators
+  //    (hyphens, underscores) into a single space.
+
+  // Regex to separate words by inserting a space before an uppercase letter
+  // followed by a lowercase letter (for camelCase).
+  let tempStr = str.replace(/([A-Z])(?=[a-z])/g, ' $1');
+
+  // Regex to replace any remaining non-word characters (like -, _, or extra spaces)
+  // with a single space. The trim() removes leading/trailing spaces.
+  tempStr = tempStr.replace(/[-_\s]+/g, ' ').trim();
+
+  // 2. Title Case: Capitalize the first letter of every word.
+  //    This works on the newly spaced string.
+  return tempStr.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+export const getClampedFileNameWithExtension = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + getFileExtension(filename))
 
 export function getFileExtension(filename: string) {
   const lastDot = filename.lastIndexOf('.')
@@ -157,68 +179,23 @@ export function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
-import { z, type ZodRawShape, type ZodTypeAny } from 'zod';
-export function mergeZodAdditionalFields(baseState: any, additionalFields: any) {
 
-  // Defines the known Zod types we can support dynamically
-  type ZodTypeKey = 'string' | 'number' | 'boolean';
+export async function getPdfData(url: string): Promise<null | Blob> {
+  try {
+    const response = await fetch(url);
 
-  // Defines the expected structure for each field in additionalFields
-  type DynamicFieldConfig = {
-    zodType: ZodTypeKey;
-    defaultValue: any; // Used for state initialization
-  };
-
-  type DynamicFieldsProp = Record<string, DynamicFieldConfig>;
-
-  // --- Schema Definition ---
-
-  const baseSchema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters long'),
-  });
-
-  /**
-   * Converts the dynamic field configuration into the corresponding Zod schema shape
-   * by selecting the correct Zod type (string, number, boolean, etc.).
-   */
-  const buildDynamicSchemaShape = (fields: DynamicFieldsProp): ZodRawShape => {
-    const dynamicShape: ZodRawShape = {};
-
-    for (const key in fields) {
-      const config = fields[key];
-      let zodValidator: ZodTypeAny;
-
-      // Dynamically select the Zod validator based on the config.zodType
-      switch (config?.zodType) {
-        case 'number':
-          // Use z.coerce.number() to allow form inputs (which are strings) to be converted
-          zodValidator = z.coerce.number().optional();
-          break;
-        case 'boolean':
-          zodValidator = z.boolean().optional();
-          break;
-        case 'string':
-        default:
-          zodValidator = z.string().optional();
-          break;
-      }
-
-      // Assign the determined Zod validator to the dynamic shape
-      dynamicShape[key] = zodValidator;
+    // 1. Check for success status
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return dynamicShape;
-  };
 
-  // 1. Get the shape for the dynamic part
-  const dynamicShape = buildDynamicSchemaShape(additionalFields);
+    // 2. Get the response body as a Blob (binary data)
+    const pdfBlob = await response.blob();
 
-  // 2. Create  Zod object for the additional fields
-  const dynamicSchema = z.object(dynamicShape);
-
-  // 3. Merge the base and dynamic schemas statically
-  const finalSchema = baseSchema.merge(dynamicSchema);
-
-  // Infer the complete, correct type
-  return finalSchema;
-
+    return pdfBlob
+  } catch (error) {
+    console.error('Failed to fetch PDF due to CORS or network error:', error);
+    // You might want to fall back to opening the link directly here
+    return null;
+  }
 }

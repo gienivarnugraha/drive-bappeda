@@ -23,16 +23,25 @@ export default defineNuxtConfig({
     }
   },
 
-  // supabase: {
-  //   redirect: process.env.NODE_ENV === 'development' ? false : true,
-  //   key: process.env.SUPABASE_PRIVATE_KEY,
-  //   url: process.env.SUPABASE_URL
-  // },
+  nitro: {
+    storage: {
+      documents: {
+        driver: 'fs',
+        base: process.env.STORAGE_URL
+      },
+      'vercel-blobs': {
+        driver: 'vercelBlob',
+        access: 'public'
+      },
+    }
+  },
 
   css: ['~/assets/css/main.css'],
+
   runtimeConfig: {
     public: {
-      storageUrl: process.env.STORAGE_URL
+      storageUrl: process.env.STORAGE_URL,
+      storageName: process.env.STORAGE_NAME,
     }
   },
 

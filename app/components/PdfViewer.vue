@@ -1,7 +1,7 @@
 <template>
     <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="default" v-model:open="showThumbnails" collapsible class="bg-elevated/25 min-h-full "
-            :collapsed-size="0" :default-size="10" :ui="{
+        <UDashboardSidebar id="default" v-model:collapsed="showThumbnails" collapsible
+            class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="10" :ui="{
                 header: 'lg:border-b lg:border-default h-auto',
                 footer: 'lg:border-t lg:border-default'
             }">
@@ -61,7 +61,7 @@
 
                     <template #trailing>
                         <p v-if="smAndLarger" class="">
-                            {{ clampCharacters(filename, smAndLarger ? 25 : 10) }}
+                            {{ getClampedFileNameWithExtension(filename, smAndLarger ? 25 : 10) }}
                         </p>
                     </template>
 

@@ -132,8 +132,9 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
       </UForm>
     </UPageCard>
 
-    <SettingsItemsEditor :options="categories" type="category" :additional-fields="{ description: 'string' }" />
+    <SettingsItemsEditor :options="categories" title="Kategori" type="categories"
+      :additional-fields="{ description: '' }" />
 
-    <SettingsItemsEditor :options="divisions" type="division" :additional-fields="{ icon: 'string' }" />
+    <SettingsItemsEditor :options="divisions" title="Bidang" type="divisions" :additional-fields="{ icon: '' }" />
   </div>
 </template>

@@ -36,11 +36,7 @@ const watcher = watch(() => props.document, (doc) => {
   setData(doc)
 })
 
-const onEdit = () => {
-  state.shouldEdit = !state.shouldEdit
-}
-
-const isEditing = computed(() => state.shouldEdit)
+const isEditing: Ref<boolean> = ref(false)
 
 const toast = useToast()
 
@@ -52,8 +48,6 @@ const schema = z.object({
   document: z.custom<Document>(),
   categories: z.custom<Category>().array(),
   divisions: z.custom<Division>().array(),
-  shouldEdit: z.boolean().optional(),
-  shouldDelete: z.boolean().optional()
 })
 
 type Schema = z.infer<typeof schema>
@@ -62,8 +56,6 @@ const state = reactive<Partial<Schema>>({
   document: undefined,
   categories: undefined,
   divisions: undefined,
-  shouldEdit: false,
-  shouldDelete: false
 })
 
 const emits = defineEmits(['update:document'])
@@ -73,7 +65,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
   try {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
-      method: 'post',
+      method: 'put',
       body: state
     })
 
@@ -84,6 +76,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     console.log(error)
   } finally {
     isSubmitting.value = false
+    isEditing.value = false
     isFileDetailsSlideoverOpen.value = false
   }
 }
@@ -107,12 +100,12 @@ const deleteFile = async () => {
 
   try {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
-      method: 'post',
+      method: 'delete',
       body: {
         document: state.document,
-        shouldDelete: true
       }
     })
+
     emits('update:document')
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
@@ -120,7 +113,7 @@ const deleteFile = async () => {
     console.log(error)
   } finally {
     isSubmitting.value = false
-    state.shouldEdit = false
+    isEditing.value = false
     isFileDetailsSlideoverOpen.value = false
   }
 }
@@ -145,7 +138,7 @@ const deleteFile = async () => {
 
       <div class="flex justify-between items-center space-x-1">
         <UButton color="neutral" variant="ghost" :icon="isEditing ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
-          @click="onEdit" :ui="{
+          @click="isEditing = !isEditing" :ui="{
             trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
           }" />
         <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
@@ -210,7 +203,7 @@ const deleteFile = async () => {
     <template #footer>
       <div v-if="!isEditing" class="flex justify-end max-w-full space-x-4 items-center pt-4">
         <UButton label="Hapus File" color="error" icon="i-lucide-save" @click="onDelete" />
-        <UButton label="Edit File" icon="i-lucide-pencil" @click="onEdit" />
+        <UButton label="Edit File" icon="i-lucide-pencil" @click="isEditing = !isEditing" />
       </div>
 
     </template>

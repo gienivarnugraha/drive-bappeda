@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { Buffer } from 'buffer';
 
 const PYTHON_SCRIPT = 'convert_pdf_pipe.py';
-const STORAGE_KEY = 'blobs'; // Matches nuxt.config.ts
+const STORAGE_NAME = process.env.STORAGE_NAME; // Matches nuxt.config.ts
 
 // Helper function to run the Python script and return the output
 function runPythonConversion(pdfBase64: string): Promise<string> {
@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Missing pdfFilePath or outputFileName in request body.' });
     }
 
-    const storage = useStorage(STORAGE_KEY);
+    const storage = useStorage(STORAGE_NAME);
     const outputKey = outputFileName.endsWith('.md') ? outputFileName : `${outputFileName}.md`;
 
     try {

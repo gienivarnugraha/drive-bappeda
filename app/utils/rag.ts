@@ -55,11 +55,11 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
     if you are not sure with the answer, you can ask the user again to confirm the question
 
     - Return the answer with markdown format
-    - Always attach source of information at the end of the answer like document file name, page number, and line location in markdown link with url format: ${process.env.STORAGE_URL}/show?filename=document-filename&page=page-number&line=line-number as markdown link
+    - Always attach source of information at the end of the answer like document file name, page number, and line location in markdown link with url format: ${process.env.SITE_URL}/show?filename=document-filename&page=page-number&line=line-number as markdown link
     - if the context contains a table, add the answer format as table in Markdown use title case for heading in new line
     - if the context contains a formula, add the answer format as formula in Markdown katex in new line
     - if the context contains a list, add the answer format as Markdown lists in new line
-    - if the context contains a image, replace the image base link with: ${process.env.DOCUMENT_PATH} and return as markdown image format in new line
+    - if the context contains a image, replace the image base link with: ${process.env.STORAGE_URL} and return as markdown image format in new line
     - Answer in indonesian language
     - End the answer with __END__
 

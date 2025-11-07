@@ -10,13 +10,17 @@ export interface User {
 export interface Category {
   id: number
   name: string
-  description?: string
+  metadata: {
+    name: string
+    description?: string
+  }
 }
 
 export interface Division {
   id: number
   name: string
-  metadata?: {
+  metadata: {
+    name: string
     description?: string
     icon?: string
   }

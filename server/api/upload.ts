@@ -1,7 +1,5 @@
 import { sseSend } from '~/utils/sse'
-import { clampCharacters } from '~/utils'
-import useSupabaseStorage from '~/utils/storage'
-import supabase from '~/utils/supabase'
+import { getClampedFileNameWithExtension } from '~/utils'
 
 const allowedTypes = [
   'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
@@ -17,7 +15,7 @@ export default eventHandler(async (event) => {
 
   const filenamesExists: string[] = []
 
-  const storage = useSupabaseStorage('documents')
+  const storage = useStorage(process.env.STORAGE_NAME)
 
   for (const file of formData) {
     if (!file.type || !allowedTypes.includes(file.type)) {
@@ -36,26 +34,22 @@ export default eventHandler(async (event) => {
         filenamesExists.push(filename)
       }
 
-      sseSend('push:notif', { message: `file exists in storage... ${clampCharacters(filename)}`, status: 'info' })
+      sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} exists in storage... `, status: 'info' })
     } else {
-      sseSend('push:notif', { message: 'File upload started', status: 'info' })
+      sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} upload started`, status: 'info' })
 
-      // const uploaded = await storage.setItem(filename, file.data)
-      const { error } = await supabase.storage.from('documents').upload(filename, file.data, {
-        upsert: true,
-      });
-
-
-      if (error) {
-        console.log('file upload error: ', error)
-        sseSend('push:notif', { message: `File ${clampCharacters(filename)} not uploaded `, status: 'error' })
+      try {
+        await storage.setItemRaw(filename, file.data)
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} not uploaded `, status: 'error' })
       }
 
       if (file.name === 'file') {
         filenames.push(filename)
       }
 
-      sseSend('push:notif', { message: `File ${clampCharacters(filename)} uploaded `, status: 'info' })
+      sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} uploaded `, status: 'info' })
     }
   }
 

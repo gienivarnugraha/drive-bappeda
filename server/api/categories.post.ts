@@ -1,6 +1,7 @@
 import type { Category } from '~/types'
 import { inspect } from 'node:util'
 import supabase from '~/utils/supabase'
+import { convertToKebabCase } from '~/utils'
 
 type EditSchema = {
   shouldDelete: boolean
@@ -16,11 +17,12 @@ export default eventHandler(async (event) => {
       .from('categories')
       .delete()
       .eq('id', payload.id)
+      .single()
   } else {
     request = supabase
       .from('categories')
-      .upsert(payload, { onConflict: 'name' })
-      .select()
+      .upsert({ name: convertToKebabCase(payload.name), metadata: { ...payload } }, { onConflict: 'name' })
+      .single()
   }
 
   const { data, error } = await request
@@ -34,5 +36,5 @@ export default eventHandler(async (event) => {
     })
   }
 
-  return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, data: payload }
+  return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, data }
 })

@@ -29,35 +29,15 @@ import type { DocumentMetadata, StorageMeta } from '~/types'
 import { getFileExtension, sanitizeFileName } from '~/utils'
 import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
-import { clampCharacters } from '~/utils'
-import type { DocumentLoader } from '@langchain/core/document_loaders/base'
-import useSupabaseStorage from '~/utils/storage'
+import { getClampedFileNameWithExtension, getPdfData } from '~/utils'
 
 const model = getModel('openai')
 
-const storage = useSupabaseStorage('documents')
-
 const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
 
-const MIME_TYPE_MAP: { [key: string]: string } = {
-  // --- DOCUMENTS & TEXT ---
-  '.txt': 'text/plain',
-  '.pdf': 'application/pdf',
-  '.csv': 'text/csv',
-  '.doc': 'application/msword',
-  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  '.xls': 'application/vnd.ms-excel',
-  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  '.ppt': 'application/vnd.ms-powerpoint',
-  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-
-  // --- IMAGES ---
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-};
-
 const idKey = 'doc_id'
+
+const storageName = process.env.STORAGE_NAME
 
 const createTable = async () => {
   // const sql = postgres(process.env.SUPABASE_PG_URL as string, {
@@ -177,13 +157,13 @@ function isValidHttpURL(file: string) {
 export const loadDocument = async (file: string): Promise<Document[]> => {
   let loader: any
 
-  sseSend('push:notif', { message: `loading document... ${clampCharacters(file)}`, status: 'info' })
+  sseSend('push:notif', { message: `loading document... ${getClampedFileNameWithExtension(file)}`, status: 'info' })
 
   const extension = extname(file)
 
   if (isValidHttpURL(file) && extension === '.pdf') {
     try {
-      let pdf = await storage.getItem(file)
+      let pdf = await getPdfData(file)
 
       if (pdf) {
         loader = new PDFLoader(pdf, {
@@ -193,7 +173,7 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
 
     } catch (error) {
       console.log('Error fetching pdf file:', error)
-      sseSend('push:notif', { message: `Error fetching pdf file... ${clampCharacters(file)}`, status: 'error' })
+      sseSend('push:notif', { message: `Error fetching pdf file... ${getClampedFileNameWithExtension(file)}`, status: 'error' })
     }
 
   } else {
@@ -255,42 +235,45 @@ export const documentSplitter = (file: string) => {
   return splitter
 }
 
-const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filepath: string) => {
-  const fileSummary = `${sanitizeFileName(filepath)}_summary.json`
+const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filename: string) => {
+  const fileSummary = `${sanitizeFileName(filename)}_summary.json`
+  sseSend('push:notif', { message: `checking if backup summary exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
 
   let summaries: Document[] | undefined
 
+  const storage = useStorage(storageName)
+
   if (await storage.hasItem(fileSummary)) {
-    sseSend('push:notif', { message: `file json exists... ${clampCharacters(fileSummary)}`, status: 'info' })
+    sseSend('push:notif', { message: `file json exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
 
-    const fileExists = await storage.getItem(fileSummary)
+    const fileExists = await storage.getItemRaw(fileSummary)
 
-    const json = JSON.parse(await fileExists?.text() as string)
+    const json = JSON.parse(fileExists as string)
 
     if (docs.length !== json.length) {
-      sseSend('push:notif', { message: `file json exists but document length is different... ${clampCharacters(fileSummary)}`, status: 'info' })
+      sseSend('push:notif', { message: `file json exists but document length is different... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
       summaries = await getDocumentSummary(docs, ids)
 
       const summariesContent = JSON.stringify(summaries)
 
-      if (await storage.setItem(fileSummary, summariesContent)) {
-        sseSend('push:notif', { message: `rewriting file... ${clampCharacters(fileSummary)}`, status: 'info' })
-      }
+      await storage.setItemRaw(fileSummary, summariesContent)
+
+      sseSend('push:notif', { message: `rewriting file... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
 
 
     } else {
-      sseSend('push:notif', { message: `retrieve exisiting file... ${clampCharacters(fileSummary)}`, status: 'info' })
+      sseSend('push:notif', { message: `retrieve exisiting file... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
       summaries = json.map((doc: DocumentInput<Record<string, any>>) => new Document(doc))
     }
   } else {
-    sseSend('push:notif', { message: `file doesnt exists... ${clampCharacters(fileSummary)}`, status: 'info' })
+    sseSend('push:notif', { message: `file doesnt exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
     summaries = await getDocumentSummary(docs, ids)
 
     const content = JSON.stringify(summaries)
 
-    if (await storage.setItem(fileSummary, content)) {
-      sseSend('push:notif', { message: `writing new file... ${clampCharacters(fileSummary)}`, status: 'info' })
-    }
+    await storage.setItemRaw(fileSummary, content)
+
+    sseSend('push:notif', { message: `writing new file... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
   }
 
   return summaries
@@ -438,7 +421,7 @@ export const setVectorStore = async (filepath: string, documentData: {
 
   const filename = basename(filepath, extension)
 
-  sseSend('push:notif', { message: `getting ids from database... ${clampCharacters(filename)}`, status: 'info' })
+  sseSend('push:notif', { message: `getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
   const { data, error } = await supabase
     .from('documents')
@@ -447,43 +430,55 @@ export const setVectorStore = async (filepath: string, documentData: {
 
   if (error) {
     console.error('Failed to get documents from database', error)
-    sseSend('push:notif', { message: `error getting ids from database... ${clampCharacters(filename)}`, status: 'error' })
+    sseSend('push:notif', { message: `error getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
   }
 
-  // if (data?.length) {
-  //   sseSend('push:notif', { message: `file exists in database... ${clampCharacters(filename)}`, status: 'info' })
-  // } else {
-  sseSend('push:notif', { message: `file not exists in database... ${clampCharacters(filename)}`, status: 'info' })
-
-  const ids = {
-    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
-    fileId: `${filename}_${uuid()}`
-  }
-
-  const fileMetadata = {
-    ...ids,
-    ...documentData,
-  }
-
-  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
-
-  await storeToDB(slicedDocuments, fileMetadata)
-
-  const summaries = await getDocumentSummary(docs, ids)
-
-  if (summaries) {
-    sseSend("push:notif", { message: `adding data to vector store... ${clampCharacters(filename)}`, status: 'info' })
-
-    await vectorstore.addDocuments(summaries);
-
-    sseSend('push:notif', { message: `success adding to vector store... ${clampCharacters(filename)}`, status: 'success' })
-
+  if (data?.length) {
+    sseSend('push:notif', { message: `file exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
   } else {
-    sseSend("push:notif", { message: `no summaries generated... ${clampCharacters(filename)}`, status: 'error' })
+    sseSend('push:notif', { message: `file not exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+    const { data, error } = await supabase
+      .from('documents_summary')
+      .select()
+      .eq('metadata->>source_id', `%${filename}%`)
+
+    if (error) {
+      console.error('error fetching vector store', error)
+      sseSend('push:notif', { message: `error fetching vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
+    }
+
+    if (data?.length) {
+      sseSend('push:notif', { message: `vector store exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
+    } else {
+      sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+      const ids = {
+        docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
+        fileId: `${filename}_${uuid()}`
+      }
+
+      const fileMetadata = {
+        ...ids,
+        ...documentData,
+      }
+
+      const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
+
+      await storeToDB(slicedDocuments, fileMetadata)
+
+      const summaries = await generateSummaries(docs, ids, filename)
+
+      if (summaries) {
+
+        await vectorstore.addDocuments(summaries);
+
+        sseSend('push:notif', { message: `success adding to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
+
+      }
+    }
+
 
   }
-
-  // }
 
   return vectorstore
 }
@@ -504,7 +499,7 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
   const { category_id, division_id, filename, fileId } = data
 
-  sseSend('push:notif', { message: `generating title and summary... ${clampCharacters(filename)}`, status: 'info' })
+  sseSend('push:notif', { message: `generating title and summary... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
   const prompt = PromptTemplate.fromTemplate(`
             You're a helpful AI assistant. 
@@ -538,18 +533,18 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   if (docerror) {
     console.error('Failed to insert document to database', docerror)
 
-    sseSend('push:notif', { message: `error creating new data... ${clampCharacters(filename)}`, status: 'error' })
+    sseSend('push:notif', { message: `error creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
   }
 
   if (docResponse) {
-    sseSend('push:notif', { message: `success creating new data... ${clampCharacters(filename)}`, status: 'info' })
+    sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
     // insert to relation table
-    const relationResponse = await modifyRelation({ document: docResponse[0], categories: category_id, divisions: division_id }, 'edit')
+    const relationResponse = await modifyRelation({ document: docResponse[0], categoryIds: category_id, divisionIds: division_id }, 'edit')
 
     if (relationResponse) {
       sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })
     }
   }
 
-  sseSend('push:notif', { message: 'success adding document...', status: 'success' })
+  sseSend('push:notif', { message: 'success adding document...', status: 'info' })
 }

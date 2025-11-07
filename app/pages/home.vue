@@ -22,8 +22,6 @@ const layoutView: Ref<'grid' | 'table'> = ref('grid')
 
 const page: Ref<number> = ref(1)
 
-const count: Ref<number> = ref(0)
-
 const orderOptions: Ref<SelectItem[]> = ref([
   { label: 'ID', value: 'id' },
   { label: 'Tanggal', value: 'created_at' },
@@ -37,9 +35,13 @@ const orderDir: Ref<'asc' | 'desc'> = ref('desc')
 
 // const documentData: Ref<Results[]> = ref([])
 
+const { data: count, execute: countExecute } = await useLazyAsyncData<number>('count', () => $fetch<number>('/api/count'), {
+  server: false,
+  immediate: true
+})
 
-const { data: documentData, pending: documentPending, execute } = await useAsyncData<{ data: Results[] }>('documents', () =>
-  $fetch<{ data: Results[] }>('/api/documents',
+const { data: documentData, pending: documentPending, execute } = await useLazyAsyncData<{ data: Results[] }>('documents', () =>
+  $fetch<{ data: Results[] }>('/api/documents/',
     {
       query: {
         perPage: perPage.value,
@@ -51,7 +53,9 @@ const { data: documentData, pending: documentPending, execute } = await useAsync
       }
     }),
   {
-    watch: [selectedCategory, selectedDivision, perPage, page, orderBy, orderDir]
+    watch: [selectedCategory, selectedDivision, perPage, page, orderBy, orderDir],
+    server: false,
+    immediate: true
   }
 )
 
@@ -72,14 +76,11 @@ onMounted(async () => {
     availableDivisions.value = deepClone(divisions.value)
     availableDivisions.value.unshift({ id: 0, name: 'Semua Bidang' })
   }
-
-  const countResponse = await $fetch<number>('/api/count')
-  count.value = countResponse
-  console.log(count.value)
 })
 
 const documentUpdated = async () => {
   await execute()
+  await countExecute()
 }
 </script>
 
@@ -104,10 +105,12 @@ const documentUpdated = async () => {
         </div>
       </div>
 
+      <USeparator class="h-2" />
+
       <div class="my-2 flex flex-wrap">
         <div v-if="categories.length > 0" class="flex flex-col space-y-2">
           <UTooltip text="Tampilkan Semua Kategori">
-            <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs"
+            <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs" class="max-w-fit"
               :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
               @click="showMoreCategories = !showMoreCategories" />
           </UTooltip>
@@ -129,12 +132,23 @@ const documentUpdated = async () => {
         </div>
       </div>
 
+      <USeparator class="h-2" />
+
       <div class="flex flex-col gap-4">
         <div class="flex flex-row justify-between items-center">
-          <div class="flex flex-row space-x-2">
-            <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
+          <div class="flex flex-row space-x-4 items-center">
             <UPagination v-model:page="page" :total="count" :sibling-count="0" :items-per-page="perPage" />
+          </div>
+
+          <div class="flex flex-row space-x-4 items-center">
+            <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
+
+            <p class="text-xs">Per Halaman</p>
             <USelect v-model="perPage" class="max-w-16" :items="[3, 10, 25, 50, 75]" label="Per halaman" />
+
+            <USeparator orientation="vertical" class="h-4" color="primary" type="solid" />
+
+            <p class="text-xs">Urutkan</p>
             <UFieldGroup>
               <USelect v-model="orderBy" :items="orderOptions" :ui="{ content: 'min-w-fit' }" />
               <UButton :icon="orderDir === 'asc' ? 'i-lucide-arrow-up-a-z' : 'i-lucide-arrow-down-z-a'"
@@ -161,7 +175,7 @@ const documentUpdated = async () => {
         </div>
 
         <p class="text-xs">
-          Ditemukan {{ count }} Dokumen
+          Menampilkan {{ documentData?.data.length }} dari {{ count }} dokumen
         </p>
       </div>
 

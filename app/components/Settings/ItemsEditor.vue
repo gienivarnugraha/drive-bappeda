@@ -2,7 +2,6 @@
 import { z } from 'zod';
 import type { PropType, Ref } from 'vue';
 import type { Category, Division } from '~/types'; // Assuming this path is correct
-import { mergeZodAdditionalFields } from '~/utils';
 
 type Item = Category | Division;
 const toast = useToast();
@@ -14,9 +13,10 @@ const props = defineProps({
     default: () => []
   },
   type: {
-    type: String as PropType<'category' | 'division'>,
+    type: String as PropType<'categories' | 'divisions'>,
     required: true,
   },
+  title: String,
   additionalFields: {
     type: Object as PropType<Record<string, string>>,
     required: false,
@@ -24,13 +24,11 @@ const props = defineProps({
   },
 });
 
-const baseSchema = z.object({
+const Schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters long'),
 });
 
-const finalSchema = mergeZodAdditionalFields(baseSchema, props.additionalFields);
-
-type FormSchema = z.output<typeof finalSchema>;
+type FormSchema = z.output<typeof Schema>;
 
 const state = reactive<FormSchema>({
   name: '',
@@ -85,22 +83,22 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
       title: 'Error',
       description: error.data?.message || 'An unknown error occurred.',
       icon: 'i-lucide-alert-triangle',
-      color: 'danger'
+      color: 'error'
     });
   }
 };
 </script>
 
 <template>
-  <UPageCard :title="type" :description="`Rubah ${type}s`" variant="subtle">
+  <UPageCard :title="title" :description="`Rubah ${title?.toLowerCase()}`" variant="subtle">
 
     <div class="flex flex-row space-y-1 flex-wrap">
       <div v-for="item in items" :key="item.id" class="flex flex-row items-center justify-between space-x-1 px-2 py-1">
         <UTooltip :text="item.name">
           <UBadge class="font-bold rounded-full">
-            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.name), 20) }}</p>
+            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.metadata?.name || item.name), 20) }}</p>
             <template #trailing>
-              <UButton color="red" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(item, true)" />
+              <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(item, true)" />
             </template>
           </UBadge>
         </UTooltip>
@@ -108,18 +106,18 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
     </div>
 
     <div class="mt-4 mb-4">
-      <UButton variant="subtle" :label="`Tambah ${toTitleCase(type)}`" color="primary" size="sm"
+      <UButton variant="subtle" :label="`Tambah ${title}`" color="primary" size="sm"
         :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" @click="addView = !addView" />
     </div>
 
-    <UForm v-if="addView" :schema="finalSchema" :state="state" class="flex flex-col gap-4 max-w-md"
+    <UForm v-if="addView" :schema="Schema" :state="state" class="flex flex-col gap-4 max-w-md"
       @submit="submit(state as FormSchema)">
       <UFormField v-for="key in Object.keys(state)" :key="key" :name="key" :label="toTitleCase(key)"
         :description="`Enter the value for ${key}`" class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="(state as Record<string, any>)[key]" :placeholder="`New ${key}`" class="w-full" />
       </UFormField>
 
-      <UButton type="submit" label="Submit" color="primary" />
+      <UButton type="submit" label="Submit" color="primary" class="max-w-fit" />
     </UForm>
   </UPageCard>
 </template>

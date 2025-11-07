@@ -18,7 +18,7 @@ onMounted(() => {
   }
 })
 
-const { isFileDetailsSlideoverOpen, isSidebarSlideOverOpen } = useDashboard()
+const { isFileDetailsSlideoverOpen } = useDashboard()
 
 const { divisions, categories } = await useItems()
 
@@ -55,7 +55,7 @@ const selectDocument = (data: Results) => {
         <template #header>
           <div class="flex flex-col gap-4 ">
             <div class="flex justify-between align-center">
-              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item, 10) }}
+              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item.filename, 10) }}
               </p>
               <UTooltip :text="`Buka ${item.filename}`">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"

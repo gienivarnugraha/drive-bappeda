@@ -42,8 +42,8 @@ export async function getLangchainDB() {
   }
 }
 
-export const modifyRelation = async (data: { document: Document, categories: number[], divisions: number[] }, action: 'edit' | 'delete') => {
-  const { document, categories, divisions } = data
+export const modifyRelation = async (data: { document: Document, categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
+  const { document, categoryIds, divisionIds } = data
 
   let request
 
@@ -52,8 +52,8 @@ export const modifyRelation = async (data: { document: Document, categories: num
   } else {
     const relationData = []
 
-    for (const categoryId of categories) {
-      for (const divisionId of divisions) {
+    for (const categoryId of categoryIds as number[]) {
+      for (const divisionId of divisionIds as number[]) {
         relationData.push({
           document_id: document.id,
           category_id: categoryId,
@@ -61,6 +61,8 @@ export const modifyRelation = async (data: { document: Document, categories: num
         })
       }
     }
+
+    console.log(relationData)
 
     request = supabase.from('categories_documents_divisions').insert(relationData).select()
   }
