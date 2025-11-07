@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import supabaseStorage from '~/composables/useSupabaseStorage'
+import supabaseStorage from '~/utils/storage'
 
 const route = useRoute()
 

@@ -1,6 +1,6 @@
 import supabase from '~/utils/supabase'
 
-import useSupabaseStorage from '~/composables/useSupabaseStorage'
+import useSupabaseStorage from '~/utils/storage'
 
 export default eventHandler(async (event) => {
   const { count, error } = await supabase

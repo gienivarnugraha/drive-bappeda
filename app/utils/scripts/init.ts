@@ -31,7 +31,7 @@ import { modifyRelation } from '~/utils/db'
 import { sseSend } from '~/utils/sse'
 import { clampCharacters } from '~/utils'
 import type { DocumentLoader } from '@langchain/core/document_loaders/base'
-import useSupabaseStorage from '~/composables/useSupabaseStorage'
+import useSupabaseStorage from '~/utils/storage'
 
 const model = getModel('openai')
 

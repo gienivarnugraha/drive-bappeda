@@ -1,6 +1,6 @@
 import { sseSend } from '~/utils/sse'
 import { clampCharacters } from '~/utils'
-import useSupabaseStorage from '~/composables/useSupabaseStorage'
+import useSupabaseStorage from '~/utils/storage'
 import supabase from '~/utils/supabase'
 
 const allowedTypes = [
