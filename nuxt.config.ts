@@ -27,7 +27,7 @@ export default defineNuxtConfig({
     storage: {
       documents: {
         driver: 'fs',
-        base: process.env.STORAGE_URL
+        base: '/public/documents'
       },
       'vercel-blobs': {
         driver: 'vercelBlob',
