@@ -1,6 +1,4 @@
-import { join } from 'node:path'
 import supabase from '~/utils/supabase'
-
 
 type FileBody =
     | ArrayBuffer
@@ -44,19 +42,28 @@ interface FileOptions {
     headers?: Record<string, string>
 }
 
+/**
+ * Normalizes a storage key by:
+ * 1. Removing the query string.
+ * 2. Replacing backslashes `\` with forward slashes `/`.
+ * 3. Collapsing multiple consecutive slashes into a single slash.
+ * 4. Removing any leading or trailing slashes.
+ * "/a/b/c.txt?v=1"a/b/c.txt → a/b/c.txt    -> a/b/c.txt"
+ * @param key The key to normalize.
+ * @returns The normalized key.
+ */
+function normalizeKey(key: string) {
+    if (!key) return ""
+    return key.split('?')[0]?.replace(/[\\/]+/g, '/').replace(/^\/|\/$/g, '') || ''
+}
+function joinKeys(...keys: string[]) {
+    return normalizeKey(keys.join("/"));
+}
 
 
 export default function (bucketName: string, base?: string) {
-    /** 
-     * Discard the query string.Convert all slashes (/ and \) to colons (:).
-     * Ensure only a single colon separates segments.
-     * Remove any leading or trailing colons.
-     * Return an empty string if the input was empty.
-     * example Input (key) 
-     * "/a/b/c.txt?v=1"a/b/c.txt → a:b:c.txt    -> a:b:c.txt"
-     * \\foo//bar\\"\foo//bar\   → :foo::bar:   -> foo:bar 
-     */
     const client = supabase.storage;
+
     const storage = client.from(bucketName)
 
     // Helper to fetch object metadata (Supabase does not have a direct 'get' by key for content)
@@ -159,7 +166,7 @@ export default function (bucketName: string, base?: string) {
                 .filter((item) => item.name !== undefined) // Filter out folder objects if they exist in list
                 .map((item) => {
                     // Remove the base base and any leading/trailing slashes
-                    let key = join(base, item.name);
+                    let key = joinKeys(base, item.name);
                     return key.substring(base.length).replace(/^\/|\/$/g, '');
                 });
         },
@@ -174,4 +181,3 @@ export default function (bucketName: string, base?: string) {
 
     };
 };
-
