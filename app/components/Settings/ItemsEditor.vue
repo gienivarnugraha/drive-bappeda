@@ -50,7 +50,7 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
     const { data, message } = await $fetch<{ message: string, data: Category | Division }>(`/api/${props.type}`, {
       method: 'POST',
       body: {
-        shouldDelete: false,
+        shouldDelete,
         ...itemData
       },
     });
@@ -66,10 +66,10 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
       // Creation/Update: Add the newly created item to the list
       items.value.push(data);
       // Reset state for new entry
-      Object.assign(state, {
-        name: '',
-        ...props.additionalFields // Reset dynamic fields to initial values
-      });
+      // Object.assign(state, {
+      //   name: '',
+      //   ...props.additionalFields // Reset dynamic fields to initial values
+      // });
     }
 
     toast.add({
