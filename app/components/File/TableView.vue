@@ -8,7 +8,7 @@ const UBadge = resolveComponent('UBadge')
 
 const props = defineProps({
   document: {
-    type: Object as PropType<Results[] | undefined>,
+    type: Object as PropType<Results[]>,
     required: true
   }
 })

@@ -1,4 +1,4 @@
-import { generateAnswerFromDocument } from '~/utils/rag'
+import { generateAnswerFromDocument } from '~~/server/utils/rag'
 
 export default defineEventHandler(async (event) => {
   const { question, uuid } = await readBody(event)

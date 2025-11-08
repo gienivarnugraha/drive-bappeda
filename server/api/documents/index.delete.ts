@@ -1,24 +1,30 @@
 import type { Category, Division, Document } from '~/types'
 import { inspect } from 'node:util'
 import { getClampedFileNameWithExtension, sanitizeFileName } from '~/utils'
-import supabase from '~/utils/supabase'
+import { serverSupabaseClient } from '#supabase/server'
 
 type Schema = {
-    document: Document
+    documentId: string
 }
 
 export default defineEventHandler(async (event) => {
-    const data = await readBody<Schema>(event)
+    const payload = await readBody<Schema>(event)
 
     const storage = useStorage(process.env.STORAGE_NAME)
 
-    const { document } = data
+    const { documentId } = payload
+
+    const supabase = await serverSupabaseClient(event)
 
     // Logic for Deletion
-    const { error: documentError } = await supabase
+    const { data: document, error: documentError } = await supabase
         .from('documents')
         .delete()
-        .eq('id', document.id) // Assuming document.id is the key
+        .eq('id', parseInt(documentId))
+        .select()
+        .limit(1)
+        .single()
+
 
     if (documentError) {
         console.error(`error Delete file: ${inspect(documentError, true, null, true)}`)
@@ -39,7 +45,7 @@ export default defineEventHandler(async (event) => {
     const { error: summaryError } = await supabase
         .from('documents_summary')
         .delete()
-        .eq('metadata->>source_id', document.uuid)
+        .eq('metadata->>source_id', document.uuid as string)
 
     if (summaryError) {
         console.error(`error Delete summary: ${inspect(summaryError, true, null, true)}`)

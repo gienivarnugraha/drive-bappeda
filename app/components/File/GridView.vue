@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl } from '~/utils'
-import type { DocumentMetadata, FilteredData, Results } from '~/types'
+import type { DocumentMetadata, Results } from '~/types'
 import { useItems } from '~/composables/useItems'
 
 const props = defineProps({
   document: {
-    type: Object as PropType<Results[] | undefined>,
+    type: Object as PropType<Results[]>,
     required: true
   }
 })
@@ -55,7 +55,7 @@ const selectDocument = (data: Results) => {
         <template #header>
           <div class="flex flex-col gap-4 ">
             <div class="flex justify-between align-center">
-              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item.filename, 10) }}
+              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item.filename ?? '', 10) }}
               </p>
               <UTooltip :text="`Buka ${item.filename}`">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
@@ -72,7 +72,7 @@ const selectDocument = (data: Results) => {
         <template #footer>
           <div class="grid gap-2">
             <p class="text-primary text-xs font-bold line-clamp-1">
-              {{ toTitleCase(item.title) }}
+              {{ toTitleCase(item.title ?? '') }}
             </p>
 
             <p class="text-gray text-xs">

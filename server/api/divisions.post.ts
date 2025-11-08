@@ -1,20 +1,18 @@
-import { Division } from '~/types'
+import type { Division } from '~/types'
 import { inspect } from 'node:util'
-import supabase from '~/utils/supabase'
+import { serverSupabaseClient } from '#supabase/server'
 import { convertToKebabCase } from '~/utils'
 
 type EditSchema = {
-  shouldDelete?: boolean
-  id?: number
-  name: string
-  description: string
-  icon: string
-}
+  shouldDelete: boolean
+} & Division
 
 export default eventHandler(async (event) => {
   const { shouldDelete, ...payload } = await readBody<EditSchema>(event)
 
   let request
+
+  const supabase = await serverSupabaseClient(event)
 
   if (shouldDelete) {
     request = supabase
@@ -32,13 +30,13 @@ export default eventHandler(async (event) => {
   const { data, error } = await request
 
   if (error) {
-    console.error(`Error ${shouldDelete ? 'Delete' : 'Update'} division: ${inspect(error, true, null, true)}`)
+    console.error(`error ${shouldDelete ? 'Delete' : 'Update'} category: ${inspect(error, true, null, true)}`)
 
     throw createError({
       statusCode: 400,
-      statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} division:  ${error}`
+      statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} category:  ${error}`
     })
   }
 
-  return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} division: ${payload.name}`, data }
+  return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, data }
 })

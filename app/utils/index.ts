@@ -12,10 +12,10 @@ export function dateToLocale(date: string) {
   return new Date(date).toLocaleDateString()
 }
 
-export const stringToNumberArray = (input: string[] | string): number[] | null => {
+export const stringToNumberArray = (input: string[] | string): number[] | undefined => {
   // 1. Handle null input immediately
   if (input === undefined || input.length === 0 || input.includes('0')) {
-    return null
+    return undefined
   }
   // 2. Handle single string input
   if (typeof input === 'string') {
@@ -144,7 +144,7 @@ export const toTitleCase = (str: string) => {
   return tempStr.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export const getClampedFileNameWithExtension = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + getFileExtension(filename))
+export const getClampedFileNameWithExtension = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + '.' + getFileExtension(filename))
 
 export function getFileExtension(filename: string) {
   const lastDot = filename.lastIndexOf('.')

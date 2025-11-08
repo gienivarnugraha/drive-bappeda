@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { useStorage } from '@vueuse/core'
+import { useUser } from '#imports'
+
 
 const toast = useToast()
 
@@ -17,31 +18,46 @@ const fields: AuthFormField[] = [{
   type: 'password',
   placeholder: 'Enter your password',
   required: true
-}, {
-  name: 'remember',
-  label: 'Remember me',
-  type: 'checkbox'
 }]
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
-  password: z.string()
+  password: z.string(),
   // .min(8, 'Must be at least 8 characters')
+})
+
+onMounted(async () => {
+  const { isAuthenticated } = await useUser()
+
+  console.log('login page check: ', isAuthenticated.value)
+
+  if (isAuthenticated.value) {
+    navigateTo('/home')
+  }
 })
 
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
+  const supabase = useSupabaseClient()
+
+  const { email, password, } = payload.data
+
   try {
-    const data = await $fetch('/api/auth', {
-      method: 'POST',
-      body: payload.data
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     })
+
+    if (error) {
+      console.error('auth error: ', error)
+
+      toast.add({ title: 'Error', description: error.message, color: 'error' })
+    }
+
 
     navigateTo('/home')
 
-    // bind object
-    useStorage('auth-store', data)
   } catch (error: any) {
     console.log('login error', error)
     toast.add({ title: 'Error', description: error.statusMessage, color: 'error' })
@@ -50,7 +66,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen items-center justify-center gap-4 p-4">
+  <div class="flex flex-row h-screen items-center justify-center gap-4 p-4">
+    <LazyStars />
     <UPageCard class="w-full max-w-md">
       <UAuthForm :schema="schema" :fields="fields" title="Welcome back!" icon="i-lucide-lock" @submit="onSubmit">
         <template #description>

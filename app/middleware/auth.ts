@@ -1,5 +1,4 @@
-// import supabase from '~/utils/supabase'
-import { useUser } from '#imports'
+import { useUser } from '~/composables/useUser'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   if (import.meta.server) {
@@ -8,17 +7,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   const { isAuthenticated } = await useUser()
 
-  console.log('user in middleware: ', isAuthenticated.value)
+  console.log('isAuthenticated', isAuthenticated.value)
 
   if (isAuthenticated.value) {
     if (to.path === '/login' || to.path === '/') {
-      // return navigateTo('/home')
       return navigateTo('/home')
     } else {
       return
     }
   } else {
-    // return navigateTo('/login')
-    return
+    return navigateTo('/login')
   }
 })

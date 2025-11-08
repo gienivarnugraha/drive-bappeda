@@ -1,15 +1,24 @@
 import type { User } from '~/types'
 
 export const useUser = async () => {
-  const user = useState<User>('user', () => ({} as User))
+  const user = useState<User | undefined>('user', undefined)
 
-  // Simply check if the user object exists (is not null)
-  const isAuthenticated = computed<boolean>(() => !!user.value)
+  const supabaseUser = useSupabaseUser()
 
-  const data = await $fetch<User>('/api/user')
+  const isAuthenticated = computed<boolean>(() => !!supabaseUser.value)
 
-  if (data) {
-    user.value = data
+  if (user.value === undefined) {
+    const supabase = useSupabaseClient()
+
+    const { data, error } = await supabase.from('profiles').select().eq('uuid', supabaseUser.value.sub)
+
+    if (data) {
+      user.value = data[0]
+    }
+
+    if (error) {
+      console.error('error fetching user', error)
+    }
   }
 
   return {

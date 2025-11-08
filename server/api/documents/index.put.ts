@@ -1,36 +1,38 @@
 import type { Document, Category, Division } from '~/types'
 import { inspect } from 'node:util'
-import { modifyRelation } from '~/utils/db'
+import { modifyRelation } from '~~/server/utils/db'
 import { getClampedFileNameWithExtension } from '~/utils'
-import supabase from '~/utils/supabase'
+import { serverSupabaseClient } from '#supabase/server'
 
 type Schema = {
-    document: Document
+    documentId: number
     categories: Category[]
     divisions: Division[]
+    title?: string
+    description?: string
 }
 
 export default defineEventHandler(async (event) => {
     const data = await readBody<Schema>(event)
 
-    const { document, categories, divisions } = data
+    const { documentId, categories, divisions, ...rest } = data
+
+    console.log('update data', data)
 
     const categoryIds = categories.length ? categories.map(category => category.id) : []
     const divisionIds = divisions.length ? divisions.map(division => division.id) : []
 
-    await modifyRelation({ document }, 'delete')
+    await modifyRelation({ documentId }, 'delete')
 
     // add the relation again after deleting
-    await modifyRelation({ document, categoryIds, divisionIds }, 'edit')
+    await modifyRelation({ documentId, categoryIds, divisionIds }, 'edit')
 
-    // throw categories and division
-    const { categories: cat, divisions: div, ...payload } = document
+    const supabase = await serverSupabaseClient(event)
 
     let request = supabase
         .from('documents')
-        .upsert(payload, { onConflict: 'id' })
-        .eq('id', document.id)
-
+        .update(rest)
+        .eq('id', documentId)
 
     const { data: result, error } = await request
 
@@ -42,6 +44,6 @@ export default defineEventHandler(async (event) => {
             statusMessage: `Error Update file:  ${error}`
         })
     } else {
-        return { message: `Success Update file: ${getClampedFileNameWithExtension(document.filename)}` }
+        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}` }
     }
 })

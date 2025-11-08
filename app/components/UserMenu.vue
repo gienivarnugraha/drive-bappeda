@@ -7,30 +7,30 @@ defineProps<{
 }>()
 
 const user = ref({
-  name: 'Benjamin Canac',
+  display_name: '',
   avatar: {
-    src: 'https://github.com/benjamincanac.png',
-    alt: 'Benjamin Canac'
+    src: '',
+    alt: ''
   }
 })
 
+
 onMounted(async () => {
-  const { user } = await useUser()
+  const { user: profile } = await useUser()
 
-  console.log(user)
+  console.log(profile)
 
+  if (profile.value) {
+    user.value.display_name = profile.value?.display_name || ''
+    user.value.avatar.src = profile.value?.avatar || ''
+    user.value.avatar.alt = profile.value?.display_name || ''
+  }
 })
 
 const logout = async () => {
   try {
-    const data = await $fetch('/api/auth', {
-      method: 'POST',
-      body: {
-        logout: true
-      }
-    })
+    const data = await supabase.auth.signOut()
 
-    localStorage.removeItem('user-store')
   } catch (error) {
     console.error(error)
   }
@@ -38,7 +38,7 @@ const logout = async () => {
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
-  label: user.value.name,
+  label: user.value.display_name,
   avatar: user.value.avatar
 }], [{
   label: 'Settings',
@@ -58,18 +58,18 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     <UDropdownMenu :items="items" :content="{ align: 'center', collisionPadding: 12 }"
       :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }">
       <UButton v-bind="{
-      ...user,
-      label: collapsed ? undefined : user?.name,
-      trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
-    }" color="neutral" variant="ghost" block :square="collapsed" class="data-[state=open]:bg-elevated" :ui="{
-      trailingIcon: 'text-dimmed'
-    }" />
+        ...user,
+        label: collapsed ? undefined : user?.display_name,
+        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
+      }" color="neutral" variant="ghost" block :square="collapsed" class="data-[state=open]:bg-elevated" :ui="{
+        trailingIcon: 'text-dimmed'
+      }" />
 
       <template #chip-leading="{ item }">
         <span :style="{
-      '--chip-light': `var(--color-${(item as any).chip}-500)`,
-      '--chip-dark': `var(--color-${(item as any).chip}-400)`
-    }" class="ms-0.5 size-2 rounded-full bg-(--chip-light) dark:bg-(--chip-dark)" />
+          '--chip-light': `var(--color-${(item as any).chip}-500)`,
+          '--chip-dark': `var(--color-${(item as any).chip}-400)`
+        }" class="ms-0.5 size-2 rounded-full bg-(--chip-light) dark:bg-(--chip-dark)" />
       </template>
     </UDropdownMenu>
   </ClientOnly>

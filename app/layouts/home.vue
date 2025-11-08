@@ -10,7 +10,7 @@ const isHome = computed(() => route.name === 'home')
 <template>
   <UDashboardGroup unit="rem">
     <UDashboardSidebar id="default" v-model:collapsed="isSidebarSlideOverOpen" collapsible
-      class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="25" :ui="{
+      class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="20" :ui="{
         header: 'lg:border-b lg:border-default h-auto',
         footer: 'lg:border-t lg:border-default'
       }">

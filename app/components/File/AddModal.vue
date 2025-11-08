@@ -14,6 +14,8 @@ const { divisions: availableDivisions, categories: availableCategories } = await
 
 const fileUploading = ref(false)
 
+const disabled = ref(false)
+
 const isSubmitting = ref(false)
 
 const isProcessing = ref(false)
@@ -23,6 +25,7 @@ const schema = z.object({
   categories: z.number().array(),
   divisions: z.number().array()
 })
+
 
 const thumbnails: Ref<{ filename: string, blob: Blob }[]> = ref([])
 
@@ -34,24 +37,23 @@ const state = reactive<Partial<Schema>>({
   divisions: undefined
 })
 
-let ids: string[] = []
+const successCount = ref(0)
+
+const allSuccess = computed(() => state.files?.length === successCount.value)
+
 
 async function upload(files: File[]) {
   fileUploading.value = true
 
   const formData = new FormData()
 
-  ids = files.map(_ => uuid())
-
   files.forEach((file, index) => {
     formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
 
-    console.log('thumbnails length on upload:', thumbnails.value.length)
-
     if (thumbnails.value.length > 0) {
-      // @ts-ignore
-      formData.append('thumbnail', thumbnails.value[index].blob, `${thumbnails.value[index].filename}.png`)
+      formData.append('thumbnail', thumbnails.value[index].blob, `${sanitizeFileName(file.name)}.png`)
     }
+
   })
 
   try {
@@ -113,12 +115,13 @@ const onChange = () => {
 
 let eventSource: EventSource | null = null
 
-onUnmounted(() => {
-  if (eventSource) {
-    eventSource.close()
-  }
-  isProcessing.value = false
-})
+const isEventSourceClosed = computed(() => eventSource?.readyState !== 2)
+// onUnmounted(() => {
+//   if (eventSource) {
+//     eventSource.close()
+//   }
+//   isProcessing.value = false
+// })
 
 const stepperItems = ref<StepperItem[]>([
   {
@@ -180,12 +183,21 @@ const stream = async () => {
     const data = JSON.parse(event.data)
 
     if (data.status === 'success') {
-      stepActive.value = 2
+      successCount.value += 1
 
-      console.log(data.status, stepActive.value)
+      if (allSuccess.value) {
 
-      if (eventSource) {
-        eventSource.close()
+        if (eventSource) {
+          eventSource.close()
+        }
+
+        stepActive.value = 2
+
+        console.log(data.status, stepActive.value)
+
+
+        addModalOpen.value = false
+
       }
     }
 
@@ -241,7 +253,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
 
     <template #body>
-      <div v-if="isProcessing" class="flex mb-4 justify-between items-center">
+      <div v-if="isEventSourceClosed" class="flex mb-4 justify-between items-center">
         <p> Progress </p>
 
         <UButton icon="i-lucide-arrow-left" label="Back" @click="backFromProcess" />
@@ -307,9 +319,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </UFormField>
 
+        <p v-if="disabled" class="text-xs text-slate-500">generating thumbnails...</p>
         <div class="flex justify-end gap-2">
           <UButton label="Cancel" color="neutral" variant="subtle" @click="addModalOpen = false" />
-          <UButton label="Create" color="primary" variant="solid" type="submit" />
+          <UButton label="Create" color="primary" variant="solid" type="submit" :disabled="disabled" />
         </div>
       </UForm>
     </template>

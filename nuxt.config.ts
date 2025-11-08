@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    // '@nuxtjs/supabase',
+    '@nuxtjs/supabase',
     '@vueuse/nuxt'
   ],
 
@@ -13,15 +13,19 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/documents/*': { ssr: false },
-    '/home': { ssr: false },
-    '/settings': { ssr: false },
     '/': { prerender: true },
     '/login': { prerender: true },
     '/api/**': {
       cors: true
     }
   },
+
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_KEY,
+    redirect: false
+  },
+
 
   nitro: {
     storage: {

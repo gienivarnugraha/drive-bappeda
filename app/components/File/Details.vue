@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatBytes } from '#imports'
-import type { Document, Category, Division, Results } from '~/types'
+import type { Results, Category, Division, Document } from '~/types'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useItems } from '~/composables/useItems'
 import { z } from 'zod'
@@ -13,15 +13,16 @@ const { divisions, categories } = await useItems()
 
 
 const props = defineProps<{
-  document: Document
+  document: Results
 }>()
 
 const isSubmitting: Ref<boolean> = ref(false)
 
-const setData = (document: Document) => {
-  state.document = document
-  state.categories = document.categories
-  state.divisions = document.divisions
+const setData = (item: Results) => {
+  state.title = item.title
+  state.description = item.description
+  state.categories = item.categories
+  state.divisions = item.divisions
 }
 
 onMounted(() => {
@@ -45,7 +46,8 @@ const config = useRuntimeConfig()
 const storageUrl = config.public.storageUrl
 
 const schema = z.object({
-  document: z.custom<Document>(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
   categories: z.custom<Category>().array(),
   divisions: z.custom<Division>().array(),
 })
@@ -53,7 +55,8 @@ const schema = z.object({
 type Schema = z.infer<typeof schema>
 
 const state = reactive<Partial<Schema>>({
-  document: undefined,
+  title: undefined,
+  description: undefined,
   categories: undefined,
   divisions: undefined,
 })
@@ -66,7 +69,10 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
       method: 'put',
-      body: state
+      body: {
+        documentId: props.document.id,
+        ...state
+      }
     })
 
     emits('update:document')
@@ -102,7 +108,7 @@ const deleteFile = async () => {
     const { message } = await $fetch<{ message: string }>('/api/documents', {
       method: 'delete',
       body: {
-        document: state.document,
+        documentId: props.document.id
       }
     })
 

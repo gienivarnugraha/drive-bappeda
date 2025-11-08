@@ -1,12 +1,12 @@
 // import 'dotenv/config'
 import { join, resolve, extname, basename } from 'node:path'
 import { readdir, readFile, statSync, writeFile, existsSync, readFileSync } from 'node:fs'
-import { PDFLoader } from './pdfLoader'
+import { PDFLoader } from './scripts/pdfLoader'
 // import postgres from 'postgres';
 import { MultiFileLoader } from 'langchain/document_loaders/fs/multi_file'
 import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { Document, type DocumentInput } from '@langchain/core/documents'
-import { getModel, getVectorStore } from '../ai'
+import { getModel, getVectorStore } from './ai'
 // import { generateAnswerFromDocument } from '../server/utils/rag';
 import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from '@langchain/core/prompts'
 import { RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables'
@@ -18,16 +18,16 @@ import { inspect } from 'node:util'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { formatDocumentsAsString } from 'langchain/util/document'
 import { ChatMessageHistory } from 'langchain/stores/message/in_memory'
-import { generateAnswerFromDocument, getRetriever } from '../rag'
+import { generateAnswerFromDocument, getRetriever } from './rag'
 import { spawn } from 'node:child_process'
 import { TextLoader } from 'langchain/document_loaders/fs/text'
-import supabase from '../supabase'
+import supabase from './supabase'
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio'
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
 import type { DocumentMetadata, StorageMeta } from '~/types'
 import { getFileExtension, sanitizeFileName } from '~/utils'
-import { modifyRelation } from '~/utils/db'
+import { modifyRelation } from '~~/server/utils/db'
 import { sseSend } from '~/utils/sse'
 import { getClampedFileNameWithExtension, getPdfData } from '~/utils'
 
@@ -514,8 +514,6 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
   const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
-  console.log('title and summary result:', title, summary)
-
   const { data: docResponse, error: docerror } = await supabase
     .from('documents')
     .insert({
@@ -529,6 +527,8 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
       }
     })
     .select()
+    .limit(1)
+    .single()
 
   if (docerror) {
     console.error('Failed to insert document to database', docerror)
@@ -539,7 +539,7 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
   if (docResponse) {
     sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
     // insert to relation table
-    const relationResponse = await modifyRelation({ document: docResponse[0], categoryIds: category_id, divisionIds: division_id }, 'edit')
+    const relationResponse = await modifyRelation({ documentId: docResponse.id, categoryIds: category_id, divisionIds: division_id }, 'edit')
 
     if (relationResponse) {
       sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })

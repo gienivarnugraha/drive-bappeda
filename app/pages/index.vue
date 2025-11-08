@@ -30,9 +30,9 @@ const features = [
 // Define data for the CTA section
 const cta = {
   title: 'Empower Your Regional Development with Data',
-  description: 'Unlock the full potential of your BAPPEDA data. Explore our Datalake and PDF Chatbot today.',
+  description: 'Unlock the full potential of your BAPPEDA data. Explore our Datalake and Document Chatbot today.',
   buttonText: 'Explore the Datalake',
-  buttonLink: '#' // Link to your datalake application or demo
+  buttonLink: '/login' // Link to your datalake application or demo
 }
 </script>
 
@@ -44,6 +44,7 @@ const cta = {
           <Logo />
         </template>
         <template #right>
+          <UColorModeButton />
           <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
             variant="solid" to="/login" />
         </template>
@@ -51,7 +52,8 @@ const cta = {
     </UContainer>
 
     <UMain>
-      <UContainer class="py-24 sm:py-32 text-center bg-linear-to-tl from-primary/10 from-5% to-default">
+      <LazyStars />
+      <UContainer class="py-16 sm:py-24 text-center ">
         <div class="relative max-w-4xl mx-auto">
           <h1 class="text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl leading-tight">
             <span class="text-gray-900 dark:text-white block">Intelligent Conversations,</span>
@@ -91,7 +93,7 @@ const cta = {
       <UContainer id="features" class="py-24 sm:py-32">
         <div class="text-center mb-16">
           <h2 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Key Features to Elevate Your Business
+            Key Features to Elevate Your Analysis
           </h2>
           <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Discover how our AI chatbot empowers your team and delights your customers.
@@ -115,7 +117,7 @@ const cta = {
         </div>
       </UContainer>
 
-      <UContainer class="py-24 sm:py-32 text-center bg-primary-50 dark:bg-primary-950 rounded-lg shadow-lg">
+      <UContainer class="py-24 sm:py-32 text-center bg-linear-to-tl from-primary/10 from-5% to-default">
         <h2 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
           {{ cta.title }}
         </h2>

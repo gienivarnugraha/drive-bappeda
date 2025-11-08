@@ -1,5 +1,5 @@
 import { stringToNumberArray } from '~/utils'
-import supabase from '~/utils/supabase'
+import { serverSupabaseClient } from '#supabase/server'
 
 type Schema = {
     category: string[]
@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
     const { category, division, perPage, page, orderBy, orderDir } = query
 
     console.log('documents query:', query)
+
+    const supabase = await serverSupabaseClient(event)
 
     const request = supabase.rpc('get_documents', {
         filter_category_ids: stringToNumberArray(category),
@@ -38,9 +40,6 @@ export default defineEventHandler(async (event) => {
             statusMessage: `Error getting documents: ${error}`
         })
     } else {
-        return {
-            data: response,
-            page: query.page
-        }
+        return response
     }
 })

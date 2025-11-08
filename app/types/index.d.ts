@@ -1,41 +1,30 @@
-import type { AvatarProps } from '@nuxt/ui'
+import type { Database, Tables } from "./database.types"
 
-export interface User {
-  id: number
-  name: string
-  avatar?: AvatarProps
-  uuid: string
-}
+export interface User extends Tables<'profile'> { }
 
-export interface Category {
-  id: number
-  name: string
-  metadata: {
-    name: string
+export type Category = Omit<Tables<'categories'>, 'metadata' | 'created_at'> & {
+  metadata?: {
+    name?: string
     description?: string
   }
 }
 
-export interface Division {
-  id: number
-  name: string
-  metadata: {
-    name: string
+// export interface Division extends Tables<'divisions'> { }
+export type Division = Omit<Tables<'divisions'>, 'metadata' | 'created_at'> & {
+  metadata?: {
+    name?: string
     description?: string
-    icon?: string
   }
 }
 
-export interface Document {
-  id: number
-  uuid: string
-  filename: string
-  description?: string
-  title: string
+export interface Document extends Tables<'documents'> {
+  metadata: DocumentMetadata
+}
+
+//export interface Results extends Database['public']['Functions']['get_documents']['Returns'] { }
+export type Results = Document & {
   categories: Category[]
   divisions: Division[]
-  created_at: string
-  metadata: DocumentMetadata
 }
 
 export interface StorageMeta {
@@ -54,18 +43,7 @@ export interface DocumentMetadata extends StorageMeta {
   division_id: number[]
 }
 
-export interface FilteredData {
-  documents: Document
-  categories: Category
-  divisions: Division
-}
 
-type OmitFilteredData = Omit<FilteredData, 'categories' | 'divisions'>
-
-export type Results = Document & {
-  categories: Category[]
-  divisions: Division[]
-}
 
 export interface Notification {
   id: number

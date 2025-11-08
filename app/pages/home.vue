@@ -14,7 +14,7 @@ const selectedCategory = ref<number[]>([])
 
 const selectedDivision = ref<number[]>([])
 
-const selected: Ref<Results | undefined> = ref(undefined)
+const selected: Ref<Results> = ref({} as Results)
 
 const perPage: Ref<number> = ref(3)
 
@@ -36,26 +36,24 @@ const orderDir: Ref<'asc' | 'desc'> = ref('desc')
 // const documentData: Ref<Results[]> = ref([])
 
 const { data: count, execute: countExecute } = await useLazyAsyncData<number>('count', () => $fetch<number>('/api/count'), {
-  server: false,
   immediate: true
 })
 
-const { data: documentData, pending: documentPending, execute } = await useLazyAsyncData<{ data: Results[] }>('documents', () =>
-  $fetch<{ data: Results[] }>('/api/documents/',
-    {
-      query: {
-        perPage: perPage.value,
-        page: page.value,
-        category: selectedCategory.value,
-        division: selectedDivision.value,
-        orderBy: orderBy.value,
-        orderDir: orderDir.value
-      }
-    }),
+const { data: documentData, pending: documentPending, execute } = await useAsyncData<Results[]>('documents', () =>
+  $fetch<Results[]>('/api/documents', {
+    query: {
+      perPage: perPage.value,
+      page: page.value,
+      category: selectedCategory.value,
+      division: selectedDivision.value,
+      orderBy: orderBy.value,
+      orderDir: orderDir.value
+    },
+  }),
   {
-    watch: [selectedCategory, selectedDivision, perPage, page, orderBy, orderDir],
-    server: false,
+    watch: [perPage, page, selectedCategory, selectedDivision, orderBy, orderDir],
     immediate: true
+
   }
 )
 
@@ -66,13 +64,13 @@ const showMoreCategories: Ref<boolean> = ref(false)
 
 const showAvailableCategories: ComputedRef<Category[]> = computed(() => showMoreCategories.value ? availableCategories.value : availableCategories.value.slice(0, 5))
 
-onMounted(async () => {
-  if (availableCategories.value) {
+onMounted(() => {
+  if (categories.value) {
     availableCategories.value = deepClone(categories.value)
     availableCategories.value.unshift({ id: 0, name: 'Semua Kategori' })
   }
 
-  if (availableDivisions.value) {
+  if (divisions.value) {
     availableDivisions.value = deepClone(divisions.value)
     availableDivisions.value.unshift({ id: 0, name: 'Semua Bidang' })
   }
@@ -87,68 +85,67 @@ const documentUpdated = async () => {
 <template>
   <div class="flex flex-row">
     <div class="flex flex-col gap-4 ">
-      <div class="my-2">
-        <div v-if="divisions.length > 0">
-          <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
-            :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
-            <template #label="{ item }">
-              <UTooltip :text="item.name">
-                <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
-              </UTooltip>
-            </template>
-          </UCheckboxGroup>
-        </div>
 
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <USkeleton v-for="value in 6" class="h-8 w-full" />
-        </div>
+      <div v-if="divisions.length === 0" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
+        <USkeleton v-for="value in 6" class="h-24 w-full" />
+      </div>
+
+      <div v-else class="my-2">
+        <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
+          :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
+          :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+          <template #label="{ item }">
+            <UTooltip :text="item.name">
+              <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+            </UTooltip>
+          </template>
+        </UCheckboxGroup>
       </div>
 
       <USeparator class="h-2" />
 
-      <div class="my-2 flex flex-wrap">
-        <div v-if="categories.length > 0" class="flex flex-col space-y-2">
-          <UTooltip text="Tampilkan Semua Kategori">
-            <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs" class="max-w-fit"
-              :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-              @click="showMoreCategories = !showMoreCategories" />
-          </UTooltip>
+      <UTooltip text="Tampilkan Semua Kategori">
+        <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs" class="max-w-fit"
+          :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          @click="showMoreCategories = !showMoreCategories" />
+      </UTooltip>
 
-          <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
-            :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
-            <template #label="{ item }">
-              <UTooltip :text="item.name">
-                <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
-              </UTooltip>
-            </template>
+      <div v-if="categories.length === 0" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
+        <USkeleton v-for="value in 6" class="h-24 w-full" />
+      </div>
 
-          </UCheckboxGroup>
-        </div>
+      <div v-else class="my-2 flex flex-wrap">
+        <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
+          :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
+          :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+          <template #label="{ item }">
+            <UTooltip :text="item.name">
+              <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+            </UTooltip>
+          </template>
 
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <USkeleton v-for="value in 6" class="h-8 w-full" />
-        </div>
+        </UCheckboxGroup>
       </div>
 
       <USeparator class="h-2" />
 
       <div class="flex flex-col gap-4">
-        <div class="flex flex-row justify-between items-center">
+        <div class="flex flex-row justify-between items-center ">
           <div class="flex flex-row space-x-4 items-center">
             <UPagination v-model:page="page" :total="count" :sibling-count="0" :items-per-page="perPage" />
           </div>
 
-          <div class="flex flex-row space-x-4 items-center">
+          <USeparator orientation="vertical" class="hidden sm:visible h-4" color="primary" type="solid" />
+
+          <div class="flex flex-row space-x-2 items-center">
             <!-- <UInput icon="i-lucide-search" placeholder="Cari..." :trailing="false" /> -->
 
-            <p class="text-xs">Per Halaman</p>
+            <p class="hidden sm:visible text-xs">Per Halaman</p>
             <USelect v-model="perPage" class="max-w-16" :items="[3, 10, 25, 50, 75]" label="Per halaman" />
 
             <USeparator orientation="vertical" class="h-4" color="primary" type="solid" />
 
-            <p class="text-xs">Urutkan</p>
+            <p class="hidden sm:visible text-xs">Urutkan</p>
             <UFieldGroup>
               <USelect v-model="orderBy" :items="orderOptions" :ui="{ content: 'min-w-fit' }" />
               <UButton :icon="orderDir === 'asc' ? 'i-lucide-arrow-up-a-z' : 'i-lucide-arrow-down-z-a'"
@@ -156,26 +153,31 @@ const documentUpdated = async () => {
 
             </UFieldGroup>
           </div>
-          <div class="flex flex-row space-x-2">
+
+          <USeparator orientation="vertical" class="hidden sm:visible h-4" color="primary" type="solid" />
+
+          <div class="flex flex-row space-x-2 items-center">
             <UButton icon="i-lucide-layout-grid" :variant="layoutView === 'grid' ? 'subtle' : 'ghost'"
               @click="layoutView = 'grid'" />
+            <USeparator orientation="vertical" class="h-4" color="primary" type="solid" />
+
             <UButton icon="i-lucide-table-properties" :variant="layoutView === 'table' ? 'subtle' : 'ghost'"
               @click="layoutView = 'table'" />
           </div>
         </div>
 
-        <div v-if="documentPending" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
-          <USkeleton v-for="value in 6" class="h-24 w-full" />
+        <div v-if="documentPending" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
+          <USkeleton v-for="value in 6" class="h-36 w-full" />
         </div>
 
         <div v-else>
-          <FileGridView v-if="layoutView === 'grid'" v-model="selected" :document="documentData?.data" />
+          <FileGridView v-if="layoutView === 'grid' && documentData" v-model="selected" :document="documentData" />
 
-          <FileTableView v-if="layoutView === 'table'" v-model="selected" :document="documentData?.data" />
+          <FileTableView v-if="layoutView === 'table' && documentData" v-model="selected" :document="documentData" />
         </div>
 
         <p class="text-xs">
-          Menampilkan {{ documentData?.data.length }} dari {{ count }} dokumen
+          Menampilkan {{ documentData?.length }} dari {{ count }} dokumen
         </p>
       </div>
 

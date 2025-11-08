@@ -14,7 +14,6 @@ const props = defineProps({
   modelValue: {
     type: Array as PropType<Items[]>,
     required: true,
-    default: () => []
   },
   options: {
     type: Array as PropType<Items[]>,
@@ -27,16 +26,12 @@ const props = defineProps({
 
 // The local state should be an array of IDs (numbers)
 // We initialize it by mapping the IDs from the incoming Category objects.
-const item_ids: Ref<number[]> = ref(
-  props.modelValue.map((item) => item.id)
-)
+const item_ids: Ref<number[]> = ref(props.modelValue.map(item => item.id))
 
 // The emit event name is correct for v-model
 const emit = defineEmits(['update:modelValue'])
 
-// --- Computed Properties for Synchronization ---
-
-// 1. Convert selected IDs (item_ids.value) back into Category objects for emitting.
+// Convert selected IDs (item_ids.value) back into Category objects for emitting.
 // This is necessary because the parent v-model is bound to Category[] (the prop type).
 const itemsToEmit = computed(() => {
   // Filter the full list of available items to only include those whose ID is selected
@@ -54,34 +49,13 @@ const itemsToEmit = computed(() => {
  */
 const updateModelValue = watch(item_ids, (newVal) => {
   // Emit the computed Category[] array, updating v-model in the parent.
+  console.log('modelValue updated')
   emit('update:modelValue', itemsToEmit.value)
 }, { deep: true })
-
-
-/**
- * Watch props.modelValue for external changes (parent updates the v-model binding)
- * and update the local item_ids (array of numbers).
- */
-const syncModelValue = watch(() => props.modelValue, (newItems) => {
-  // Map the incoming Category objects back to an array of IDs
-  const newIds = newItems.map(item => item.id)
-
-  // Update local state only if the new IDs are different from the current local state
-  if (JSON.stringify(newIds) !== JSON.stringify(item_ids.value)) {
-    item_ids.value = newIds
-  }
-}, { immediate: true, deep: true }) // immediate: true runs the check on setup
-
-// --- Lifecycle Hooks ---
-
-onMounted(() => {
-  console.log('Initial Category IDs:', item_ids.value)
-})
 
 onUnmounted(() => {
   // Stop watchers to prevent memory leaks
   updateModelValue()
-  syncModelValue()
 })
 
 /**

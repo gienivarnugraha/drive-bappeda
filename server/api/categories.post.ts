@@ -1,6 +1,6 @@
 import type { Category } from '~/types'
 import { inspect } from 'node:util'
-import supabase from '~/utils/supabase'
+import { serverSupabaseClient } from '#supabase/server'
 import { convertToKebabCase } from '~/utils'
 
 type EditSchema = {
@@ -11,6 +11,8 @@ export default eventHandler(async (event) => {
   const { shouldDelete, ...payload } = await readBody<EditSchema>(event)
 
   let request
+
+  const supabase = await serverSupabaseClient(event)
 
   if (shouldDelete) {
     request = supabase

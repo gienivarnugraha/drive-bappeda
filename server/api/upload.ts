@@ -1,5 +1,7 @@
 import { sseSend } from '~/utils/sse'
 import { getClampedFileNameWithExtension } from '~/utils'
+import { serverSupabaseClient } from "#supabase/server";
+
 
 const allowedTypes = [
   'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
@@ -12,8 +14,6 @@ export default eventHandler(async (event) => {
   }
 
   const filenames: string[] = []
-
-  const filenamesExists: string[] = []
 
   const storage = useStorage(process.env.STORAGE_NAME)
 
@@ -29,12 +29,14 @@ export default eventHandler(async (event) => {
 
     const filename = file.filename as string
 
-    if (await storage.hasItem(filename)) {
-      if (file.name === 'file') {
-        filenamesExists.push(filename)
-      }
 
+    if (file.name === 'file') {
+      filenames.push(filename)
+    }
+
+    if (await storage.hasItem(filename)) {
       sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} exists in storage... `, status: 'info' })
+
     } else {
       sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} upload started`, status: 'info' })
 
@@ -45,24 +47,11 @@ export default eventHandler(async (event) => {
         sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} not uploaded `, status: 'error' })
       }
 
-      if (file.name === 'file') {
-        filenames.push(filename)
-      }
-
       sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} uploaded `, status: 'info' })
     }
   }
 
-  if (filenames.length > 0) {
-    sseSend('push:notif', { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
+  sseSend('push:notif', { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
 
-    return { message: `${filenames.length} files uploaded successfully`, filenames }
-  } else {
-    sseSend('push:notif', { message: `${filenamesExists.join(', ')} exists in storage...`, status: 'error' })
-
-    throw createError({
-      statusCode: 400,
-      statusMessage: `${filenamesExists.join(', ')} exists in storage...`
-    })
-  }
+  return { message: `${filenames.length} files uploaded successfully`, filenames }
 })

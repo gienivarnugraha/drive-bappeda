@@ -4,6 +4,7 @@ import type { PropType, Ref } from 'vue';
 import type { Category, Division } from '~/types'; // Assuming this path is correct
 
 type Item = Category | Division;
+
 const toast = useToast();
 
 const props = defineProps({
@@ -41,51 +42,87 @@ for (const key in props.additionalFields) {
   (state as Record<string, any>)[key] = props.additionalFields[key];
 }
 
-const items: Ref<Item[]> = ref([...props.options]);
+onMounted(() => {
+  items.value = props.options;
+})
+const items: Ref<Item[]> = ref([]);
 const addView = ref(false);
+const supabase = useSupabaseClient();
 
-const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
-
-  try {
-    const { data, message } = await $fetch<{ message: string, data: Category | Division }>(`/api/${props.type}`, {
-      method: 'POST',
-      body: {
-        shouldDelete,
-        ...itemData
+const onDelete = (item: Item) => {
+  toast.add({
+    title: 'Apakah anda yakin?',
+    description: `${props.title} akan dihapus secara permanen`,
+    duration: 0,
+    actions: [{
+      label: 'Hapus',
+      onClick: e => {
+        deleteItem(item);
       },
-    });
+      variant: 'solid',
+      color: 'error'
+    }]
+  })
+}
 
-    // --- Update Local State ---
-    if (shouldDelete) {
-      // Deletion: Find and remove item by ID
-      const index = items.value.findIndex(i => i.id === data.id);
-      if (index !== -1) {
-        items.value.splice(index, 1);
-      }
-    } else {
-      // Creation/Update: Add the newly created item to the list
-      items.value.push(data);
-      // Reset state for new entry
-      // Object.assign(state, {
-      //   name: '',
-      //   ...props.additionalFields // Reset dynamic fields to initial values
-      // });
-    }
+const deleteItem = async (item: Item) => {
+  const { error } = await supabase.from(props.type)
+    .delete()
+    .eq('id', item.id)
 
-    toast.add({
-      title: 'Success',
-      description: message,
-      icon: 'i-lucide-check',
-      color: 'success'
-    });
-  } catch (error: any) {
+  if (error) {
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'An unknown error occurred.',
+      description: error.details || 'An unknown error occurred.',
       icon: 'i-lucide-alert-triangle',
       color: 'error'
     });
   }
+
+  const index = items.value.findIndex(i => i.id === item.id);
+
+  if (index !== -1) {
+    items.value.splice(index, 1);
+  }
+
+  toast.add({
+    title: 'Success',
+    description: `Succes delete ${item.name}`,
+    icon: 'i-lucide-check',
+    color: 'success'
+  });
+}
+
+const onSubmit = async (itemData: FormSchema | Item) => {
+
+  const { name, ...payload } = itemData as FormSchema;
+
+  const { data, error } = await supabase
+    .from(props.type)
+    .upsert({ name: convertToKebabCase(name), metadata: { ...payload } }, { onConflict: 'name' })
+    .select()
+    .limit(1)
+    .single()
+
+  if (data) {
+    items.value.push(data as unknown as Item);
+
+    toast.add({
+      title: 'Success',
+      description: `Success add ${data.name}`,
+      icon: 'i-lucide-check',
+      color: 'success'
+    })
+
+  } else if (error) {
+    toast.add({
+      title: 'Error',
+      description: error.details || 'An unknown error occurred.',
+      icon: 'i-lucide-alert-triangle',
+      color: 'error'
+    });
+  }
+
 };
 </script>
 
@@ -98,7 +135,7 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
           <UBadge class="font-bold rounded-full">
             <p class="text-xs"> {{ clampCharacters(toTitleCase(item.metadata?.name || item.name), 20) }}</p>
             <template #trailing>
-              <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="submit(item, true)" />
+              <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="onDelete(item)" />
             </template>
           </UBadge>
         </UTooltip>
@@ -111,7 +148,7 @@ const submit = async (itemData: FormSchema | Item, shouldDelete = false) => {
     </div>
 
     <UForm v-if="addView" :schema="Schema" :state="state" class="flex flex-col gap-4 max-w-md"
-      @submit="submit(state as FormSchema)">
+      @submit="onSubmit(state as FormSchema)">
       <UFormField v-for="key in Object.keys(state)" :key="key" :name="key" :label="toTitleCase(key)"
         :description="`Enter the value for ${key}`" class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="(state as Record<string, any>)[key]" :placeholder="`New ${key}`" class="w-full" />
