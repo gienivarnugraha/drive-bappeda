@@ -2,10 +2,13 @@
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import { markdownToHtml } from '~/utils/markdown'
 import { v4 as uuid } from 'uuid'
+import { useUser } from '~/composables/useUser'
 
 defineProps<{
   collapsed?: boolean
 }>()
+
+const { user } = await useUser()
 
 const question = ref<string>('')
 const threadId = uuid()
@@ -143,7 +146,8 @@ onUnmounted(() => {
       side: 'left',
       variant: 'solid',
       avatar: {
-        src: 'https://github.com/benjamincanac.png'
+        src: user.avatar,
+        alt: user.display_name
       }
     }">
       <template #content="{ message }">

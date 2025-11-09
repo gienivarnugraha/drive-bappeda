@@ -19,7 +19,6 @@ const props = defineProps<{
 const isSubmitting: Ref<boolean> = ref(false)
 
 const setData = (item: Results, clear: boolean = false) => {
-  console.log(item)
   state.title = clear ? '' : item.title
   state.description = clear ? '' : item.description
   state.categories = clear ? [] : deepClone(item.categories)
@@ -27,12 +26,17 @@ const setData = (item: Results, clear: boolean = false) => {
 }
 
 onUnmounted(() => {
+  console.log('DETAILS.VUE unmounted')
   setData(props.document, true)
   watcher()
 })
 
 const watcher = watch(() => props.document, (doc) => {
   setData(doc)
+
+  if (isEditing.value) {
+    isEditing.value = false
+  }
 })
 
 const isEditing: Ref<boolean> = ref(false)
@@ -77,7 +81,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
   } catch (error) {
-    console.log(error)
+    console.log('error editing document:', error)
   } finally {
     isSubmitting.value = false
     isEditing.value = false
@@ -114,12 +118,16 @@ const deleteFile = async () => {
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
   } catch (error) {
-    console.log(error)
+    console.log('error deleting document: ', error)
   } finally {
     isSubmitting.value = false
     isEditing.value = false
     isFileDetailsSlideoverOpen.value = false
   }
+}
+
+function isEmpty(obj: Object) {
+  return Object.keys(obj).length === 0;
 }
 </script>
 
@@ -128,9 +136,9 @@ const deleteFile = async () => {
     :dismissible="smallerThanLg" :handle="smallerThanLg" :overlay="false" :modal="false" title="File Details"
     description="File description" :ui="{ header: 'flex justify-between items-center' }">
     <UTooltip text="Tutup Panel Detail Berkas">
-      <UButton variant="solid" class="fixed bottom-10 right-10"
+      <UButton v-if="!isEmpty(document)" variant="solid" class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
-        label="Buka File" :ui="{
+        :label="isFileDetailsSlideoverOpen ? 'Tutup File' : 'Buka File'" :ui="{
           trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
         }" />
     </UTooltip>

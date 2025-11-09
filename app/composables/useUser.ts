@@ -5,6 +5,7 @@ export const useUser = async () => {
 
   const supabaseUser = useSupabaseUser()
 
+  const config = useRuntimeConfig()
 
   const isAuthenticated = computed<boolean>(() => !!supabaseUser.value)
 
@@ -16,7 +17,8 @@ export const useUser = async () => {
     const { data, error } = await supabase.from('profiles').select('display_name, avatar').eq('uuid', uuid).limit(1).single()
 
     if (data) {
-      user.value = data as User
+      user.value.display_name = data.display_name as string
+      user.value.avatar = sanitizeUrl(config.public.avatarUrl) + '/' + data.avatar as string
     }
 
     if (error) {

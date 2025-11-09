@@ -18,13 +18,9 @@ const user = ref({
 onMounted(async () => {
   const { user: profile } = await useUser()
 
-  console.log(profile)
-  const config = useRuntimeConfig()
-
-
   if (profile) {
     user.value.display_name = profile.display_name || ''
-    user.value.avatar.src = sanitizeUrl(config.public.avatarUrl) + '/' + profile.avatar || ''
+    user.value.avatar.src = profile.avatar || ''
     user.value.avatar.alt = profile.display_name || ''
   }
 })
