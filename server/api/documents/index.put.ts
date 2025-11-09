@@ -17,9 +17,8 @@ export default defineEventHandler(async (event) => {
 
     const { documentId, categories, divisions, ...rest } = data
 
-    console.log('update data', data)
-
     const categoryIds = categories.length ? categories.map(category => category.id) : []
+
     const divisionIds = divisions.length ? divisions.map(division => division.id) : []
 
     await modifyRelation({ documentId }, 'delete')

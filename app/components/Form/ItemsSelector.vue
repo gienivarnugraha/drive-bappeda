@@ -49,7 +49,7 @@ const itemsToEmit = computed(() => {
  */
 const updateModelValue = watch(item_ids, (newVal) => {
   // Emit the computed Category[] array, updating v-model in the parent.
-  console.log('modelValue updated')
+  console.log('modelValue updated', itemsToEmit.value)
   emits('update:modelValue', itemsToEmit.value)
 }, { deep: true })
 

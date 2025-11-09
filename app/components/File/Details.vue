@@ -177,8 +177,8 @@ const deleteFile = async () => {
             </template>
           </UTooltip>
 
-          <FormItemsSelector v-model="state.divisions" :options="categories" title="Bidang" :edit="isEditing" />
-          <FormItemsSelector v-model="state.categories" :options="divisions" title="Kategori" :edit="isEditing" />
+          <FormItemsSelector v-model="state.divisions" :options="divisions" title="Bidang" :edit="isEditing" />
+          <FormItemsSelector v-model="state.categories" :options="categories" title="Kategori" :edit="isEditing" />
 
           <UButton v-if="isEditing" label="Simpan Perubahan" icon="i-lucide-save" type="submit" />
 
