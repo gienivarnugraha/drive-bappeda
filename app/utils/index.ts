@@ -87,7 +87,7 @@ export function base64ToArrayBuffer(data: string) {
   return bytes
 };
 
-export const deepClone = (object: any) => JSON.parse(JSON.stringify(object))
+export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
 
 /**

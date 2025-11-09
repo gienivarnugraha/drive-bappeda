@@ -18,18 +18,16 @@ const props = defineProps<{
 
 const isSubmitting: Ref<boolean> = ref(false)
 
-const setData = (item: Results) => {
-  state.title = item.title
-  state.description = item.description
-  state.categories = item.categories
-  state.divisions = item.divisions
+const setData = (item: Results, clear: boolean = false) => {
+  console.log(item)
+  state.title = clear ? '' : item.title
+  state.description = clear ? '' : item.description
+  state.categories = clear ? [] : deepClone(item.categories)
+  state.divisions = clear ? [] : deepClone(item.divisions)
 }
 
-onMounted(() => {
-  setData(props.document)
-})
-
 onUnmounted(() => {
+  setData(props.document, true)
   watcher()
 })
 
@@ -54,11 +52,11 @@ const schema = z.object({
 
 type Schema = z.infer<typeof schema>
 
-const state = reactive<Partial<Schema>>({
-  title: undefined,
-  description: undefined,
-  categories: undefined,
-  divisions: undefined,
+const state = reactive<Schema>({
+  title: '',
+  description: '',
+  categories: [],
+  divisions: [],
 })
 
 const emits = defineEmits(['update:document'])
@@ -159,28 +157,28 @@ const deleteFile = async () => {
             class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail">
 
           <UFormField v-if="isEditing" label="Judul File" name="title">
-            <UTextarea v-model="document.title" class="w-full" :rows="2" />
+            <UTextarea v-model="state.title" class="w-full" :rows="2" />
           </UFormField>
 
           <UFormField v-if="isEditing" label="Deskripsi" name="description">
-            <UTextarea v-model="document.description" class="w-full" :rows="4" />
+            <UTextarea v-model="state.description" class="w-full" :rows="4" />
           </UFormField>
 
           <UTooltip>
             <p v-if="!isEditing" class="line-clamp-4 text-md">
-              {{ document.description }}
+              {{ state.description }}
             </p>
 
             <template #content>
               <p class="max-w-96 text-md p-4 rounded bg-slate-400 dark:bg-slate-500">
-                {{ document.description }}
+                {{ state.description }}
               </p>
 
             </template>
           </UTooltip>
 
-          <FormItemsSelector v-model="document.divisions" :options="categories" title="Bidang" :edit="isEditing" />
-          <FormItemsSelector v-model="document.categories" :options="divisions" title="Kategori" :edit="isEditing" />
+          <FormItemsSelector v-model="state.divisions" :options="categories" title="Bidang" :edit="isEditing" />
+          <FormItemsSelector v-model="state.categories" :options="divisions" title="Kategori" :edit="isEditing" />
 
           <UButton v-if="isEditing" label="Simpan Perubahan" icon="i-lucide-save" type="submit" />
 

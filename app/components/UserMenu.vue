@@ -19,11 +19,13 @@ onMounted(async () => {
   const { user: profile } = await useUser()
 
   console.log(profile)
+  const config = useRuntimeConfig()
 
-  if (profile.value) {
-    user.value.display_name = profile.value?.display_name || ''
-    user.value.avatar.src = profile.value?.avatar || ''
-    user.value.avatar.alt = profile.value?.display_name || ''
+
+  if (profile) {
+    user.value.display_name = profile.display_name || ''
+    user.value.avatar.src = sanitizeUrl(config.public.avatarUrl) + '/' + profile.avatar || ''
+    user.value.avatar.alt = profile.display_name || ''
   }
 })
 

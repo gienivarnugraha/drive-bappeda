@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Category, Division } from '~/types'
+import { useVModel } from "@vueuse/core";
 
 type Items = Category | Division
-
 
 const props = defineProps({
   edit: {
@@ -24,12 +24,12 @@ const props = defineProps({
 })
 
 
+const emits = defineEmits(["update:modelValue"]);
+
 // The local state should be an array of IDs (numbers)
 // We initialize it by mapping the IDs from the incoming Category objects.
 const item_ids: Ref<number[]> = ref(props.modelValue.map(item => item.id))
 
-// The emit event name is correct for v-model
-const emit = defineEmits(['update:modelValue'])
 
 // Convert selected IDs (item_ids.value) back into Category objects for emitting.
 // This is necessary because the parent v-model is bound to Category[] (the prop type).
@@ -50,7 +50,7 @@ const itemsToEmit = computed(() => {
 const updateModelValue = watch(item_ids, (newVal) => {
   // Emit the computed Category[] array, updating v-model in the parent.
   console.log('modelValue updated')
-  emit('update:modelValue', itemsToEmit.value)
+  emits('update:modelValue', itemsToEmit.value)
 }, { deep: true })
 
 onUnmounted(() => {

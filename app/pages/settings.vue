@@ -56,14 +56,14 @@ function onFileClick() {
 }
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Too short'),
-  avatar: z.string().optional(),
+  display_name: z.string().min(3, 'Must be at least 3 characters'),
+  avatar: z.string().optional()
 })
 
 type ProfileSchema = z.output<typeof profileSchema>
 
 const profile = reactive<Partial<ProfileSchema>>({
-  name: 'Benjamin Canac',
+  display_name: 'Benjamin Canac',
   avatar: undefined,
 })
 const toast = useToast()
@@ -71,7 +71,7 @@ const toast = useToast()
 async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
   const { data, error } = await supabase.auth.updateUser({
     data: {
-      name: event.data.name,
+      display_name: event.data.display_name,
       avatar: event.data.avatar
     }
   })
@@ -132,14 +132,14 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
         <USeparator />
         <UFormField name="name" label="Name" description="Will appear on receipts, invoices, and other communication."
           required class="flex max-sm:flex-col justify-between items-start gap-4">
-          <UInput v-model="profile.name" autocomplete="off" />
+          <UInput v-model="profile.display_name" autocomplete="off" />
         </UFormField>
 
         <USeparator />
         <UFormField name="avatar" label="Avatar" description="JPG, GIF or PNG. 1MB Max."
           class="flex max-sm:flex-col justify-between sm:items-center gap-4">
           <div class="flex flex-wrap items-center gap-3">
-            <UAvatar :src="profile.avatar" :alt="profile.name" size="lg" />
+            <UAvatar :src="profile.avatar" :alt="profile.display_name" size="lg" />
             <UButton label="Choose" color="neutral" @click="onFileClick" />
             <input ref="fileRef" type="file" class="hidden" accept=".jpg, .jpeg, .png, .gif" @change="onFileChange">
           </div>

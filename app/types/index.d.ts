@@ -1,6 +1,11 @@
 import type { Database, Tables } from "./database.types"
 
-export interface User extends Tables<'profile'> { }
+export interface User extends Tables<'profile'> {
+  avatar: string;
+  display_name: string;
+}
+
+// export interface Category extends Tables<'categories'> { }
 
 export type Category = Omit<Tables<'categories'>, 'metadata' | 'created_at'> & {
   metadata?: {

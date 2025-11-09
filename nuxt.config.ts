@@ -46,6 +46,7 @@ export default defineNuxtConfig({
     public: {
       storageUrl: process.env.STORAGE_URL,
       storageName: process.env.STORAGE_NAME,
+      avatarUrl: process.env.AVATAR_URL,
     }
   },
 
