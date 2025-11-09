@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
-import { useItems } from '#imports'
+import { useItems } from '~/composables/useItems'
 
 definePageMeta({
   layout: 'home',
@@ -10,11 +10,53 @@ definePageMeta({
 
 const { categories, divisions } = await useItems()
 
-const fileRef = ref<HTMLInputElement>()
+const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
+
+const supabase = useSupabaseClient()
+
+async function onFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+
+
+  if (!input.files?.length) {
+    return
+  }
+
+  const avatarFile = input.files[0]
+
+  if (avatarFile) {
+    const { data, error } = await supabase
+      .storage
+      .from('avatars')
+      .upload('public/avatar1.png', avatarFile, {
+        cacheControl: '3600',
+        upsert: true
+      })
+
+    if (error) {
+      console.log('error uploading files', error)
+
+      toast.add({
+        title: 'Error',
+        description: `Error uploading files: ${error.message}`,
+        icon: 'i-lucide-x',
+        color: 'error'
+      })
+
+      return
+    }
+
+    profile.avatar = data?.fullPath
+  }
+
+}
+
+function onFileClick() {
+  fileRef.value?.click()
+}
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Too short'),
-  email: z.string().email('Invalid email'),
   avatar: z.string().optional(),
 })
 
@@ -22,34 +64,29 @@ type ProfileSchema = z.output<typeof profileSchema>
 
 const profile = reactive<Partial<ProfileSchema>>({
   name: 'Benjamin Canac',
-  email: 'ben@nuxtlabs.com',
   avatar: undefined,
 })
 const toast = useToast()
 
-async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
-  toast.add({
-    title: 'Success',
-    description: 'Your settings have been updated.',
-    icon: 'i-lucide-check',
-    color: 'success'
+async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      name: event.data.name,
+      avatar: event.data.avatar
+    }
   })
-  console.log(event.data)
-}
 
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-
-  if (!input.files?.length) {
-    return
+  if (data) {
+    toast.add({
+      title: 'Success',
+      description: 'Your settings have been updated.',
+      icon: 'i-lucide-check',
+      color: 'success'
+    })
   }
 
-  profile.avatar = URL.createObjectURL(input.files[0]!)
 }
 
-function onFileClick() {
-  fileRef.value?.click()
-}
 
 const passwordSchema = z.object({
   current: z.string().min(8, 'Must be at least 8 characters'),
@@ -63,6 +100,13 @@ const password = reactive<Partial<PasswordSchema>>({
   new: undefined
 })
 
+const updateUserPassword = async () => {
+  const { data, error } = await supabase.auth.updateUser({
+    password: password.new
+  })
+  if (error) console.log(error)
+}
+
 const validate = (state: Partial<PasswordSchema>): FormError[] => {
   const errors: FormError[] = []
   if (state.current && state.new && state.current === state.new) {
@@ -74,7 +118,7 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
 
 <template>
   <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full lg:max-w-2xl mx-auto">
-    <UForm id="settings" :schema="profileSchema" :state="profile" @submit="onSubmit">
+    <UForm id="settings" :schema="profileSchema" :state="profile" @submit="profileUpdate">
       <UPageCard title="Profile" description="These informations will be displayed publicly." variant="naked"
         orientation="horizontal" class="mb-4">
         <UButton form="settings" label="Save changes" color="neutral" type="submit" class="w-fit lg:ms-auto" />
@@ -104,7 +148,7 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
     </UForm>
 
     <UPageCard title="Password" description="Confirm your current password before setting a new one." variant="subtle"
-      class="bg-linear-to-tl from-secondary/10 from-5% to-default">
+      class="bg-linear-to-tl from-secondary/10 from-5% to-default" @submit="updateUserPassword">
       <UForm :schema="passwordSchema" :state="password" :validate="validate" class="flex flex-col gap-4 max-w-xs">
         <UFormField name="current">
           <UInput v-model="password.current" type="password" placeholder="Current password" class="w-full" />
