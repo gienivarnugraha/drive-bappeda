@@ -1,144 +1,171 @@
 <script setup lang="ts">
-import type { FormSubmitEvent, FormError } from '@nuxt/ui'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import * as z from 'zod'
 import { v4 as uuid } from 'uuid'
 
-
 const toast = useToast()
-
 const supabase = useSupabaseClient()
 
-const Schema = z.object({
+// --- 1. Zod Schema ---
+const schema = z.object({
   email: z.string().email('Invalid email'),
-  display_name: z.string().min(8, 'Must be at least 8 characters'),
+  display_name: z.string().min(6, 'Must be at least 6 characters'),
   password: z.string().min(8, 'Must be at least 8 characters'),
-  avatar: z.string().optional()
+  // Avatar is optional in the form, but we'll manage the URL string if uploaded
+  avatar: z.string().optional().nullable()
 })
 
-type Schema = z.output<typeof Schema>
+type Schema = z.output<typeof schema>
 
-const state = reactive<Partial<Schema>>({
-  email: undefined,
-  display_name: undefined,
-  password: undefined,
-  avatar: undefined
+// --- 2. Reactive State ---
+const state = reactive<Schema>({
+  email: '',
+  display_name: '',
+  password: '',
+  avatar: null, // Use null for no avatar URL
 })
 
-
+// --- 3. File Handling State & Refs ---
 const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
-
 const avatarFile: Ref<File | undefined> = ref(undefined);
-
 const previousObjectUrl: Ref<string | undefined> = ref(undefined);
+const isUploading = ref(false);
 
-// --- File Handling Logic ---
+// --- 4. File Handling Logic ---
 
 /**
- * Handles the change event from a file input element.
- * * @param event The native change event.
+ * Handles the change event from a file input element, creating a local object URL for preview.
+ * @param event The native change event.
  */
 function onFileChange(event: Event): void {
-  // Cast the event target to HTMLInputElement immediately for type safety
   const input = event.target as HTMLInputElement;
-
-  // Check for files and exit if none
   const file = input.files?.[0];
+
+  // 4a. Cleanup and reset if file is cleared or canceled
   if (!file) {
-    // Clear state if the file selection was canceled or cleared
-    if (state.avatar && previousObjectUrl.value) {
-      URL.revokeObjectURL(previousObjectUrl.value); // Clean up old URL
+    if (previousObjectUrl.value) {
+      URL.revokeObjectURL(previousObjectUrl.value);
     }
-    state.avatar = undefined;
+    state.avatar = null;
     avatarFile.value = undefined;
     previousObjectUrl.value = undefined;
     return;
   }
 
-  // Cleanup previous object URL to avoid memory leaks
+  // 4b. Cleanup previous object URL to avoid memory leaks
   if (previousObjectUrl.value) {
     URL.revokeObjectURL(previousObjectUrl.value);
   }
 
-  // Create the new object URL for immediate preview
+  // 4c. Create and store new object URL for preview
   const newObjectUrl = URL.createObjectURL(file);
-
-  // Update the state
-  state.avatar = newObjectUrl;       // Update for preview
-  avatarFile.value = file;             // Update for upload
-  previousObjectUrl.value = newObjectUrl; // Store for future cleanup
+  state.avatar = newObjectUrl;
+  avatarFile.value = file;
+  previousObjectUrl.value = newObjectUrl;
 }
 
-async function uploadFile() {
-
-  if (avatarFile.value) {
-
-    const filename = `${uuid()}.${avatarFile.value.name.split('.').pop()}`
-
-    const { data, error } = await supabase
-      .storage
-      .from('avatars')
-      .upload(filename, avatarFile.value, {
-        cacheControl: '3600',
-        upsert: true
-      })
-
-    if (error) {
-      console.log('error uploading files', error)
-
-      toast.add({
-        title: 'Error',
-        description: `Error uploading files: ${error.message}`,
-        icon: 'i-lucide-x',
-        color: 'error'
-      })
-
-      return
-    }
-
-  }
-}
-
-function onFileClick() {
+/**
+ * Triggers the hidden file input click.
+ */
+function onFileClick(): void {
   fileRef.value?.click()
 }
 
-const onSubmit = async (event: FormSubmitEvent<Schema>) => {
-  const { email, password, display_name } = event.data
+// --- 5. Supabase Upload Logic ---
 
-  const avatar = await uploadFile()
+/**
+ * Uploads the selected avatar file to Supabase storage.
+ * @returns {Promise<string | null>} The public URL of the uploaded file, or null on failure/no file.
+ */
+async function uploadAvatar(): Promise<string | null> {
+  if (!avatarFile.value) {
+    return null; // No file to upload
+  }
 
-  const { data, error } = await supabase.auth.signUp(
-    {
-      email,
-      password,
-      options: {
-        data: {
-          display_name,
-          avatar,
-        },
-      },
-    }
-  )
+  isUploading.value = true;
+  const file = avatarFile.value;
+  // Generate a unique filename using UUID and the original extension
+  const fileExtension = file.name.split('.').pop();
+  const filename = `${uuid()}.${fileExtension}`;
 
-  if (data) {
-    toast.add({
-      title: 'Success',
-      description: `User ${data.user?.email}} telah ditambahkan!`,
-      icon: 'i-lucide-check',
-      color: 'success'
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filename, file, {
+      cacheControl: '3600',
+      upsert: false // Set to false to prevent accidental overwrites if UUIDs clash (unlikely)
     })
-  } else if (error) {
-    console.log('error adding new user: ', error)
 
+  isUploading.value = false;
+
+  if (uploadError) {
+    console.error('Error uploading file:', uploadError);
     toast.add({
-      title: 'Error',
-      description: `Error menambahkan user: ${error.message}`,
+      title: 'Upload Failed',
+      description: `Error uploading avatar: ${uploadError.message}`,
       icon: 'i-lucide-x',
       color: 'error'
-    })
+    });
+    return null;
   }
+
+  return uploadData.fullPath;
 }
 
+// --- 6. Form Submission Logic ---
+
+const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
+  const { email, password, display_name } = event.data
+
+  // 6a. Upload the avatar and get its public URL
+  const avatarUrl = await uploadAvatar();
+
+  if (avatarFile.value && !avatarUrl) {
+    // Stop sign-up if upload failed but a file was selected
+    return;
+  }
+
+  // 6b. Sign up the user with the uploaded avatar URL (if successful)
+  const { data: signUpData, error: signUpError } = await $fetch('/api/admin/user', {
+    method: 'POST',
+    body: {
+      email,
+      password,
+      display_name,
+      avatar_url: avatarUrl,
+    }
+  })
+
+  if (signUpData !== null || signUpData !== undefined) {
+    toast.add({
+      title: 'Success',
+      description: `User ${signUpData.user?.email} has been added!`,
+      icon: 'i-lucide-check',
+      color: 'success'
+    });
+
+    // Optional: Clear form state after successful submission
+    // Object.assign(state, {
+    //   email: '',
+    //   display_name: '',
+    //   password: '',
+    //   avatar: null,
+    // });
+    // avatarFile.value = undefined;
+    // if (previousObjectUrl.value) {
+    //   URL.revokeObjectURL(previousObjectUrl.value);
+    //   previousObjectUrl.value = undefined;
+    // }
+
+  } else if (signUpError) {
+    console.error('Error adding new user: ', signUpError);
+    toast.add({
+      title: 'Error',
+      description: `Error adding user: ${signUpError.message}`,
+      icon: 'i-lucide-x',
+      color: 'error'
+    });
+  }
+}
 </script>
 
 <template>
@@ -146,9 +173,9 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   <UPageCard title="Add User" description="Add a new user" variant="subtle"
     class="bg-linear-to-tl from-secondary/10 from-5% to-default">
 
-    <UForm id="settings-add-user" :schema="Schema" :state="state" class="flex flex-col gap-4 " @submit="onSubmit">
-      <UFormField name="name" label="Name" description="Will appear on receipts, invoices, and other communication."
-        required class="flex max-sm:flex-col justify-between items-start gap-4">
+    <UForm id="settings-add-user" :schema="schema" :state="state" class="flex flex-col gap-4 " @submit="onSubmit">
+      <UFormField name="display_name" label="Name" description="The user's display name." required
+        class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="state.display_name" autocomplete="off" />
       </UFormField>
 
@@ -157,25 +184,28 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         <UInput v-model="state.email" type="email" autocomplete="off" />
       </UFormField>
 
-      <UFormField name="password" label="Password"
-        description="Will appear on receipts, invoices, and other communication." required
+      <UFormField name="password" label="Password" description="Must be at least 8 characters long." required
         class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="state.password" type="password" placeholder="Password" autocomplete="off" />
       </UFormField>
 
       <USeparator />
+
       <UFormField name="avatar" label="Avatar" description="JPG, GIF or PNG. 1MB Max."
         class="flex max-sm:flex-col justify-between sm:items-center gap-4">
         <div class="flex flex-wrap items-center gap-3">
-          <UAvatar :src="state.avatar" :alt="state.display_name" size="lg" />
-          <UButton label="Choose" color="neutral" @click="onFileClick" />
+          <UAvatar :src="state.avatar ?? undefined" :alt="state.display_name" size="lg" />
+          <UButton :label="avatarFile ? 'Change File' : 'Choose File'" :loading="isUploading" color="neutral"
+            @click="onFileClick" />
           <input ref="fileRef" type="file" class="hidden" accept=".jpg, .jpeg, .png, .gif" @change="onFileChange">
+
+          <UButton v-if="avatarFile" icon="i-lucide-x" color="error" variant="ghost"
+            @click="onFileChange({ target: { files: null } } as unknown as Event)" />
+
         </div>
       </UFormField>
 
-      <UButton label="Add" class="w-fit" type="submit" />
+      <UButton label="Add User" class="w-fit" type="submit" :loading="isUploading" />
     </UForm>
   </UPageCard>
-
-
 </template>

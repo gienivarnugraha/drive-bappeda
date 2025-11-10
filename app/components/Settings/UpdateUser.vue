@@ -85,7 +85,7 @@ async function uploadFile() {
         const { data, error } = await supabase
             .storage
             .from('avatars')
-            .upload(filename ? filename[0] : `${user.value.id}.${avatarFile.value.name.split('.').pop()}`, avatarFile.value, {
+            .upload(filename ? filename[0] + '.' + avatarFile.value.name.split('.').pop() : `${user.value.id}.${avatarFile.value.name.split('.').pop()}`, avatarFile.value, {
                 cacheControl: '3600',
                 upsert: true
             })
@@ -138,6 +138,12 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             icon: 'i-lucide-check',
             color: 'success'
         })
+
+        if (previousObjectUrl.value) {
+            URL.revokeObjectURL(previousObjectUrl.value);
+            previousObjectUrl.value = undefined;
+        }
+
     } else if (error) {
         console.log('error updating user', error)
 
