@@ -41,9 +41,18 @@ export function sanitizeUrl(url: string): string {
   if (!url) {
     return url
   }
-  // Replace multiple slashes with a single slash, but not after a colon (to preserve http://).
+  // Remove double slashes (but not after a colon)
   // This uses a negative lookbehind `(?<!:)` to ensure the slashes are not preceded by a colon.
-  return url.replace(/(?<!:)\/{2,}/g, '/')
+  let sanitized = url.replace(/(?<!:)\/{2,}/g, '/')
+
+  // Add a trailing slash if one does not exist
+  // The regex /[^/]$/ matches any character that is NOT a slash, when it is at the end ($) of the string.
+  // We use this to identify URLs that are missing the trailing slash.
+  if (sanitized.match(/[^/]$/)) {
+    sanitized += '/'
+  }
+
+  return sanitized
 }
 
 
@@ -107,7 +116,7 @@ export function sanitizeFileName(file: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-export const convertToKebabCase = (str: string) => {
+export const toKebabCase = (str: string) => {
   if (!str) return str;
 
   // 1. Normalize CamelCase/PascalCase: Insert a hyphen before any capital letter

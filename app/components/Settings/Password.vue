@@ -31,8 +31,15 @@ const updateUserPassword = async (event: FormSubmitEvent<PasswordSchema>) => {
       icon: 'i-lucide-check',
       color: 'success'
     })
+  } else if (error) {
+    console.log('error update password: ', error)
+    toast.add({
+      title: 'Error',
+      description: error.message,
+      icon: 'i-lucide-x',
+      color: 'error'
+    })
   }
-  if (error) console.log(error)
 }
 
 const validate = (state: Partial<PasswordSchema>): FormError[] => {
@@ -48,16 +55,17 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
 
   <UPageCard title="Password" description="Confirm your current password before setting a new one." variant="subtle"
     class="bg-linear-to-tl from-secondary/10 from-5% to-default">
+
     <UForm id="settings-password" :schema="passwordSchema" :state="password" :validate="validate"
       @submit="updateUserPassword" class="flex flex-col gap-4 max-w-xs">
-      <UFormField name="current">
+      <UFormField name="current" label="Current Password">
         <UInput v-model="password.current" type="password" placeholder="Current password" class="w-full" />
       </UFormField>
 
-      <UFormField name="new">
+      <UFormField name="new" label="New Password">
         <UInput v-model="password.new" type="password" placeholder="New password" class="w-full" />
       </UFormField>
-
+      <USeparator />
       <UButton label="Update" class="w-fit" type="submit" />
     </UForm>
   </UPageCard>

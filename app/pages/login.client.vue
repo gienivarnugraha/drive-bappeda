@@ -6,7 +6,7 @@ import { useUser } from '#imports'
 
 const toast = useToast()
 
-onMounted(()=>{
+onMounted(() => {
   const user = useSupabaseUser()
 
   console.log(!!user.value)
@@ -42,22 +42,22 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
   const { email, password, } = payload.data
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  })
 
-    console.log(data.user?.email)
+  console.log('logged in: ', data.user?.email)
 
-    if (error) {
-      console.error('auth error: ', error)
+  if (error) {
+    console.error('auth error: ', error)
 
-      toast.add({ title: 'Error', description: error.message, color: 'error' })
-    }
+    toast.add({ title: 'Error', description: error.message, color: 'error' })
+  }
 
-    navigateTo('/home')
+  navigateTo('/home')
 
-    toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
+  toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
 }
 </script>
 

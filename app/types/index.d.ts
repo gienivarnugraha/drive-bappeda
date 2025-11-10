@@ -1,8 +1,9 @@
 import type { Database, Tables } from "./database.types"
 
-export interface User extends Tables<'profile'> {
+export interface User {
   avatar: string;
   display_name: string;
+  id: string
 }
 
 // export interface Category extends Tables<'categories'> { }

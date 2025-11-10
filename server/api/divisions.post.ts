@@ -1,7 +1,7 @@
 import type { Division } from '~/types'
 import { inspect } from 'node:util'
 import { serverSupabaseClient } from '#supabase/server'
-import { convertToKebabCase } from '~/utils'
+import { toKebabCase } from '~/utils'
 
 type EditSchema = {
   shouldDelete: boolean
@@ -23,7 +23,7 @@ export default eventHandler(async (event) => {
   } else {
     request = supabase
       .from('divisions')
-      .upsert({ name: convertToKebabCase(payload.name), metadata: { ...payload } }, { onConflict: 'name' })
+      .upsert({ name: toKebabCase(payload.name), metadata: { ...payload } }, { onConflict: 'name' })
       .single()
   }
 

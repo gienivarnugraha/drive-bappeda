@@ -15,13 +15,17 @@ const user = ref({
 })
 
 
+const config = useRuntimeConfig()
+
+const avatarUrl = config.public.avatarUrl
+
 onMounted(async () => {
   const { user: profile } = await useUser()
 
   if (profile) {
-    user.value.display_name = profile.display_name || ''
-    user.value.avatar.src = profile.avatar || ''
-    user.value.avatar.alt = profile.display_name || ''
+    user.value.display_name = profile.value.display_name || ''
+    user.value.avatar.src = sanitizeUrl(avatarUrl) + profile.value.avatar || ''
+    user.value.avatar.alt = profile.value.display_name || ''
   }
 })
 

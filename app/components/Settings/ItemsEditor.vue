@@ -99,7 +99,7 @@ const onSubmit = async (itemData: FormSchema | Item) => {
 
   const { data, error } = await supabase
     .from(props.type)
-    .upsert({ name: convertToKebabCase(name), metadata: { ...payload } }, { onConflict: 'name' })
+    .upsert({ name: toKebabCase(name), metadata: { ...payload } }, { onConflict: 'name' })
     .select()
     .limit(1)
     .single()

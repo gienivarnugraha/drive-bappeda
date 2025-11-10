@@ -12,11 +12,11 @@ const { categories, divisions } = await useItems()
 
 <template>
   <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full lg:max-w-2xl mx-auto">
-    <SettingsUpdateUser />
+    <SettingsUpdateUser key="setting-update-user" />
 
-    <SettingsAddUser />
+    <SettingsAddUser key="settings-add-user" />
 
-    <SettingsPassword />
+    <SettingsPassword key="settings-password" />
 
     <SettingsItemsEditor :options="categories" title="Kategori" type="categories"
       :additional-fields="{ description: '' }" />

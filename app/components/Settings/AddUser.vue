@@ -1,62 +1,12 @@
 <script setup lang="ts">
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import * as z from 'zod'
+import { v4 as uuid } from 'uuid'
+
 
 const toast = useToast()
 
-
-const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
-
-async function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-
-
-  if (!input.files?.length) {
-    return
-  }
-
-  const avatarFile = input.files[0]
-
-  if (avatarFile) {
-    const { data, error } = await supabase
-      .storage
-      .from('avatars')
-      .upload(avatarFile.name, avatarFile, {
-        cacheControl: '3600',
-        upsert: true
-      })
-
-    if (error) {
-      console.log('error uploading files', error)
-
-      toast.add({
-        title: 'Error',
-        description: `Error uploading files: ${error.message}`,
-        icon: 'i-lucide-x',
-        color: 'error'
-      })
-
-      return
-    }
-
-    if (data) {
-      toast.add({
-        title: 'Success',
-        description: 'Your avatar has been uploaded.',
-        icon: 'i-lucide-check',
-        color: 'success'
-      })
-
-      state.avatar = data?.fullPath
-    }
-
-  }
-
-}
-
-function onFileClick() {
-  fileRef.value?.click()
-}
+const supabase = useSupabaseClient()
 
 const Schema = z.object({
   email: z.string().email('Invalid email'),
@@ -75,12 +25,87 @@ const state = reactive<Partial<Schema>>({
 })
 
 
+const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
+
+const avatarFile: Ref<File | undefined> = ref(undefined);
+
+const previousObjectUrl: Ref<string | undefined> = ref(undefined);
+
+// --- File Handling Logic ---
+
+/**
+ * Handles the change event from a file input element.
+ * * @param event The native change event.
+ */
+function onFileChange(event: Event): void {
+  // Cast the event target to HTMLInputElement immediately for type safety
+  const input = event.target as HTMLInputElement;
+
+  // Check for files and exit if none
+  const file = input.files?.[0];
+  if (!file) {
+    // Clear state if the file selection was canceled or cleared
+    if (state.avatar && previousObjectUrl.value) {
+      URL.revokeObjectURL(previousObjectUrl.value); // Clean up old URL
+    }
+    state.avatar = undefined;
+    avatarFile.value = undefined;
+    previousObjectUrl.value = undefined;
+    return;
+  }
+
+  // Cleanup previous object URL to avoid memory leaks
+  if (previousObjectUrl.value) {
+    URL.revokeObjectURL(previousObjectUrl.value);
+  }
+
+  // Create the new object URL for immediate preview
+  const newObjectUrl = URL.createObjectURL(file);
+
+  // Update the state
+  state.avatar = newObjectUrl;       // Update for preview
+  avatarFile.value = file;             // Update for upload
+  previousObjectUrl.value = newObjectUrl; // Store for future cleanup
+}
+
+async function uploadFile() {
+
+  if (avatarFile.value) {
+
+    const filename = `${uuid()}.${avatarFile.value.name.split('.').pop()}`
+
+    const { data, error } = await supabase
+      .storage
+      .from('avatars')
+      .upload(filename, avatarFile.value, {
+        cacheControl: '3600',
+        upsert: true
+      })
+
+    if (error) {
+      console.log('error uploading files', error)
+
+      toast.add({
+        title: 'Error',
+        description: `Error uploading files: ${error.message}`,
+        icon: 'i-lucide-x',
+        color: 'error'
+      })
+
+      return
+    }
+
+  }
+}
+
+function onFileClick() {
+  fileRef.value?.click()
+}
+
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
-  const supabase = useSupabaseClient()
+  const { email, password, display_name } = event.data
 
-  const { email, password, avatar, display_name } = event.data
-
-  console.log(event.data)
+  const avatar = await uploadFile()
 
   const { data, error } = await supabase.auth.signUp(
     {
@@ -90,23 +115,19 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         data: {
           display_name,
           avatar,
-        }
-      }
+        },
+      },
     }
   )
 
   if (data) {
-    console.log(data)
-
     toast.add({
       title: 'Success',
-      description: `User baru telah ditambahkan!`,
+      description: `User ${data.user?.email}} telah ditambahkan!`,
       icon: 'i-lucide-check',
       color: 'success'
     })
-  }
-
-  if (error) {
+  } else if (error) {
     console.log('error adding new user: ', error)
 
     toast.add({

@@ -1,7 +1,7 @@
 import type { User } from '~/types'
 
 export const useUser = async () => {
-  const user = useState<User>('user', () => ({ display_name: '', avatar: '' }))
+  const user = useState<User>('user', () => ({ display_name: '', avatar: '', id: '' }))
 
   const supabaseUser = useSupabaseUser()
 
@@ -10,15 +10,14 @@ export const useUser = async () => {
   const isAuthenticated = computed<boolean>(() => !!supabaseUser.value)
 
   if (supabaseUser.value) {
-    const uuid = supabaseUser.value.sub
-
     const supabase = useSupabaseClient()
 
-    const { data, error } = await supabase.from('profiles').select('display_name, avatar').eq('uuid', uuid).limit(1).single()
+    const { data, error } = await supabase.auth.getUser()
 
     if (data) {
-      user.value.display_name = data.display_name as string
-      user.value.avatar = sanitizeUrl(config.public.avatarUrl) + '/' + data.avatar as string
+      user.value.display_name = data.user?.user_metadata.display_name as string
+      user.value.avatar = data.user?.user_metadata.avatar as string
+      user.value.id = data.user?.id as string
     }
 
     if (error) {
@@ -27,7 +26,7 @@ export const useUser = async () => {
   }
 
   return {
-    user: user.value,
+    user,
     isAuthenticated,
   }
 }
