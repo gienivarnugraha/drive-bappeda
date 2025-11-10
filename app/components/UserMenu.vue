@@ -26,8 +26,12 @@ onMounted(async () => {
 })
 
 const logout = async () => {
+  const supabase = useSupabaseClient()
+
   try {
-    const data = await supabase.auth.signOut()
+    await supabase.auth.signOut()
+
+    navigateTo('/')
 
   } catch (error) {
     console.error(error)

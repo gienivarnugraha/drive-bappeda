@@ -127,7 +127,8 @@ const onSubmit = async (itemData: FormSchema | Item) => {
 </script>
 
 <template>
-  <UPageCard :title="title" :description="`Rubah ${title?.toLowerCase()}`" variant="subtle">
+  <UPageCard :title="title" :description="`Rubah ${title?.toLowerCase()}`" variant="subtle"
+    class="bg-linear-to-tl from-primary/10 from-5% to-default">
 
     <div class="flex flex-row space-y-1 flex-wrap">
       <div v-for="item in items" :key="item.id" class="flex flex-row items-center justify-between space-x-1 px-2 py-1">

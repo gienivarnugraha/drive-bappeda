@@ -6,6 +6,15 @@ import { useUser } from '#imports'
 
 const toast = useToast()
 
+onMounted(()=>{
+  const user = useSupabaseUser()
+
+  console.log(!!user.value)
+  if (!!user.value) {
+    navigateTo('/home')
+  }
+})
+
 const fields: AuthFormField[] = [{
   name: 'email',
   type: 'email',
@@ -26,16 +35,6 @@ const schema = z.object({
   // .min(8, 'Must be at least 8 characters')
 })
 
-onMounted(async () => {
-  const { isAuthenticated } = await useUser()
-
-  console.log('login page check: ', isAuthenticated.value)
-
-  if (isAuthenticated.value) {
-    navigateTo('/home')
-  }
-})
-
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
@@ -43,11 +42,12 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
   const { email, password, } = payload.data
 
-  try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
+
+    console.log(data.user?.email)
 
     if (error) {
       console.error('auth error: ', error)
@@ -55,13 +55,9 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       toast.add({ title: 'Error', description: error.message, color: 'error' })
     }
 
-
     navigateTo('/home')
 
-  } catch (error: any) {
-    console.log('login error', error)
-    toast.add({ title: 'Error', description: error.statusMessage, color: 'error' })
-  }
+    toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
 }
 </script>
 
