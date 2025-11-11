@@ -8,13 +8,11 @@ import { h, resolveComponent } from 'vue'
 
 const UAvatar = resolveComponent('UAvatar')
 
-const supabase = useSupabaseClient()
 const toast = useToast()
 const config = useRuntimeConfig()
 const { copy } = useClipboard()
 
 const page = ref(1)
-
 
 /**
  * Converts ISO date string to a readable format or 'N/A'.
@@ -24,11 +22,13 @@ function formatDateTime(dateString: string | undefined | null): string {
     if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleDateString('id-ID')
 }
+
 const columns: TableColumn<User>[] = [
     {
         id: 'avatar',
         header: 'Avatar',
         cell: ({ row }) => {
+            console.log(row.original.user_metadata)
             return h(UAvatar, {
                 src: row.original.user_metadata.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.user_metadata.avatar}`) : '',
                 alt: row.original.user_metadata.display_name,
@@ -63,7 +63,6 @@ const columns: TableColumn<User>[] = [
     }
 ]
 
-
 function getDropdownActions(user: User): DropdownMenuItem[][] {
     return [
         [
@@ -95,7 +94,7 @@ function getDropdownActions(user: User): DropdownMenuItem[][] {
                         duration: 0,
                         actions: [{
                             label: 'Hapus',
-                            onClick: deleteUser,
+                            onClick: (e: any) => deleteUser(user.id.toString()),
                             variant: 'solid',
                             color: 'error'
                         }]
@@ -106,11 +105,43 @@ function getDropdownActions(user: User): DropdownMenuItem[][] {
     ]
 }
 
-const deleteUser = async () => {
-    toast.add({
-        title: 'Sukses menghapus pengguna!',
-        description: `Pengguna .... dihapus`,
+const deleteAvatar = async (filename: string) => {
+    const { data, error } = await supabase
+        .storage
+        .from('avatars')
+        .remove([filename])
+
+    if (error) {
+        toast.add({
+            title: 'Error deleting avatar',
+            description: error.message,
+            icon: 'i-lucide-x',
+            color: 'error'
+        })
+    }
+}
+const deleteUser = async (id: string) => {
+    const { data, error } = await $fetch('/api/admin/user', {
+        method: 'DELETE',
+        body: { id }
     })
+
+    if (data) {
+        await deleteAvatar(data.user?.user_metadata.avatar)
+
+        toast.add({
+            title: 'Sukses menghapus pengguna!',
+            description: `Pengguna .... dihapus`,
+        })
+    } else if (error) {
+        toast.add({
+            title: 'Error',
+            description: error.message,
+            icon: 'i-lucide-x',
+            color: 'error'
+        })
+    }
+
 }
 
 /**
@@ -138,12 +169,13 @@ const { data, pending, execute, error } = await useAsyncData<{ users: User[], to
     <div>
         <UPageCard title="Users" description="List of users in the system." variant="naked" orientation="horizontal"
             class="mb-4">
-            <UButton icon="i-lucide-rotate-cw" :loading="pending" @click="(e) => { execute }">
+            <UButton icon="i-lucide-rotate-cw" color="neutral" class="max-w-fit lg:ms-auto" :loading="pending"
+                @click="(e: any) => execute()">
                 Refresh
             </UButton>
         </UPageCard>
 
-        <UPageCard variant="subtle" class="bg-linear-to-tl from-primary/10 from-5% to-default">
+        <UPageCard variant="subtle" class="bg-linear-to-tl from-primary/10 from-5% to-default overflow-auto">
 
             <UCard>
                 <div v-if="pending" class="flex justify-center items-center h-48">

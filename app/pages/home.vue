@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '~/types'
 import { toTitleCase, clampCharacters } from '#imports'
-import type { SelectItem } from '@nuxt/ui'
+import type { SelectItem } from '#ui/types'
+import { useTailwindBreakpoints } from '~/composables/useTailwindBreakpoints'
 
 definePageMeta({
   layout: 'home',
@@ -9,6 +10,8 @@ definePageMeta({
 })
 
 const { categories, divisions } = await useItems()
+
+const { smAndLarger } = useTailwindBreakpoints()
 
 const selectedCategory = ref<number[]>([])
 
@@ -105,8 +108,8 @@ const documentUpdated = async () => {
       <USeparator class="h-2" />
 
       <UTooltip text="Tampilkan Semua Kategori">
-        <UButton variant="subtle" label="Tampilkan Semua Kategori" color="primary" size="xs" class="max-w-fit"
-          :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+        <UButton variant="subtle" :label="`Tampilkan Semua Kategori (${categories.length})`" color="primary" size="xs"
+          class="max-w-fit" :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
           @click="showMoreCategories = !showMoreCategories" />
       </UTooltip>
 
@@ -130,7 +133,7 @@ const documentUpdated = async () => {
       <USeparator class="h-2" />
 
       <div class="flex flex-col gap-4">
-        <div class="flex flex-row justify-between items-center ">
+        <div class="flex flex-col sm:flex-row justify-between space-y-2 items-center ">
           <div class="flex flex-row space-x-4 items-center">
             <UPagination v-model:page="page" :total="count" :sibling-count="0" :items-per-page="perPage" />
           </div>

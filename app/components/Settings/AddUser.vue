@@ -6,6 +6,8 @@ import { v4 as uuid } from 'uuid'
 const toast = useToast()
 const supabase = useSupabaseClient()
 
+const addView = ref(false)
+
 // --- 1. Zod Schema ---
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -131,7 +133,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
       email,
       password,
       display_name,
-      avatar_url: avatarUrl,
+      avatar: avatarUrl,
     }
   })
 
@@ -144,17 +146,17 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
     });
 
     // Optional: Clear form state after successful submission
-    // Object.assign(state, {
-    //   email: '',
-    //   display_name: '',
-    //   password: '',
-    //   avatar: null,
-    // });
-    // avatarFile.value = undefined;
-    // if (previousObjectUrl.value) {
-    //   URL.revokeObjectURL(previousObjectUrl.value);
-    //   previousObjectUrl.value = undefined;
-    // }
+    Object.assign(state, {
+      email: '',
+      display_name: '',
+      password: '',
+      avatar: null,
+    });
+    avatarFile.value = undefined;
+    if (previousObjectUrl.value) {
+      URL.revokeObjectURL(previousObjectUrl.value);
+      previousObjectUrl.value = undefined;
+    }
 
   } else if (signUpError) {
     console.error('Error adding new user: ', signUpError);
@@ -173,7 +175,11 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
   <UPageCard title="Add User" description="Add a new user" variant="subtle"
     class="bg-linear-to-tl from-secondary/10 from-5% to-default">
 
-    <UForm id="settings-add-user" :schema="schema" :state="state" class="flex flex-col gap-4 " @submit="onSubmit">
+    <UButton variant="subtle" label="Tambah User" color="primary" size="xs" class="max-w-fit"
+      :icon="addView ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" @click="addView = !addView" />
+
+    <UForm v-if="addView" id="settings-add-user" :schema="schema" :state="state" class="flex flex-col gap-4 "
+      @submit="onSubmit">
       <UFormField name="display_name" label="Name" description="The user's display name." required
         class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="state.display_name" autocomplete="off" />

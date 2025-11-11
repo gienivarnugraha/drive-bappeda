@@ -1,5 +1,10 @@
 <script setup lang="ts">
 // Define data for the Features section
+import { useUser } from '~/composables/useUser'
+
+const { isAuthenticated } = await useUser()
+
+
 const features = [
   {
     icon: 'i-heroicons-folder-open-20-solid',
@@ -40,13 +45,24 @@ const cta = {
   <div class="min-h-screen flex flex-col">
     <UContainer>
       <UHeader :toggle="false">
-        <template #left>
-          <Logo />
+        <template #title>
+          <div class="flex flex-row space-x-2 items-center">
+            <div v-if="isAuthenticated">
+              <UButton variant="subtle" color="neutral" icon="i-lucide-chevron-left" to="/home" />
+            </div>
+            <Logo />
+          </div>
         </template>
         <template #right>
           <UColorModeButton />
-          <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
-            variant="solid" to="/login" />
+
+          <div v-if="isAuthenticated">
+            <UserMenu />
+          </div>
+          <div v-else>
+            <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
+              variant="solid" to="/login" />
+          </div>
         </template>
       </UHeader>
     </UContainer>

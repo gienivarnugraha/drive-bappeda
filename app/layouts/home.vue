@@ -11,9 +11,9 @@ const isHome = computed(() => route.name === 'home')
   <UDashboardGroup unit="rem">
     <UDashboardSidebar id="default" v-model:collapsed="isSidebarSlideOverOpen" collapsible
       class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="20" :ui="{
-        header: 'lg:border-b lg:border-default h-auto',
-        footer: 'lg:border-t lg:border-default'
-      }">
+      header: 'lg:border-b lg:border-default h-auto',
+      footer: 'lg:border-t lg:border-default'
+    }">
       <template #header="{ collapsed }">
         <Logo :collapsed="collapsed" />
       </template>
@@ -27,7 +27,7 @@ const isHome = computed(() => route.name === 'home')
       </template>
 
       <template #footer="{ collapsed }">
-        <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2024</span>
+        <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2025</span>
       </template>
     </UDashboardSidebar>
 

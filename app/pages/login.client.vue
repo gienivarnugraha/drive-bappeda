@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { useUser } from '#imports'
-
 
 const toast = useToast()
 
 onMounted(() => {
   const user = useSupabaseUser()
 
-  console.log(!!user.value)
+  console.log('user: ', !!user.value)
   if (!!user.value) {
     navigateTo('/home')
   }
@@ -79,9 +77,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
     // IMPORTANT: Exit the function immediately on error!
     return;
-  }
-
-  if (data) {
+  } else if (data) {
 
     navigateTo('/home')
 

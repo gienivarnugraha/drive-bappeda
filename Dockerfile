@@ -3,7 +3,7 @@
 FROM node:22-alpine AS builder
 
 # Install dependencies yang dibutuhkan oleh canvas & node-gyp
-RUN apk add --no-cache python3 make g++ pkgconfig cairo-dev pango-dev jpeg-dev giflib-dev
+RUN apk add --no-cache python3 make g++ py3-pip
 
 # Set working directory
 WORKDIR /app

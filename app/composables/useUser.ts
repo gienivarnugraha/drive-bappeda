@@ -5,11 +5,9 @@ export const useUser = async () => {
 
   const supabaseUser = useSupabaseUser()
 
-  const config = useRuntimeConfig()
-
   const isAuthenticated = computed<boolean>(() => !!supabaseUser.value)
 
-  if (supabaseUser.value) {
+  if (!!supabaseUser.value) {
     const supabase = useSupabaseClient()
 
     const { data, error } = await supabase.auth.getUser()

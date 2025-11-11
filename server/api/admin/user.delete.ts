@@ -2,9 +2,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server';
 
 type Schema = {
-    email: string
-    display_name: string
-    password: string
+    id: string
     avatar: string
 }
 
@@ -13,24 +11,17 @@ export default defineEventHandler(async (event) => {
 
     const payload = await readBody<Schema>(event);
 
-    const { email, password, ...rest } = payload
+    const { id } = payload
 
     // Example: Fetch all users (this bypasses RLS)
-    const { data, error } = await client.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
-            ...rest
-        },
-        email_confirm: true
-    });
+    const { data, error } = await client.auth.admin.deleteUser(id)
 
     if (data.user !== null || data.user !== undefined) {
-        console.log('new user created: ', data)
+        console.log('User deleted: ', data.user?.email)
     }
 
     if (error) {
-        console.log('error creating user: ', error)
+        console.log('error deleting user: ', error)
     }
 
 
