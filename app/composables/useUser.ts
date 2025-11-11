@@ -1,25 +1,25 @@
 import type { User } from '~/types'
 
-export const useUser = async () => {
-  const user = useState<User>('user', () => ({ display_name: '', avatar: '', id: '' }))
+export const _useUser = async () => {
+  const user: Ref<User> = ref({ display_name: '', email: '', avatar: '', id: '' })
 
-  const supabaseUser = useSupabaseUser()
+  const isAuthenticated = computed<boolean>(() => !!user.value.id)
 
-  const isAuthenticated = computed<boolean>(() => !!supabaseUser.value)
+  if (user.value.id === '') {
+    try {
+      const session = await $fetch('/api/auth', {
+        headers: useRequestHeaders(['cookie'])
+      })
 
-  if (!!supabaseUser.value) {
-    const supabase = useSupabaseClient()
+      console.log('supabase session: ', session)
 
-    const { data, error } = await supabase.auth.getUser()
+      user.value.display_name = session?.user_metadata.display_name as string
+      user.value.avatar = session?.user_metadata.avatar as string
+      user.value.id = session?.sub as string
+      user.value.email = session?.email as string
 
-    if (data) {
-      user.value.display_name = data.user?.user_metadata.display_name as string
-      user.value.avatar = data.user?.user_metadata.avatar as string
-      user.value.id = data.user?.id as string
-    }
-
-    if (error) {
-      console.error('error fetching user', error)
+    } catch (error) {
+      console.error('auth error: ', error)
     }
   }
 
@@ -28,3 +28,5 @@ export const useUser = async () => {
     isAuthenticated,
   }
 }
+
+export const useUser = createSharedComposable(_useUser)

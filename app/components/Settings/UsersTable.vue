@@ -28,7 +28,6 @@ const columns: TableColumn<User>[] = [
         id: 'avatar',
         header: 'Avatar',
         cell: ({ row }) => {
-            console.log(row.original.user_metadata)
             return h(UAvatar, {
                 src: row.original.user_metadata.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.user_metadata.avatar}`) : '',
                 alt: row.original.user_metadata.display_name,

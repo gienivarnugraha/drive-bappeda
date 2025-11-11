@@ -2,6 +2,7 @@ import type { Database, Tables } from "./database.types"
 
 export interface User {
   avatar: string;
+  email: string;
   display_name: string;
   id: string
 }

@@ -6,7 +6,6 @@ import { useTailwindBreakpoints } from '~/composables/useTailwindBreakpoints'
 
 definePageMeta({
   layout: 'home',
-  middleware: 'auth'
 })
 
 const { categories, divisions } = await useItems()

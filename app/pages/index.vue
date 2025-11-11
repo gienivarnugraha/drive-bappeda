@@ -47,18 +47,25 @@ const cta = {
       <UHeader :toggle="false">
         <template #title>
           <div class="flex flex-row space-x-2 items-center">
-            <div v-if="isAuthenticated">
+            <ClientOnly v-if="isAuthenticated" class="w-fit">
               <UButton variant="subtle" color="neutral" icon="i-lucide-chevron-left" to="/home" />
-            </div>
+              <template #fallback>
+                <USkeleton class="h-8 w-8" />
+              </template>
+            </ClientOnly>
+
             <Logo />
           </div>
         </template>
         <template #right>
           <UColorModeButton />
 
-          <div v-if="isAuthenticated">
+          <ClientOnly v-if="isAuthenticated" class="w-fit">
             <UserMenu />
-          </div>
+            <template #fallback>
+              <USkeleton class="h-8 w-24" />
+            </template>
+          </ClientOnly>
           <div v-else>
             <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
               variant="solid" to="/login" />
