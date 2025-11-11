@@ -139,8 +139,8 @@ function isEmpty(obj: Object) {
       <UButton v-if="!isEmpty(document)" variant="solid" class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
         :label="isFileDetailsSlideoverOpen ? 'Tutup File' : 'Buka File'" :ui="{
-          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-        }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
     </UTooltip>
 
     <template #header>
@@ -151,8 +151,8 @@ function isEmpty(obj: Object) {
       <div class="flex justify-between items-center space-x-1">
         <UButton color="neutral" variant="ghost" :icon="isEditing ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
           @click="isEditing = !isEditing" :ui="{
-            trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-          }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
         <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
       </div>
 
@@ -161,7 +161,7 @@ function isEmpty(obj: Object) {
     <template #body>
       <div class="flex flex-col px-2 overflow-y-auto  max-w-full  lg:max-w-84">
         <UForm :schema="schema" :state="state" class="space-y-4 " @submit="onSubmit">
-          <img :src="`${storageUrl}/${document.metadata.thumbnailSrc}`"
+          <img :src="sanitizeUrl(`${storageUrl}/${document.metadata.thumbnailSrc}`)"
             class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail">
 
           <UFormField v-if="isEditing" label="Judul File" name="title">

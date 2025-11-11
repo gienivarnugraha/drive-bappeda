@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
         password,
         user_metadata: {
             ...rest
-        }
+        },
+        email_confirm: true
     });
 
     if (data.user !== null || data.user !== undefined) {

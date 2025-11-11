@@ -1,3 +1,4 @@
+import { sanitizeUrl } from '../utils/index';
 <script setup lang="ts">
 
 const route = useRoute()
@@ -12,7 +13,7 @@ const storageUrl = config.public.storageUrl
 const storageName = config.public.storageName
 
 // https://hwhq1hnvu4gvftjq.public.blob.vercel-storage.com/1685513328242-laporan-akhir---kajian-kebijakan-pemerintah-kota-semarang-dalam-pengembangan-ekonomi-kreatif.jpg
-const pdfUrl = `${storageUrl}/${filename}`
+const pdfUrl = sanitizeUrl(`${storageUrl}/${filename}`)
 
 console.log(filename, pdfUrl, page)
 

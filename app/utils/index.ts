@@ -48,9 +48,9 @@ export function sanitizeUrl(url: string): string {
   // Add a trailing slash if one does not exist
   // The regex /[^/]$/ matches any character that is NOT a slash, when it is at the end ($) of the string.
   // We use this to identify URLs that are missing the trailing slash.
-  if (sanitized.match(/[^/]$/)) {
-    sanitized += '/'
-  }
+  // if (sanitized.match(/[^/]$/)) {
+  //   sanitized += '/'
+  // }
 
   return sanitized
 }

@@ -50,14 +50,44 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   console.log('logged in: ', data.user?.email)
 
   if (error) {
-    console.error('auth error: ', error)
+    console.error('auth error: ', error);
 
-    toast.add({ title: 'Error', description: error.message, color: 'error' })
+    // Check if the error message is the specific one you want to act on.
+    // NOTE: This check is purely to illustrate how to trap specific errors,
+    // but a sign-in error usually just means invalid credentials.
+    if (error.message === 'Invalid Refresh Token: Refresh Token not found') {
+      console.warn('Handling critical session error: INVALID REFRESH TOKEN. Attempting to clear/re-login.');
+
+      // The best action here is usually to force a complete sign-out
+      // and prompt the user to log in again.
+      await supabase.auth.signOut();
+
+      toast.add({
+        title: 'Session Error',
+        description: 'Your session is corrupted. Please log in again.',
+        color: 'error'
+      });
+      // Do NOT navigate to /home on this critical error.
+      return;
+    }
+    // Handle all other sign-in errors (e.g., Invalid credentials)
+    toast.add({
+      title: 'Error',
+      description: error.message,
+      color: 'error'
+    });
+
+    // IMPORTANT: Exit the function immediately on error!
+    return;
   }
 
-  navigateTo('/home')
+  if (data) {
 
-  toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
+    navigateTo('/home')
+
+    toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
+  }
+
 }
 </script>
 

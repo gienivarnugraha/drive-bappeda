@@ -30,7 +30,7 @@ const columns: TableColumn<User>[] = [
         header: 'Avatar',
         cell: ({ row }) => {
             return h(UAvatar, {
-                src: row.original.user_metadata.avatar ? config.public.avatarUrl + row.original.user_metadata.avatar : '',
+                src: row.original.user_metadata.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.user_metadata.avatar}`) : '',
                 alt: row.original.user_metadata.display_name,
                 size: 'lg'
             })
@@ -157,8 +157,8 @@ const { data, pending, execute, error } = await useAsyncData<{ users: User[], to
                     title="Data Access Error" :description="`Could not load user list. Details: ${error}`" />
 
                 <UTable v-else :data="data?.users" :ui="{
-                    separator: 'divide-y divide-gray-200 dark:divide-gray-800'
-                }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
+                separator: 'divide-y divide-gray-200 dark:divide-gray-800'
+            }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
 
                     <template #action-cell="{ row }">
                         <UDropdownMenu :items="getDropdownActions(row.original)">

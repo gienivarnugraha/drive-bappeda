@@ -12,8 +12,6 @@ const { user } = await useUser()
 
 const config = useRuntimeConfig()
 
-const avatarUrl = config.public.avatarUrl
-
 const profileSchema = z.object({
     // Use .trim() to handle whitespace from user input
     display_name: z.string().trim().min(3, 'Display name must be at least 3 characters'),
@@ -30,7 +28,7 @@ const profile = reactive<Partial<ProfileSchema>>({
 onMounted(() => {
     const userClone = deepClone(user.value)
     profile.display_name = userClone.display_name
-    profile.avatar = sanitizeUrl(avatarUrl) + userClone.avatar || ''
+    profile.avatar = sanitizeUrl(`${config.public.avatarUrl}/${userClone.avatar  || ''}`)
 })
 
 const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
@@ -127,7 +125,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
 
     if (data) {
 
-        user.value.avatar = sanitizeUrl(avatarUrl) + data.user?.user_metadata.avatar
+        user.value.avatar = sanitizeUrl(`${avatarUrl}/${data.user?.user_metadata.avatar}`)
         user.value.display_name = data.user?.user_metadata.display_name
 
         await nextTick()
