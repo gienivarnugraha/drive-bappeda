@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tables, useDrizzle } from '#imports'
+import { tables, useDrizzle } from '~~/server/utils/drizzle'
 
 export default defineEventHandler(async (event) => {
     const { email, password, name, avatar } = await readValidatedBody(event, z.object({
@@ -13,16 +13,19 @@ export default defineEventHandler(async (event) => {
 
     const db = useDrizzle()
 
-    await db.insert(tables.users).values({
+    const user = await db.insert(tables.users).values({
         email,
         name,
         avatar,
         password: hashedPassword
-    })
+    }).returning()
 
     await setUserSession(event, {
         user: {
-            email,
+            id: user[0].id,
+            email: user[0].email,
+            name: user[0].name,
+            avatar: user[0].avatar
         },
         loggedInAt: Date.now(),
     })

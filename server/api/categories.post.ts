@@ -1,6 +1,6 @@
 import type { Category } from '#shared/types'
 import { inspect } from 'node:util'
-import { serverSupabaseClient } from '#supabase/server'
+import { useDrizzle, tables } from '#imports'
 import { toKebabCase } from '#shared/utils'
 
 type EditSchema = {
@@ -12,31 +12,35 @@ export default eventHandler(async (event) => {
 
   let request
 
-  const supabase = await serverSupabaseClient(event)
+  const db = useDrizzle()
 
   if (shouldDelete) {
-    request = supabase
-      .from('categories')
-      .delete()
-      .eq('id', payload.id)
-      .single()
+    request = db
+      .delete(tables.categories)
+      .where(eq(tables.categories.id, payload.id))
+      .returning()
+
   } else {
-    request = supabase
-      .from('categories')
-      .upsert({ name: toKebabCase(payload.name), metadata: { ...payload } }, { onConflict: 'name' })
-      .single()
+    request = db
+      .update(tables.categories)
+      .set({ name: toKebabCase(payload.name), metadata: { ...payload } })
+      .where(eq(tables.categories.id, payload.id))
+      .returning()
   }
 
-  const { data, error } = await request
+  try {
+    const response = await request
 
-  if (error) {
+    return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, response }
+
+  } catch (error: any) {
     console.error(`error ${shouldDelete ? 'Delete' : 'Update'} category: ${inspect(error, true, null, true)}`)
 
     throw createError({
       statusCode: 400,
-      statusMessage: `Error ${shouldDelete ? 'Delete' : 'Update'} category:  ${error}`
+      message: `Error ${shouldDelete ? 'Delete' : 'Update'} category:  ${error.message}`
     })
+
   }
 
-  return { message: `Success ${shouldDelete ? 'Delete' : 'Update'} category: ${payload.name}`, data }
 })

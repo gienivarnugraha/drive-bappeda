@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useSupabaseClient } from '#imports'
-import type { User } from '@supabase/supabase-js'
 import type { TableColumn, DropdownMenuItem } from '#ui/types'
 import { useClipboard } from '@vueuse/core'
+import { sanitizeUrl } from '#shared/utils'
+import type { User } from '#shared/types'
 import { h, resolveComponent } from 'vue'
 
 const UAvatar = resolveComponent('UAvatar')
@@ -29,17 +28,17 @@ const columns: TableColumn<User>[] = [
         header: 'Avatar',
         cell: ({ row }) => {
             return h(UAvatar, {
-                src: row.original.user_metadata.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.user_metadata.avatar}`) : '',
-                alt: row.original.user_metadata.display_name,
+                src: row.original.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.avatar}`) : '',
+                alt: row.original.name,
                 size: 'lg'
             })
         }
     },
     {
-        id: 'display_name',
+        id: 'name',
         header: 'Nama',
         cell: ({ row }) => {
-            return row.original.user_metadata.display_name ?? ''
+            return row.original.name ?? ''
         }
     },
     { accessorKey: 'email', header: 'Email', },
@@ -126,7 +125,7 @@ const deleteUser = async (id: string) => {
     })
 
     if (data) {
-        await deleteAvatar(data.user?.user_metadata.avatar)
+        await deleteAvatar(data.user?.avatar)
 
         toast.add({
             title: 'Sukses menghapus pengguna!',
@@ -145,7 +144,7 @@ const deleteUser = async (id: string) => {
 
 /**
  * Fetches the list of users from Supabase.
- * NOTE: This requires the user running the app to have the `supabase_admin` role
+ * NOTE: This requires the user running the app to have the `admin` role
  * or appropriate RLS policies for `auth.users` table access.
  */
 const { data, pending, execute, error } = await useAsyncData<{ users: User[], total: number, nextPage: number, lastPage: number }>('users', async () =>
@@ -188,8 +187,8 @@ const { data, pending, execute, error } = await useAsyncData<{ users: User[], to
                     title="Data Access Error" :description="`Could not load user list. Details: ${error}`" />
 
                 <UTable v-else :data="data?.users" :ui="{
-                separator: 'divide-y divide-gray-200 dark:divide-gray-800'
-            }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
+                    separator: 'divide-y divide-gray-200 dark:divide-gray-800'
+                }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
 
                     <template #action-cell="{ row }">
                         <UDropdownMenu :items="getDropdownActions(row.original)">

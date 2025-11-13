@@ -1,38 +1,38 @@
-// server/api/admin/users.get.ts
-import { serverSupabaseServiceRole } from '#supabase/server';
+import { useDrizzle, tables } from '#imports';
+// @ts-ignore
+import bcrypt from 'bcrypt'
 
 type Schema = {
     email: string
-    display_name: string
+    name: string
     password: string
     avatar: string
 }
 
 export default defineEventHandler(async (event) => {
-    const client = serverSupabaseServiceRole(event);
-
     const payload = await readBody<Schema>(event);
 
-    const { email, password, ...rest } = payload
+    const db = useDrizzle()
 
-    // Example: Fetch all users (this bypasses RLS)
-    const { data, error } = await client.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
+    const { password, ...rest } = payload
+
+    const hashedPassword = await bcrypt.hash(password, 2)
+
+    try {
+        const data = await db.insert(tables.users).values({
+            password: hashedPassword,
             ...rest
-        },
-        email_confirm: true
-    });
+        }).returning();
 
-    if (data.user !== null || data.user !== undefined) {
         console.log('new user created: ', data)
-    }
 
-    if (error) {
+        return data
+    } catch (error: any) {
         console.log('error creating user: ', error)
+
+        throw createError({
+            statusCode: 400,
+            message: `Error creating user: ${error.message}`
+        })
     }
-
-
-    return { data, error };
 });

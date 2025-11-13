@@ -7,8 +7,12 @@ export function randomFrom<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)]!
 }
 
-export function dateToLocale(date: string) {
-    return new Date(date).toLocaleDateString()
+export function dateToLocale(date: string | null) {
+    if (date) {
+        return new Date(date).toLocaleDateString()
+    } else {
+        return ''
+    }
 }
 
 export const stringToNumberArray = (input: string[] | string): number[] | undefined => {
@@ -56,6 +60,9 @@ export function sanitizeUrl(url: string): string {
 
 
 export function clampCharacters(text: string, limit: number = 25) {
+    if (text === null || text === undefined) {
+        return ''
+    }
     if (!text || text.length <= limit) {
         return text;
     }

@@ -1,5 +1,6 @@
 import { stringToNumberArray } from '#shared/utils'
-import { serverSupabaseClient } from '#supabase/server'
+import { useDrizzle } from '#imports'
+import { sql } from 'drizzle-orm'
 
 type Schema = {
     category: string[]
@@ -19,27 +20,37 @@ export default defineEventHandler(async (event) => {
 
     console.log('documents query:', query)
 
-    const supabase = await serverSupabaseClient(event)
+    const db = useDrizzle()
 
-    const request = supabase.rpc('get_documents', {
-        filter_category_ids: stringToNumberArray(category),
-        filter_division_ids: stringToNumberArray(division),
-        page_size: parseInt(perPage),
-        page_number: parseInt(page),
-        order_by_column: orderBy,
-        order_direction: orderDir,
-    })
+    // const request = db.('get_documents', {
+    //     filter_category_ids: stringToNumberArray(category),
+    //     filter_division_ids: stringToNumberArray(division),
+    //     page_size: parseInt(perPage),
+    //     page_number: parseInt(page),
+    //     order_by_column: orderBy,
+    //     order_direction: orderDir,
+    // })
+    const filter_category_ids = stringToNumberArray(category) || null
+    const filter_division_ids = stringToNumberArray(division) || null
+    const page_size = parseInt(perPage)
+    const page_number = parseInt(page)
+    const order_by_column = orderBy
+    const order_direction = orderDir
 
-    const { data: response, error } = await request
+    const request = db.execute(
+        sql`SELECT * FROM get_documents(${page_size}, ${page_number}, ${filter_category_ids}, ${filter_division_ids}, ${order_by_column}, ${order_direction})`
+    )
 
-    if (error) {
-        console.error('Error fetching documents:', error.message)
+    try {
+        const { rows: response } = await request
+
+        return response
+    } catch (error: any) {
+        console.error('Error fetching documents:', error)
 
         throw createError({
             statusCode: 400,
-            statusMessage: `Error getting documents: ${error}`
+            message: `Error getting documents: ${error.message}`
         })
-    } else {
-        return response
     }
 })

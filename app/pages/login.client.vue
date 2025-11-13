@@ -4,13 +4,16 @@ import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 
 const toast = useToast()
 
+const { fetch, session } = useUserSession()
+
 onMounted(() => {
   // const session = useSupabaseSession()
 
-  // console.log('session: ', !!session.value)
-  // if (!!session.value) {
-  //   navigateTo('/home')
-  // }
+  console.log('session: ', !!session)
+
+  if (!!session) {
+    navigateTo('/home')
+  }
 })
 
 const fields: AuthFormField[] = [{
@@ -36,52 +39,30 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
-  const supabase = useSupabaseClient()
-
   const { email, password, } = payload.data
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  })
+  try {
+    await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: {
+        email,
+        password
+      }
+    })
 
-  console.log('logged in: ', data.user?.email)
+    await fetch()
 
-  if (error) {
-    console.error('auth error: ', error);
+    navigateTo('/home')
 
-    // Check if the error message is the specific one you want to act on.
-    // NOTE: This check is purely to illustrate how to trap specific errors,
-    // but a sign-in error usually just means invalid credentials.
-    if (error.message === 'Invalid Refresh Token: Refresh Token not found') {
-      console.warn('Handling critical session error: INVALID REFRESH TOKEN. Attempting to clear/re-login.');
+    toast.add({ title: 'Success', description: `Welcome Back ${email}!`, color: 'success' })
 
-      // The best action here is usually to force a complete sign-out
-      // and prompt the user to log in again.
-      await supabase.auth.signOut();
-
-      toast.add({
-        title: 'Session Error',
-        description: 'Your session is corrupted. Please log in again.',
-        color: 'error'
-      });
-      // Do NOT navigate to /home on this critical error.
-      return;
-    }
-    // Handle all other sign-in errors (e.g., Invalid credentials)
+  } catch (error: any) {
     toast.add({
       title: 'Error',
       description: error.message,
       color: 'error'
     });
 
-    // IMPORTANT: Exit the function immediately on error!
-    return;
-  } else if (data) {
-
-    navigateTo('/home')
-
-    toast.add({ title: 'Success', description: `Welcome Back ${data.user?.email}!`, color: 'success' })
   }
 
 }

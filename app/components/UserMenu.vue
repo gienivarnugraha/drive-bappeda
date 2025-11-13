@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useUser } from '~/composables/useUser'
+import { sanitizeUrl } from '#shared/utils'
 
 defineProps<{
   collapsed?: boolean
 }>()
 
 const user = ref({
-  display_name: '',
+  name: '',
   avatar: {
     src: '',
     alt: ''
@@ -16,21 +17,21 @@ const user = ref({
 
 const config = useRuntimeConfig()
 
-onMounted(async () => {
-  const { user: profile } = await useUser()
+const { user: profile } = useUserSession()
 
+onMounted(async () => {
   if (profile) {
-    user.value.display_name = profile.value.display_name || ''
-    user.value.avatar.src = sanitizeUrl(`${config.public.avatarUrl}/${profile.value.avatar || ''}`)
-    user.value.avatar.alt = profile.value.display_name || ''
+    user.value.name = profile.value?.name || ''
+    user.value.avatar.src = sanitizeUrl(`${config.public.avatarUrl}/${profile.value?.avatar || ''}`)
+    user.value.avatar.alt = profile.value?.name || ''
   }
 })
 
 const logout = async () => {
-  const supabase = useSupabaseClient()
-
   try {
-    await supabase.auth.signOut()
+    await $fetch('/api/auth/logout', {
+      method: 'POST'
+    })
 
     navigateTo('/')
 
@@ -41,7 +42,7 @@ const logout = async () => {
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
-  label: user.value.display_name,
+  label: user.value.name,
   avatar: user.value.avatar
 }], [{
   label: 'Settings',
@@ -61,18 +62,18 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     <UDropdownMenu :items="items" :content="{ align: 'center', collisionPadding: 12 }"
       :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }">
       <UButton v-bind="{
-      ...user,
-      label: collapsed ? undefined : user?.display_name,
-      trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
-    }" color="neutral" variant="ghost" block :square="collapsed" class="data-[state=open]:bg-elevated" :ui="{
-      trailingIcon: 'text-dimmed'
-    }" />
+        ...user,
+        label: collapsed ? undefined : user?.name,
+        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
+      }" color="neutral" variant="ghost" block :square="collapsed" class="data-[state=open]:bg-elevated" :ui="{
+        trailingIcon: 'text-dimmed'
+      }" />
 
       <template #chip-leading="{ item }">
         <span :style="{
-      '--chip-light': `var(--color-${(item as any).chip}-500)`,
-      '--chip-dark': `var(--color-${(item as any).chip}-400)`
-    }" class="ms-0.5 size-2 rounded-full bg-(--chip-light) dark:bg-(--chip-dark)" />
+          '--chip-light': `var(--color-${(item as any).chip}-500)`,
+          '--chip-dark': `var(--color-${(item as any).chip}-400)`
+        }" class="ms-0.5 size-2 rounded-full bg-(--chip-light) dark:bg-(--chip-dark)" />
       </template>
     </UDropdownMenu>
   </ClientOnly>

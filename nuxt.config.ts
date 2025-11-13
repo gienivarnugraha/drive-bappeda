@@ -3,7 +3,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@nuxtjs/supabase',
     '@vueuse/nuxt',
     'nuxt-auth-utils'
   ],
@@ -22,13 +21,6 @@ export default defineNuxtConfig({
       cors: true
     }
   },
-
-  supabase: {
-    redirect: false,
-    useSsrCookies: false,
-    types: false
-  },
-
 
   nitro: {
     storage: {

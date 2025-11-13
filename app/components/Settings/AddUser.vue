@@ -4,7 +4,6 @@ import * as z from 'zod'
 import { v4 as uuid } from 'uuid'
 
 const toast = useToast()
-const supabase = useSupabaseClient()
 
 const addView = ref(false)
 

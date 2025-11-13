@@ -1,5 +1,5 @@
-// server/api/admin/users.get.ts
-import { serverSupabaseServiceRole } from '#supabase/server';
+import { useDrizzle, tables } from '#imports';
+import { eq } from 'drizzle-orm';
 
 type Schema = {
     id: string
@@ -7,23 +7,21 @@ type Schema = {
 }
 
 export default defineEventHandler(async (event) => {
-    const client = serverSupabaseServiceRole(event);
-
     const payload = await readBody<Schema>(event);
 
     const { id } = payload
 
-    // Example: Fetch all users (this bypasses RLS)
-    const { data, error } = await client.auth.admin.deleteUser(id)
+    const db = useDrizzle()
 
-    if (data.user !== null || data.user !== undefined) {
-        console.log('User deleted: ', data.user?.email)
-    }
+    try {
+        return await db.delete(tables.users).where(eq(tables.users.id, id)).returning()
 
-    if (error) {
+    } catch (error: any) {
         console.log('error deleting user: ', error)
+        throw createError({
+            statusCode: 400,
+            message: `Error deleting user: ${error.message}`
+        })
     }
 
-
-    return { data, error };
 });

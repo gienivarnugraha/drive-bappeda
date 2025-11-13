@@ -1,14 +1,14 @@
 CREATE TABLE "categories" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "categories_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"name" text,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"name" text NOT NULL,
 	"metadata" jsonb,
 	CONSTRAINT "categories_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE "categories_documents_divisions" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "categories_documents_divisions_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
 	"category_id" integer,
 	"document_id" integer,
 	"division_id" integer
@@ -16,17 +16,19 @@ CREATE TABLE "categories_documents_divisions" (
 --> statement-breakpoint
 CREATE TABLE "divisions" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "divisions_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"name" varchar,
-	"metadata" jsonb
+	"created_at" timestamp with time zone DEFAULT now(),
+	"name" varchar NOT NULL,
+	"metadata" jsonb,
+	CONSTRAINT "divisions_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE "documents" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "documents_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"filename" text,
 	"title" text,
+	"description" text,
 	"metadata" jsonb,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
 	"uuid" text,
 	CONSTRAINT "documents_filename_unique" UNIQUE("filename")
 );
@@ -39,12 +41,12 @@ CREATE TABLE "documents_summary" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT 'c4a8b2c0-95f8-4a9c-92ee-8ce36f4ba6d8' NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT 'b7b8e6e3-7ed0-4626-8311-ab4addcb2040' NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"password" text NOT NULL,
 	"avatar" text,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint

@@ -1,18 +1,21 @@
-// server/api/admin/users.get.ts
-import { serverSupabaseServiceRole } from '#supabase/server';
+import { useDrizzle, tables } from "#imports";
+import { getTableColumns } from 'drizzle-orm';
 
+// Destructure to exclude the 'content' column
 export default defineEventHandler(async (event) => {
-    const client = serverSupabaseServiceRole(event);
+    const db = useDrizzle()
 
-    const { data, error } = await client.auth.admin.listUsers();
+    const { password, ...rest } = getTableColumns(tables.users);
 
+    try {
+        const response = await db.select(rest).from(tables.users);
 
-    if (error) {
+        return response;
+    } catch (error) {
+
         console.log('error listing user: ', error)
     }
 
-    // @ts-ignore
-    const { users, total, lastPage, nextPage } = data
 
-    return { users, pagination: { total, lastPage, nextPage }, error };
+
 });

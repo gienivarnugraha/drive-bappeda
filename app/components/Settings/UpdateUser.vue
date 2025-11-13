@@ -2,32 +2,30 @@
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import * as z from 'zod'
 import { useUser } from '~/composables/useUser'
-import { toKebabCase } from '#shared/utils'
+import { toKebabCase, deepClone, sanitizeUrl } from '#shared/utils'
 
 const toast = useToast()
 
-const supabase = useSupabaseClient()
-
-const { user } = await useUser()
+const { user } = useUserSession()
 
 const config = useRuntimeConfig()
 
 const profileSchema = z.object({
     // Use .trim() to handle whitespace from user input
-    display_name: z.string().trim().min(3, 'Display name must be at least 3 characters'),
+    name: z.string().trim().min(3, 'Display name must be at least 3 characters'),
     avatar: z.string().url('Avatar must be a valid URL or an object URL').optional()
 });
 
 type ProfileSchema = z.output<typeof profileSchema>
 
 const profile = reactive<Partial<ProfileSchema>>({
-    display_name: undefined,
+    name: undefined,
     avatar: undefined,
 })
 
 onMounted(() => {
     const userClone = deepClone(user.value)
-    profile.display_name = userClone.display_name
+    profile.name = userClone.name
     profile.avatar = sanitizeUrl(`${config.public.avatarUrl}/${userClone.avatar || ''}`)
 })
 
@@ -112,13 +110,13 @@ function onFileClick() {
 
 
 async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
-    const { display_name } = event.data
+    const { name } = event.data
 
     const avatar = await uploadFile()
 
     const { data, error } = await supabase.auth.updateUser({
         data: {
-            display_name,
+            name,
             avatar
         }
     })
@@ -126,7 +124,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
     if (data) {
 
         user.value.avatar = sanitizeUrl(`${avatarUrl}/${data.user?.user_metadata.avatar}`)
-        user.value.display_name = data.user?.user_metadata.display_name
+        user.value.name = data.user?.user_metadata.name
 
         await nextTick()
 
@@ -168,7 +166,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             <UFormField name="name" label="Name"
                 description="Will appear on receipts, invoices, and other communication." required
                 class="flex max-sm:flex-col justify-between items-start gap-4">
-                <UInput v-model="profile.display_name" autocomplete="off" />
+                <UInput v-model="profile.name" autocomplete="off" />
             </UFormField>
 
             <USeparator />
@@ -176,7 +174,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             <UFormField name="avatar" label="Avatar" description="JPG, GIF or PNG. 1MB Max."
                 class="flex max-sm:flex-col justify-between sm:items-center gap-4">
                 <div class="flex flex-wrap items-center gap-3">
-                    <UAvatar :src="profile.avatar" :alt="profile.display_name" size="lg" />
+                    <UAvatar :src="profile.avatar" :alt="profile.name" size="lg" />
                     <UButton label="Choose" color="neutral" @click="onFileClick" />
                     <input ref="fileRef" type="file" class="hidden" accept=".jpg, .jpeg, .png, .gif"
                         @change="onFileChange">

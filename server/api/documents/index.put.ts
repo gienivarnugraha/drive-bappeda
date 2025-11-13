@@ -2,7 +2,7 @@ import type { Document, Category, Division } from '#shared/types'
 import { inspect } from 'node:util'
 import { modifyRelation } from '~~/server/utils/db'
 import { getClampedFileNameWithExtension } from '#shared/utils'
-import { serverSupabaseClient } from '#supabase/server'
+import { useDrizzle, tables } from '#imports'
 
 type Schema = {
     documentId: number
@@ -26,23 +26,24 @@ export default defineEventHandler(async (event) => {
     // add the relation again after deleting
     await modifyRelation({ documentId, categoryIds, divisionIds }, 'edit')
 
-    const supabase = await serverSupabaseClient(event)
+    const db = useDrizzle()
 
-    let request = supabase
-        .from('documents')
-        .update(rest)
-        .eq('id', documentId)
 
-    const { data: result, error } = await request
+    try {
+        await db
+            .update(tables.documents)
+            .set(rest)
+            .where(eq(tables.documents.id, documentId))
 
-    if (error) {
+        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}` }
+    } catch (error: any) {
+
         console.error(`error Update file: ${inspect(error, true, null, true)}`)
 
         throw createError({
             statusCode: 400,
-            statusMessage: `Error Update file:  ${error}`
+            message: `Error Update file:  ${error.message}`
         })
-    } else {
-        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}` }
     }
+
 })

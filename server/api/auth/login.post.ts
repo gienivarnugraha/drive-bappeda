@@ -2,12 +2,7 @@ import { z } from 'zod'
 import { createError } from '#imports'
 import { useDrizzle } from '#imports'
 import { setUserSession } from '#imports'
-
-const invalidCredentialsError = createError({
-    statusCode: 401,
-    // This message is intentionally vague to prevent user enumeration attacks.
-    message: 'Invalid credentials',
-})
+import bcrypt from 'bcrypt'
 
 export default defineEventHandler(async (event) => {
     const db = useDrizzle()
@@ -22,16 +17,24 @@ export default defineEventHandler(async (event) => {
     })
 
     if (!user) {
-        throw invalidCredentialsError
+        throw createError({
+            statusCode: 401,
+            message: 'User not Found!',
+        })
     }
 
-    if (!(await verifyPassword(user.password, password))) {
-        throw invalidCredentialsError
+    if (!(await bcrypt.compare(password, user.password))) {
+        throw createError({
+            statusCode: 401,
+            message: 'Invalid credentials',
+        })
     }
 
     await setUserSession(event, {
         user: {
             email,
+            name: user.name,
+            avatar: user.avatar
         },
         loggedInAt: Date.now(),
     })

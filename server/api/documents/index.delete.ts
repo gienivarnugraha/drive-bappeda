@@ -1,7 +1,8 @@
 import type { Category, Division, Document } from '#shared/types'
 import { inspect } from 'node:util'
 import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
-import { serverSupabaseClient } from '#supabase/server'
+import { useDrizzle, tables } from '#imports'
+import { sql } from 'drizzle-orm'
 
 type Schema = {
     documentId: string
@@ -14,47 +15,42 @@ export default defineEventHandler(async (event) => {
 
     const { documentId } = payload
 
-    const supabase = await serverSupabaseClient(event)
+    const db = useDrizzle()
 
-    // Logic for Deletion
-    const { data: document, error: documentError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', parseInt(documentId))
-        .select()
-        .limit(1)
-        .single()
+    try {
+        const document = await db.delete(tables.documents).where(eq(tables.documents.id, parseInt(documentId))).returning()
 
+        const thumbnailSrc = `${sanitizeFileName(document[0].filename)}.png`
 
-    if (documentError) {
-        console.error(`error Delete file: ${inspect(documentError, true, null, true)}`)
+        await storage.remove(document[0].filename)
 
-        throw createError({
-            statusCode: 400,
-            statusMessage: `Error Delete document:  ${documentError}`
-        })
-    }
+        await storage.remove(thumbnailSrc)
 
 
-    const thumbnailSrc = `${sanitizeFileName(document.filename)}.png`
+        try {
+            await db
+                .delete(tables.documentsSummary)
+                .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' = ${document[0].uuid}`)
 
-    await storage.remove(document.filename)
+            return { message: `Success Delete file: ${getClampedFileNameWithExtension(document[0].filename)}` }
 
-    await storage.remove(thumbnailSrc)
+        } catch (summaryError: any) {
 
-    const { error: summaryError } = await supabase
-        .from('documents_summary')
-        .delete()
-        .eq('metadata->>source_id', document.uuid as string)
+            console.error(`error Delete summary: ${inspect(summaryError, true, null, true)}`)
 
-    if (summaryError) {
-        console.error(`error Delete summary: ${inspect(summaryError, true, null, true)}`)
+            throw createError({
+                statusCode: 400,
+                statusMessage: `Error Delete summary:  ${summaryError.message}`
+            })
+        }
+
+    } catch (docerror: any) {
+        console.error(`error Delete file: ${inspect(docerror, true, null, true)}`)
 
         throw createError({
             statusCode: 400,
-            statusMessage: `Error Delete summary:  ${summaryError}`
+            message: `Error Delete document:  ${docerror.message}`
         })
     }
 
-    return { message: `Success Delete file: ${getClampedFileNameWithExtension(document.filename)}` }
 })

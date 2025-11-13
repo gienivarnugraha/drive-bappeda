@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import type { PropType, Ref } from 'vue';
 import type { Category, Division } from '#shared/types'; // Assuming this path is correct
-import { toTitleCase, toKebabCase } from '#shared/utils'
+import { toTitleCase, toKebabCase, clampCharacters } from '#shared/utils'
 
 type Item = Category | Division;
 
@@ -48,7 +48,6 @@ onMounted(() => {
 })
 const items: Ref<Item[]> = ref([]);
 const addView = ref(false);
-const supabase = useSupabaseClient();
 
 const onDelete = (item: Item) => {
   toast.add({
@@ -67,61 +66,70 @@ const onDelete = (item: Item) => {
 }
 
 const deleteItem = async (item: Item) => {
-  const { error } = await supabase.from(props.type)
-    .delete()
-    .eq('id', item.id)
+  try {
+    const data = await $fetch<Item>(`/api/${props.type}`, {
+      method: 'DELETE',
+      body: { id: item.id }
+    })
 
-  if (error) {
+
+    const index = items.value.findIndex(i => i.id === item.id);
+
+    if (index !== -1) {
+      items.value.splice(index, 1);
+    }
+
+    toast.add({
+      title: 'Success',
+      description: `Succes delete ${item.name}`,
+      icon: 'i-lucide-check',
+      color: 'success'
+    });
+
+  } catch (error: any) {
+
     toast.add({
       title: 'Error',
-      description: error.details || 'An unknown error occurred.',
+      description: error.message || 'An unknown error occurred.',
       icon: 'i-lucide-alert-triangle',
       color: 'error'
     });
   }
-
-  const index = items.value.findIndex(i => i.id === item.id);
-
-  if (index !== -1) {
-    items.value.splice(index, 1);
-  }
-
-  toast.add({
-    title: 'Success',
-    description: `Succes delete ${item.name}`,
-    icon: 'i-lucide-check',
-    color: 'success'
-  });
 }
 
 const onSubmit = async (itemData: FormSchema | Item) => {
 
   const { name, ...payload } = itemData as FormSchema;
 
-  const { data, error } = await supabase
-    .from(props.type)
-    .upsert({ name: toKebabCase(name), metadata: { ...payload } }, { onConflict: 'name' })
-    .select()
-    .limit(1)
-    .single()
-
-  if (data) {
-    items.value.push(data as unknown as Item);
-
-    toast.add({
-      title: 'Success',
-      description: `Success add ${data.name}`,
-      icon: 'i-lucide-check',
-      color: 'success'
+  try {
+    const data = await $fetch<Item>(`/api/${props.type}`, {
+      method: 'POST',
+      body: {
+        name: toKebabCase(name),
+        metadata: { ...payload }
+      }
     })
 
-  } else if (error) {
+
+    if (data) {
+      items.value.push(data as unknown as Item);
+
+      toast.add({
+        title: 'Success',
+        description: `Success adding ${name}`,
+        icon: 'i-lucide-check',
+        color: 'success'
+      })
+    }
+
+  } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: error.details || 'An unknown error occurred.',
+      description: error.message || 'An unknown error occurred.',
       icon: 'i-lucide-alert-triangle',
       color: 'error'
     });
+
   }
 
 };
@@ -135,7 +143,7 @@ const onSubmit = async (itemData: FormSchema | Item) => {
       <div v-for="item in items" :key="item.id" class="flex flex-row items-center justify-between space-x-1 px-2 py-1">
         <UTooltip :text="item.name">
           <UBadge class="font-bold rounded-full">
-            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.metadata?.name || item.name), 20) }}</p>
+            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.metadata?.display_name || item.name), 20) }}</p>
             <template #trailing>
               <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="onDelete(item)" />
             </template>

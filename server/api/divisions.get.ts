@@ -1,19 +1,21 @@
-import { serverSupabaseClient } from '#supabase/server'
+import { useDrizzle, tables } from '#imports'
 
 export default eventHandler(async (event) => {
-  const supabase = await serverSupabaseClient(event)
+  const db = useDrizzle()
 
-  const { data, error } = await supabase
-    .from('divisions')
-    .select()
+  try {
+    const response = await db.select().from(tables.divisions)
 
-  if (error) {
-    console.error('Error fetching division:', error)
+    return response
+  } catch (error: any) {
+    if (error) {
+      console.error('error fetching categories', error)
 
-    throw createError({
-      statusCode: 400,
-      statusMessage: `Error fetching division:  ${error.message}`
-    })
+      throw createError({
+        statusCode: 400,
+        message: `Error fetching categories:  ${error.message}`
+      })
+    }
+
   }
-  return data
 })

@@ -3,7 +3,7 @@ import { DataSource, type DataSourceOptions } from 'typeorm'
 
 import type { Category, Division, Document } from '#shared/types'
 import { inspect } from 'node:util'
-import supabase from '~~/server/utils/supabase'
+import { useDrizzle, tables } from '#imports'
 
 // export const postgresConnectionOptions = {
 //   type: 'postgres',
@@ -48,36 +48,41 @@ export const modifyRelation = async (data: { documentId: Document['id'], categor
 
   console.log(data)
 
+  const db = useDrizzle()
+
   let request
 
   if (action === 'delete') {
-    request = supabase.from('categories_documents_divisions').delete().eq('document_id', documentId).select()
+    request = db.delete(tables.categoriesDocumentsDivisions).where(eq(tables.categoriesDocumentsDivisions.documentId, documentId))
   } else {
     const relationData = []
 
     for (const categoryId of categoryIds as number[]) {
       for (const divisionId of divisionIds as number[]) {
         relationData.push({
-          document_id: documentId,
-          category_id: categoryId,
-          division_id: divisionId
+          documentId,
+          categoryId,
+          divisionId
         })
       }
     }
 
-    request = supabase.from('categories_documents_divisions').insert(relationData).select()
+    request = db.insert(tables.categoriesDocumentsDivisions).values(relationData)
+
   }
 
-  const { data: result, error } = await request
+  try {
+    const response = await request
 
-  if (error) {
+    return response
+
+  } catch (error) {
     console.error(`error ${action} relation: ${inspect(error, true, null, true)}`)
 
     throw createError({
       statusCode: 400,
-      statusMessage: `Error ${action} relation:  ${error}`
+      message: `Error ${action} relation:  ${error}`
     })
   }
 
-  return result
 }

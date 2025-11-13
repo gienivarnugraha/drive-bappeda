@@ -1,13 +1,15 @@
-import type { Categories, Documents, Divisions } from "#server/database/schema"
+import type { Categories, Documents, Divisions, User as UserDB } from "~~/server/database/schema"
 
-export type Category = Omit<Categories, 'metadata' | 'created_at'> & {
+export interface User extends UserDB { }
+
+export type Category = Omit<Categories, 'metadata' | 'createdAt'> & {
   metadata?: {
     display_name?: string
     description?: string
   }
 }
 
-export type Division = Omit<Divisions, 'metadata' | 'created_at'> & {
+export type Division = Omit<Divisions, 'metadata' | 'createdAt'> & {
   metadata?: {
     display_name?: string
     description?: string

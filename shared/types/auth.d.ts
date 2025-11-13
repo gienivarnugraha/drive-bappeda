@@ -1,4 +1,4 @@
-import type { User as UserDB } from "#server/database/schema"
+import type { User as UserDB } from "~~/server/database/schema"
 
 declare module '#auth-utils' {
     interface User extends UserDB { }
@@ -16,3 +16,5 @@ declare module '#auth-utils' {
     interface SecureSessionData {
     }
 }
+
+export { }

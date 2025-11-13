@@ -21,7 +21,6 @@ import { ChatMessageHistory } from 'langchain/stores/message/in_memory'
 import { generateAnswerFromDocument, getRetriever } from './rag'
 import { spawn } from 'node:child_process'
 import { TextLoader } from 'langchain/document_loaders/fs/text'
-import supabase from './supabase'
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio'
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
@@ -30,6 +29,8 @@ import { getFileExtension, sanitizeFileName } from '#shared/utils'
 import { modifyRelation } from '~~/server/utils/db'
 import { sseSend } from '~~/server/utils/sse'
 import { getClampedFileNameWithExtension, getPdfData } from '#shared/utils'
+import { useDrizzle, tables } from '#imports'
+import { ilike } from 'drizzle-orm'
 
 const model = getModel('openai')
 
@@ -38,75 +39,6 @@ const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
 const idKey = 'doc_id'
 
 const storageName = process.env.STORAGE_NAME
-
-const createTable = async () => {
-  // const sql = postgres(process.env.SUPABASE_PG_URL as string, {
-  //     ssl: {
-  //         rejectUnauthorized: false
-  //     }
-  // });
-
-  const createQuery = `
-        -- First, ensure the 'pgvector' extension is installed and enabled.
-        -- If not, you may need to install it on your system and then run this command:
-        CREATE EXTENSION IF NOT EXISTS vector;
-
-        -- This command creates a new table named 'vector_store' to hold your vector embeddings.
-        CREATE TABLE IF NOT EXISTS documents_summary (
-            id BIGSERIAL PRIMARY KEY,
-            -- The VECTOR data type is provided by the pgvector extension.
-            -- The number in parentheses is the dimension of your embeddings (e.g., 1536 for OpenAI's ada-002 model).
-            embedding VECTOR(1536), 
-            
-            -- An optional column to store the original text or metadata associated with the embedding.
-            content TEXT,
-            metadata JSONB
-        );
-
-        -- Creating an index on the embedding column is crucial for fast similarity searches.
-        -- This GIST index is highly recommended for large datasets and efficient lookups.
-        -- CREATE INDEX ON documents_summary USING GIST (embedding);
-        CREATE INDEX ON documents_summary USING hnsw (embedding vector_cosine_ops);
-
-        -- Create a function to search for documents
-        create function match_documents (
-            query_embedding vector(1536),
-            match_count int default null,
-            filter jsonb DEFAULT '{}'
-            ) returns table (
-            id bigint,
-            content text,
-            metadata jsonb,
-            similarity float
-        )
-        
-        language plpgsql
-        as $$
-        #variable_conflict use_column
-        begin
-        return query
-        select
-            id,
-            content,
-            metadata,
-            1 - (documents_summary.embedding <=> query_embedding) as similarity
-        from documents_summary
-        where metadata @> filter
-        order by documents_summary.embedding <=> query_embedding
-        limit match_count;
-        end;
-        $$;
-        `
-
-  try {
-    // const query = await sql`${createQuery}`
-
-    // sseSend("push:notif",{message: quer}, status:'info'y)
-
-  } catch (error) {
-    console.error(error)
-  }
-}
 
 const listDocuments = (folderPath: string): Promise<string[]> => {
   return new Promise((resolve, reject) => {
@@ -398,6 +330,10 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
   }
 }
 
+type DocumentData = {
+  category_id: number[],
+  division_id: number[]
+} & StorageMeta
 /**
  * Sets the vector store with the given file.
  * If the file exists in the database, it will use the existing data.
@@ -405,11 +341,8 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const setVectorStore = async (filepath: string, documentData: {
-  category_id: number[],
-  division_id: number[]
-} & StorageMeta) => {
-  const vectorstore = getVectorStore()
+export const processDocument = async (filepath: string, documentData: DocumentData) => {
+
 
   const documents = await loadDocument(filepath)
 
@@ -421,68 +354,84 @@ export const setVectorStore = async (filepath: string, documentData: {
 
   const filename = basename(filepath, extension)
 
+  const db = useDrizzle()
+
   sseSend('push:notif', { message: `getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
-  const { data, error } = await supabase
-    .from('documents')
-    .select()
-    .ilike('uuid', `%${filename}%`)
 
-  if (error) {
+  try {
+    let filenameExists = await db
+      .select()
+      .from(tables.documents)
+      .where(ilike(tables.documents.filename, `%${filename}%`))
+
+    if (filenameExists?.length) {
+      sseSend('push:notif', { message: `file exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+      try {
+        const vectorStoreExists = await db
+          .select()
+          .from(tables.documentsSummary)
+          .where(sql`${tables.documentsSummary} ->> souce_id = like ${filename}%`)
+
+        if (vectorStoreExists?.length) {
+          sseSend('push:notif', { message: `vector store exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
+
+          return
+        }
+
+        await addToVectorStore(docs, filename, documentData)
+
+      } catch (error: any) {
+        console.error('error fetching vector store', error)
+        sseSend('push:notif', { message: `error fetching vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
+
+      }
+    } else {
+
+      sseSend('push:notif', { message: `file not exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+      await addToVectorStore(docs, filename, documentData)
+
+    }
+
+  } catch (error) {
     console.error('Failed to get documents from database', error)
     sseSend('push:notif', { message: `error getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
   }
 
-  if (data?.length) {
-    sseSend('push:notif', { message: `file exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-  } else {
-    sseSend('push:notif', { message: `file not exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
-    const { data, error } = await supabase
-      .from('documents_summary')
-      .select()
-      .eq('metadata->>source_id', `%${filename}%`)
-
-    if (error) {
-      console.error('error fetching vector store', error)
-      sseSend('push:notif', { message: `error fetching vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
-    }
-
-    if (data?.length) {
-      sseSend('push:notif', { message: `vector store exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
-    } else {
-      sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-      const ids = {
-        docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
-        fileId: `${filename}_${uuid()}`
-      }
-
-      const fileMetadata = {
-        ...ids,
-        ...documentData,
-      }
-
-      const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
-
-      await storeToDB(slicedDocuments, fileMetadata)
-
-      const summaries = await generateSummaries(docs, ids, filename)
-
-      if (summaries) {
-
-        await vectorstore.addDocuments(summaries);
-
-        sseSend('push:notif', { message: `success adding to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
-
-      }
-    }
-
-
-  }
-
-  return vectorstore
 }
 
+const addToVectorStore = async (docs: Document[], filename: string, documentData: DocumentData) => {
+  const vectorstore = await getVectorStore()
+
+  sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+  const ids = {
+    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
+    fileId: `${filename}_${uuid()}`
+  }
+
+  const fileMetadata = {
+    ...ids,
+    ...documentData,
+  }
+
+  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
+
+  await storeToDB(slicedDocuments, fileMetadata)
+
+  const summaries = await generateSummaries(docs, ids, filename)
+
+  if (summaries) {
+
+    await vectorstore.addDocuments(summaries);
+
+    sseSend('push:notif', { message: `success adding to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
+
+  }
+}
 
 /**
  * Stores the given documents to the database with the given metadata.
@@ -514,9 +463,10 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 
   const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
-  const { data: docResponse, error: docerror } = await supabase
-    .from('documents')
-    .insert({
+  const db = useDrizzle()
+
+  try {
+    const response = await db.insert(tables.documents).values({
       uuid: fileId,
       title,
       filename,
@@ -525,26 +475,22 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
         summary,
         ...data
       }
-    })
-    .select()
-    .limit(1)
-    .single()
+    }).returning()
 
-  if (docerror) {
-    console.error('Failed to insert document to database', docerror)
-
-    sseSend('push:notif', { message: `error creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
-  }
-
-  if (docResponse) {
     sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
     // insert to relation table
-    const relationResponse = await modifyRelation({ documentId: docResponse.id, categoryIds: category_id, divisionIds: division_id }, 'edit')
+    const relationResponse = await modifyRelation({ documentId: response[0].id, categoryIds: category_id, divisionIds: division_id }, 'edit')
 
     if (relationResponse) {
       sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })
     }
+
+    sseSend('push:notif', { message: 'success adding document...', status: 'info' })
+  } catch (error: any) {
+    console.error('Failed to insert document to database', error)
+
+    sseSend('push:notif', { message: `error creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
+
   }
 
-  sseSend('push:notif', { message: 'success adding document...', status: 'info' })
 }

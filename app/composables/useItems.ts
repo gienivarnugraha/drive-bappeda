@@ -2,28 +2,25 @@ import type { Category, Division } from '#shared/types'
 import { toTitleCase } from '#shared/utils'
 
 export const useItems = async () => {
-  const supabase = useSupabaseClient()
 
   const divisions = useState<Division[]>('divisions', () => [])
 
   const categories = useState<Category[]>('categories', () => [])
 
   const fetchData = async (type: 'divisions' | 'categories'): Promise<Category[] | Division[]> => {
+    try {
+      const response = await $fetch<Category[] | Division[]>(`/api/${type}`)
 
-    const { data, error } = await supabase
-      .from(type)
-      .select()
+      return response
 
-    if (error) {
-      console.error('error fetching categories', error)
-
+    } catch (error: any) {
       throw createError({
         statusCode: 400,
-        statusMessage: `Error fetching categories:  ${error.message}`
+        message: `Error fetching categories:  ${error.message}`
       })
+
     }
 
-    return data
   }
 
   if (categories.value.length === 0) {

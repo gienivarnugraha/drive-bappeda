@@ -6,25 +6,25 @@ const { loggedIn } = useUserSession()
 
 const features = [
   {
-    icon: 'i-heroicons-folder-open-20-solid',
+    icon: 'i-lucide-folder',
     title: 'Integrated File Management',
     description: 'Centralize and organize all your regional development documents, reports, and data files securely.',
     color: 'primary'
   },
   {
-    icon: 'i-heroicons-chat-bubble-left-right-20-solid',
+    icon: 'i-lucide-message-square',
     title: 'Chatbot for PDF Interaction',
     description: 'Instantly get answers and insights by querying your PDF documents through an intelligent chatbot.',
     color: 'emerald'
   },
   {
-    icon: 'i-heroicons-magnifying-glass-20-solid',
+    icon: 'i-lucide-search',
     title: 'Advanced Data Search',
     description: 'Quickly find specific information across vast datasets with powerful search and filtering capabilities.',
     color: 'orange'
   },
   {
-    icon: 'i-heroicons-cloud-arrow-up-20-solid',
+    icon: 'i-lucide-cloud',
     title: 'Secure Data Ingestion',
     description: 'Safely upload and integrate diverse data sources into the datalake for comprehensive analysis.',
     color: 'purple'
@@ -66,8 +66,7 @@ const cta = {
             </template>
           </ClientOnly>
           <div v-else>
-            <UButton label="Login" icon="i-heroicons-arrow-right-end-on-rectangle-20-solid" color="primary"
-              variant="solid" to="/login" />
+            <UButton label="Login" icon="i-lucide-arrow-right" color="primary" variant="solid" to="/login" />
           </div>
         </template>
       </UHeader>
@@ -88,10 +87,10 @@ const cta = {
           </p>
 
           <div class="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-            <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid"
-              icon="i-heroicons-chat-bubble-left-right-20-solid" :to="cta.buttonLink" />
-            <UButton label="Learn More" size="xl" color="secondary" variant="ghost"
-              icon="i-heroicons-question-mark-circle-20-solid" to="#features" />
+            <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid" icon="i-lucide-message-square"
+              :to="cta.buttonLink" />
+            <UButton label="Learn More" size="xl" color="secondary" variant="ghost" icon="i-lucide-question-mark-circle"
+              to="#features" />
           </div>
 
           <div
@@ -146,8 +145,8 @@ const cta = {
           {{ cta.description }}
         </p>
         <div class="mt-10">
-          <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid"
-            icon="i-heroicons-sparkles-20-solid" :to="cta.buttonLink" />
+          <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid" icon="i-lucide-sparkles"
+            :to="cta.buttonLink" />
         </div>
       </UContainer>
     </UMain>

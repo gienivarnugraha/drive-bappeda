@@ -2,8 +2,6 @@
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import * as z from 'zod'
 
-const supabase = useSupabaseClient()
-
 const toast = useToast()
 
 const passwordSchema = z.object({

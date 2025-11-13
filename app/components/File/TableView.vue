@@ -2,7 +2,7 @@
 import type { Category, Division, Results } from '#shared/types'
 import type { TableColumn, DropdownMenuItem, TableRow } from '#ui/types'
 import type { ColumnDef } from '@tanstack/vue-table'
-import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl, toTitleCase } from '#shared/utils'
+import { formatBytes, clampCharacters, toTitleCase } from '#shared/utils'
 import { h, resolveComponent } from 'vue'
 
 const UBadge = resolveComponent('UBadge')

@@ -1,7 +1,5 @@
 import { sseSend } from '~~/server/utils/sse'
 import { getClampedFileNameWithExtension } from '#shared/utils'
-import { serverSupabaseClient } from "#supabase/server";
-
 
 const allowedTypes = [
   'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
@@ -21,7 +19,7 @@ export default eventHandler(async (event) => {
     if (!file.type || !allowedTypes.includes(file.type)) {
       throw createError({
         statusCode: 400,
-        statusMessage:
+        message:
           `File type ${file.type || 'unknown'} not allowed. 
               Allowed types: ${allowedTypes.join(', ')}`
       })

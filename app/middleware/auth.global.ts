@@ -8,11 +8,11 @@ export default defineNuxtRouteMiddleware(async () => {
   // Don't run on client hydration when server rendered
   if (import.meta.client && nuxtApp.isHydrating && nuxtApp.payload.serverRendered) return
 
-  return
+  // return
 
-  // const { session, clear: clearSession, fetch: fetchSession } = useUserSession()
-  // // Ignore if no tokens
-  // if (!session.value?.jwt) return
+  const { session, clear: clearSession, fetch: fetchSession } = useUserSession()
+  // Ignore if no tokens
+  if (!session.value?.jwt) return
 
   // const serverEvent = useRequestEvent()
   // const runtimeConfig = useRuntimeConfig()
