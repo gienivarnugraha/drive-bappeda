@@ -5,12 +5,12 @@ import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 const toast = useToast()
 
 onMounted(() => {
-  const session = useSupabaseSession()
+  // const session = useSupabaseSession()
 
-  console.log('session: ', !!session.value)
-  if (!!session.value) {
-    navigateTo('/home')
-  }
+  // console.log('session: ', !!session.value)
+  // if (!!session.value) {
+  //   navigateTo('/home')
+  // }
 })
 
 const fields: AuthFormField[] = [{

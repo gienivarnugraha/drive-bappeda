@@ -2,7 +2,7 @@
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import * as z from 'zod'
 import { useUser } from '~/composables/useUser'
-import { toKebabCase } from '~/utils'
+import { toKebabCase } from '#shared/utils'
 
 const toast = useToast()
 
@@ -28,7 +28,7 @@ const profile = reactive<Partial<ProfileSchema>>({
 onMounted(() => {
     const userClone = deepClone(user.value)
     profile.display_name = userClone.display_name
-    profile.avatar = sanitizeUrl(`${config.public.avatarUrl}/${userClone.avatar  || ''}`)
+    profile.avatar = sanitizeUrl(`${config.public.avatarUrl}/${userClone.avatar || ''}`)
 })
 
 const fileRef = useTemplateRef<HTMLInputElement>('fileRef')

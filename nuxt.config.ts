@@ -4,9 +4,12 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@nuxtjs/supabase',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    'nuxt-auth-utils'
   ],
-
+  alias: {
+    "#server/*": "/<rootDir>/server/*"
+  },
   devtools: {
     // enabled:  process.env.NODE_ENV === 'development'
     enabled: false
@@ -22,7 +25,8 @@ export default defineNuxtConfig({
 
   supabase: {
     redirect: false,
-    useSsrCookies: false
+    useSsrCookies: false,
+    types: false
   },
 
 

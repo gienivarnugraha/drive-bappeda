@@ -1,6 +1,6 @@
-import type { Category, Division, Document } from '~/types'
+import type { Category, Division, Document } from '#shared/types'
 import { inspect } from 'node:util'
-import { getClampedFileNameWithExtension, sanitizeFileName } from '~/utils'
+import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
 import { serverSupabaseClient } from '#supabase/server'
 
 type Schema = {

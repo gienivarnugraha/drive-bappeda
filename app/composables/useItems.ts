@@ -1,4 +1,5 @@
-import type { Category, Division } from '~/types'
+import type { Category, Division } from '#shared/types'
+import { toTitleCase } from '#shared/utils'
 
 export const useItems = async () => {
   const supabase = useSupabaseClient()

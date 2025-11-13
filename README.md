@@ -1,9 +1,13 @@
 # DRIVE BAPPED - NUXT v4 Based Dashboard
 
-## Quick Start
+## Database
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/dashboard
+generate db schema and run migration to server
+
+```bash
+pnpm run db:generate
+
+pnpm run init
 ```
 
 ## Setup
@@ -34,25 +38,4 @@ Locally preview production build:
 
 ```bash
 pnpm preview
-```
-
-
-## Storage Config
-``` ts
-// ./server/plugins/storage.ts
-
-import storageDriver from './storage'
-
-export default defineNitroPlugin(async () => {
-  const storage = useStorage()
-
-  storage.mount('storage-name', storageDriver({
-    bucketName: 'your-bucket-name-in-supabase'
-  }))
-})
-
-// to use
-const storage = useStorage('storage-name')
-
-await storage.getItem('filename.ext')
 ```

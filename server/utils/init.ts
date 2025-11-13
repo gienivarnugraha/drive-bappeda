@@ -25,11 +25,11 @@ import supabase from './supabase'
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio'
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
-import type { DocumentMetadata, StorageMeta } from '~/types'
-import { getFileExtension, sanitizeFileName } from '~/utils'
+import type { DocumentMetadata, StorageMeta } from '#shared/types'
+import { getFileExtension, sanitizeFileName } from '#shared/utils'
 import { modifyRelation } from '~~/server/utils/db'
-import { sseSend } from '~/utils/sse'
-import { getClampedFileNameWithExtension, getPdfData } from '~/utils'
+import { sseSend } from '~~/server/utils/sse'
+import { getClampedFileNameWithExtension, getPdfData } from '#shared/utils'
 
 const model = getModel('openai')
 

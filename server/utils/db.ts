@@ -1,7 +1,7 @@
 import { SqlDatabase } from 'langchain/sql_db'
 import { DataSource, type DataSourceOptions } from 'typeorm'
 
-import type { Category, Division, Document } from '~/types'
+import type { Category, Division, Document } from '#shared/types'
 import { inspect } from 'node:util'
 import supabase from '~~/server/utils/supabase'
 

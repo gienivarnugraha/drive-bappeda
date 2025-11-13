@@ -1,7 +1,7 @@
-import type { Category } from '~/types'
+import type { Category } from '#shared/types'
 import { inspect } from 'node:util'
 import { serverSupabaseClient } from '#supabase/server'
-import { toKebabCase } from '~/utils'
+import { toKebabCase } from '#shared/utils'
 
 type EditSchema = {
   shouldDelete: boolean

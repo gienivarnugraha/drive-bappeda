@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { z } from 'zod';
 import type { PropType, Ref } from 'vue';
-import type { Category, Division } from '~/types'; // Assuming this path is correct
+import type { Category, Division } from '#shared/types'; // Assuming this path is correct
+import { toTitleCase, toKebabCase } from '#shared/utils'
 
 type Item = Category | Division;
 
@@ -56,7 +57,7 @@ const onDelete = (item: Item) => {
     duration: 0,
     actions: [{
       label: 'Hapus',
-      onClick: e => {
+      onClick: (e: any) => {
         deleteItem(item);
       },
       variant: 'solid',

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 // Define data for the Features section
-import { useUser } from '~/composables/useUser'
 
-const { isAuthenticated } = await useUser()
+const { loggedIn } = useUserSession()
 
 
 const features = [
@@ -47,7 +46,7 @@ const cta = {
       <UHeader :toggle="false">
         <template #title>
           <div class="flex flex-row space-x-2 items-center">
-            <ClientOnly v-if="isAuthenticated" class="w-fit">
+            <ClientOnly v-if="loggedIn" class="w-fit">
               <UButton variant="subtle" color="neutral" icon="i-lucide-chevron-left" to="/home" />
               <template #fallback>
                 <USkeleton class="h-8 w-8" />
@@ -60,7 +59,7 @@ const cta = {
         <template #right>
           <UColorModeButton />
 
-          <ClientOnly v-if="isAuthenticated" class="w-fit">
+          <ClientOnly v-if="loggedIn" class="w-fit">
             <UserMenu />
             <template #fallback>
               <USkeleton class="h-8 w-24" />

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
-import type { Category, Division } from '~/types'
-import { sanitizeFileName, getFileExtension } from '~/utils/index'
+import type { Category, Division } from '#shared/types'
+import { sanitizeFileName, getFileExtension } from '#shared/utils'
 import { generateThumbnail } from '~/utils/pdf'
 import { v4 as uuid } from 'uuid'
 

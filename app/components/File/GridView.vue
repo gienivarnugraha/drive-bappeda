@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl } from '~/utils'
-import type { DocumentMetadata, Results } from '~/types'
+import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl, toTitleCase } from '#shared/utils'
+import type { DocumentMetadata, Results } from '#shared/types'
 import { useItems } from '~/composables/useItems'
 
 const props = defineProps({

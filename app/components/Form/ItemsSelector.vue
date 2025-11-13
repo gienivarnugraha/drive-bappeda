@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Category, Division } from '~/types'
+import type { Category, Division } from '#shared/types'
 import { useVModel } from "@vueuse/core";
+import { formatBytes, getClampedFileNameWithExtension, sanitizeUrl, toTitleCase } from '#shared/utils'
 
 type Items = Category | Division
 

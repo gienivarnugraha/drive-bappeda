@@ -1,4 +1,4 @@
-import { stringToNumberArray } from '~/utils'
+import { stringToNumberArray } from '#shared/utils'
 import { serverSupabaseClient } from '#supabase/server'
 
 type Schema = {

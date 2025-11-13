@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Category, Division, Results } from '~/types'
-import { toTitleCase, clampCharacters } from '#imports'
+import type { Category, Division, Results } from '#shared/types'
+import { deepClone, clampCharacters, sanitizeUrl, toTitleCase } from '#shared/utils'
 import type { SelectItem } from '#ui/types'
 import { useTailwindBreakpoints } from '~/composables/useTailwindBreakpoints'
 

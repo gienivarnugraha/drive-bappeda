@@ -1,4 +1,4 @@
-import type { User } from '~/types'
+import type { User } from '#shared/types'
 
 export const _useUser = async () => {
   const user: Ref<User> = ref({ display_name: '', email: '', avatar: '', id: '' })

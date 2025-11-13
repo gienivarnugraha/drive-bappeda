@@ -1,4 +1,4 @@
-import { sseEvent } from '~/utils/sse'
+import { sseEvent } from '~~/server/utils/sse'
 
 let clients: Record<string, any>[] = [] // Array to store connected SSE clients
 

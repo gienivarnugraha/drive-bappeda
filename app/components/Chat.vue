@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
-import { markdownToHtml } from '~/utils/markdown'
+import { markdownToHtml } from '#shared/utils/markdown'
 import { v4 as uuid } from 'uuid'
 import { useUser } from '~/composables/useUser'
 
@@ -137,19 +137,19 @@ onUnmounted(() => {
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
     <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
-      side: 'left',
-      variant: 'outline',
-      avatar: {
-        icon: 'i-lucide-bot'
-      },
-    }" :user="{
-      side: 'left',
-      variant: 'solid',
-      avatar: {
-        src: user.avatar,
-        alt: user.display_name
-      }
-    }">
+    side: 'left',
+    variant: 'outline',
+    avatar: {
+      icon: 'i-lucide-bot'
+    },
+  }" :user="{
+    side: 'left',
+    variant: 'solid',
+    avatar: {
+      src: user.avatar,
+      alt: user.display_name
+    }
+  }">
       <template #content="{ message }">
         <div class="markdown" v-html="getTextFromMessage(message)" />
       </template>

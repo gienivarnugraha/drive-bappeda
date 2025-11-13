@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatBytes } from '#imports'
-import type { Results, Category, Division, Document } from '~/types'
+import type { Results, Category, Division, Document } from '#shared/types'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useItems } from '~/composables/useItems'
 import { z } from 'zod'

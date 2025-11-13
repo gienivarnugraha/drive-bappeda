@@ -1,34 +1,23 @@
-import type { Database, Tables } from "./database.types"
+import type { Categories, Documents, Divisions } from "#server/database/schema"
 
-export interface User {
-  avatar: string;
-  email: string;
-  display_name: string;
-  id: string
-}
-
-// export interface Category extends Tables<'categories'> { }
-
-export type Category = Omit<Tables<'categories'>, 'metadata' | 'created_at'> & {
+export type Category = Omit<Categories, 'metadata' | 'created_at'> & {
   metadata?: {
-    name?: string
+    display_name?: string
     description?: string
   }
 }
 
-// export interface Division extends Tables<'divisions'> { }
-export type Division = Omit<Tables<'divisions'>, 'metadata' | 'created_at'> & {
+export type Division = Omit<Divisions, 'metadata' | 'created_at'> & {
   metadata?: {
-    name?: string
+    display_name?: string
     description?: string
   }
 }
 
-export interface Document extends Tables<'documents'> {
+export interface Document extends Documents {
   metadata: DocumentMetadata
 }
 
-//export interface Results extends Database['public']['Functions']['get_documents']['Returns'] { }
 export type Results = Document & {
   categories: Category[]
   divisions: Division[]
@@ -55,7 +44,7 @@ export interface DocumentMetadata extends StorageMeta {
 export interface Notification {
   id: number
   unread?: boolean
-  sender: User
+  sender: string
   body: string
   date: string
 }
