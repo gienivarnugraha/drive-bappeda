@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import * as z from 'zod'
-import { useUser } from '~/composables/useUser'
-import { toKebabCase, deepClone, sanitizeUrl } from '#shared/utils'
+import type { FetchResponse, User } from '#shared/types'
+import { toKebabCase, deepClone, sanitizeUrl, sanitizeFileName } from '#shared/utils'
 
 const toast = useToast()
 
@@ -26,7 +26,7 @@ const profile = reactive<Partial<ProfileSchema>>({
 onMounted(() => {
     const userClone = deepClone(user.value)
     profile.name = userClone.name
-    profile.avatar = sanitizeUrl(`${config.public.avatarUrl}/${userClone.avatar || ''}`)
+    profile.avatar = sanitizeUrl(`/avatars/${userClone.avatar || ''}`)
 })
 
 const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
@@ -76,17 +76,25 @@ async function uploadFile() {
 
     if (avatarFile.value) {
 
+        // extract the filename Output: ["file.pdf"]  <- Extracts the filename
         const filename = profile.avatar?.match(/[^/]+$/)
 
-        const { data, error } = await supabase
-            .storage
-            .from('avatars')
-            .upload(filename ? filename[0] + '.' + avatarFile.value.name.split('.').pop() : `${user.value.id}.${avatarFile.value.name.split('.').pop()}`, avatarFile.value, {
-                cacheControl: '3600',
-                upsert: true
+        const formData = new FormData()
+
+        formData.append('file', avatarFile.value, `${sanitizeFileName(filename ? filename[0] : avatarFile.value.name), false}`)
+
+        try {
+            const response = await $fetch('/api/avatar', {
+                method: 'post',
+                body: formData,
+                query: {
+                    id: user.value?.id,
+                    name: user.value?.name,
+                }
             })
 
-        if (error) {
+            return response?.data.url
+        } catch (error: any) {
             console.log('error uploading files', error)
 
             toast.add({
@@ -96,11 +104,7 @@ async function uploadFile() {
                 color: 'error'
             })
 
-            return
-        } else if (data) {
-            return data?.fullPath
         }
-
     }
 }
 
@@ -114,17 +118,14 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
 
     const avatar = await uploadFile()
 
-    const { data, error } = await supabase.auth.updateUser({
-        data: {
-            name,
-            avatar
-        }
-    })
-
-    if (data) {
-
-        user.value.avatar = sanitizeUrl(`${avatarUrl}/${data.user?.user_metadata.avatar}`)
-        user.value.name = data.user?.user_metadata.name
+    try {
+        await $fetch<FetchResponse<User>>('/api/user', {
+            method: 'put',
+            body: {
+                name,
+                avatar
+            }
+        })
 
         await nextTick()
 
@@ -139,8 +140,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             URL.revokeObjectURL(previousObjectUrl.value);
             previousObjectUrl.value = undefined;
         }
-
-    } else if (error) {
+    } catch (error: any) {
         console.log('error updating user', error)
 
         toast.add({
@@ -150,7 +150,6 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             color: 'error'
         })
     }
-
 }
 
 </script>

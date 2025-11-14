@@ -3,6 +3,7 @@ import { useItems } from '~/composables/useItems'
 
 definePageMeta({
   layout: 'home',
+  middleware: ['auth'],
 })
 
 const { categories, divisions } = await useItems()

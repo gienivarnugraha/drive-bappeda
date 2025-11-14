@@ -18,7 +18,7 @@ type Schema = {
 export default defineEventHandler(async (event) => {
     const payload = await readBody<Schema>(event)
 
-    const storage = useStorage(process.env.STORAGE_NAME)
+    const config = useRuntimeConfig()
 
     const { filenames, categories, divisions } = payload
 
@@ -45,6 +45,9 @@ export default defineEventHandler(async (event) => {
         }
 
         for (const filename of processFiles) {
+
+            const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(filename, true)}`)
+
             const meta = await storage.getMeta(filename)
 
             const metadata = {

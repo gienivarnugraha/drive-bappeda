@@ -50,12 +50,6 @@ importers:
       '@nuxtjs/mdc':
         specifier: ^0.18.0
         version: 0.18.0(magicast@0.3.5)
-      '@nuxtjs/supabase':
-        specifier: ^2.0.1
-        version: 2.0.1
-      '@supabase/supabase-js':
-        specifier: ^2.57.0
-        version: 2.76.1
       '@tsndr/cloudflare-worker-jwt':
         specifier: ^3.2.0
         version: 3.2.0
@@ -1562,9 +1556,6 @@ packages:
   '@nuxtjs/mdc@0.18.0':
     resolution: {integrity: sha512-/rWEOiLpD6oNx2FC/UsYxLn1pP31pvRmaX5y8GurBOogATKDWd3jlfKCGgshLnsWM6dCKgNkF0mCZQCMZMfpIQ==}
 
-  '@nuxtjs/supabase@2.0.1':
-    resolution: {integrity: sha512-hnNgb6pLAiAY7FpT5fYKUsaaNzGpx0UQkHmaka/yBiOeXuG7Y3MZnYSfaSYMBAwvi1EklEPHoWK59d9cIqy3gA==}
-
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
@@ -2256,11 +2247,6 @@ packages:
 
   '@supabase/realtime-js@2.76.1':
     resolution: {integrity: sha512-B5Lfmprea2fx2FS7obp4uAWiRUlEa6j9J3+BvvETGp/2LdkSRBaLEJCBylfcZTXk67ajNPX6ppvKvAZsckqXYg==}
-
-  '@supabase/ssr@0.7.0':
-    resolution: {integrity: sha512-G65t5EhLSJ5c8hTCcXifSL9Q/ZRXvqgXeNo+d3P56f4U1IxwTqjB64UfmfixvmMcjuxnq2yGqEWVJqUcO+AzAg==}
-    peerDependencies:
-      '@supabase/supabase-js': ^2.43.4
 
   '@supabase/storage-js@2.76.1':
     resolution: {integrity: sha512-OJiNT8tocI9tcTjTjv1SBVLabzgEnS1NorZuqivkiJ0gTYmeg2c2PFmqCARhoQ4whF6zR9MVsX/Mtj2oSv4i/w==}
@@ -8536,16 +8522,6 @@ snapshots:
       - magicast
       - supports-color
 
-  '@nuxtjs/supabase@2.0.1':
-    dependencies:
-      '@supabase/ssr': 0.7.0(@supabase/supabase-js@2.76.1)
-      '@supabase/supabase-js': 2.76.1
-      defu: 6.1.4
-      pathe: 2.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@opentelemetry/api@1.9.0': {}
 
   '@oxc-minify/binding-android-arm64@0.94.0':
@@ -9031,20 +9007,24 @@ snapshots:
     dependencies:
       '@supabase/node-fetch': 2.6.15
       tslib: 2.8.1
+    optional: true
 
   '@supabase/functions-js@2.76.1':
     dependencies:
       '@supabase/node-fetch': 2.6.15
       tslib: 2.8.1
+    optional: true
 
   '@supabase/node-fetch@2.6.15':
     dependencies:
       whatwg-url: 5.0.0
+    optional: true
 
   '@supabase/postgrest-js@2.76.1':
     dependencies:
       '@supabase/node-fetch': 2.6.15
       tslib: 2.8.1
+    optional: true
 
   '@supabase/realtime-js@2.76.1':
     dependencies:
@@ -9056,16 +9036,13 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  '@supabase/ssr@0.7.0(@supabase/supabase-js@2.76.1)':
-    dependencies:
-      '@supabase/supabase-js': 2.76.1
-      cookie: 1.0.2
+    optional: true
 
   '@supabase/storage-js@2.76.1':
     dependencies:
       '@supabase/node-fetch': 2.6.15
       tslib: 2.8.1
+    optional: true
 
   '@supabase/supabase-js@2.76.1':
     dependencies:
@@ -9078,6 +9055,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@swc/helpers@0.5.17':
     dependencies:
@@ -9234,7 +9212,8 @@ snapshots:
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
-  '@types/phoenix@1.6.6': {}
+  '@types/phoenix@1.6.6':
+    optional: true
 
   '@types/pluralize@0.0.33': {}
 
@@ -9257,6 +9236,7 @@ snapshots:
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 24.9.1
+    optional: true
 
   '@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:

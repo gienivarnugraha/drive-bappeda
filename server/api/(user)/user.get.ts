@@ -8,9 +8,9 @@ export default defineEventHandler(async (event) => {
     const { password, ...rest } = getTableColumns(tables.users);
 
     try {
-        const response = await db.select(rest).from(tables.users);
-
-        return response;
+        const data = await db.select(rest).from(tables.users);
+        // { users: User[], total: number, nextPage: number, lastPage: number }
+        return data;
     } catch (error) {
 
         console.log('error listing user: ', error)

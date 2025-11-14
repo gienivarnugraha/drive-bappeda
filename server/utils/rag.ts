@@ -28,8 +28,8 @@ const getMessageHistoryForSession = (sessionId: string) => {
  * @returns {MultiVectorRetriever} - An instance of MultiVectorRetriever that can be used to search for similar documents.
  */
 // export const getRetriever = (): MultiVectorRetriever => {
-export const getRetriever = (): MultiQueryRetriever => {
-  const vectorstore = getVectorStore()
+export const getRetriever = async (): Promise<MultiQueryRetriever> => {
+  const vectorstore = await getVectorStore()
   const model = getModel('google')
 
   return MultiQueryRetriever.fromLLM({
@@ -39,7 +39,7 @@ export const getRetriever = (): MultiQueryRetriever => {
 }
 
 const getContextChain = async () => {
-  const retriever = getRetriever()
+  const retriever = await getRetriever()
 
   return RunnableSequence.from([
     input => input.question,
@@ -47,6 +47,9 @@ const getContextChain = async () => {
     formatDocumentsAsString
   ])
 }
+
+const config = useRuntimeConfig()
+
 //    - if the context contains a chart, add the answer format as <Chart> component in new line
 const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant. 
 
@@ -59,7 +62,7 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
     - if the context contains a table, add the answer format as table in Markdown use title case for heading in new line
     - if the context contains a formula, add the answer format as formula in Markdown katex in new line
     - if the context contains a list, add the answer format as Markdown lists in new line
-    - if the context contains a image, replace the image base link with: ${process.env.STORAGE_URL} and return as markdown image format in new line
+    - if the context contains a image, replace the image base link with: ${config.public.storageUrl} and return as markdown image format in new line
     - Answer in indonesian language
 
     Context

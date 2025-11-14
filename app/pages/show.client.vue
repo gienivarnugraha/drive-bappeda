@@ -1,5 +1,5 @@
-import { sanitizeUrl } from '../utils/index';
 <script setup lang="ts">
+import { sanitizeUrl, getPdfData } from '#shared/utils';
 
 const route = useRoute()
 

@@ -1,19 +1,23 @@
 import type { Categories, Documents, Divisions, User as UserDB } from "~~/server/database/schema"
 
-export interface User extends UserDB { }
 
-export type Category = Omit<Categories, 'metadata' | 'createdAt'> & {
-  metadata?: {
-    display_name?: string
-    description?: string
-  }
+export type FetchResponse<T> = {
+  message: string
+  data?: T
 }
 
-export type Division = Omit<Divisions, 'metadata' | 'createdAt'> & {
-  metadata?: {
-    display_name?: string
-    description?: string
-  }
+export interface User extends UserDB { }
+
+export type ItemMetadata = {
+  display_name?: string
+  description?: string
+}
+export type Category = Omit<Categories, 'createdAt'> & {
+  metadata: ItemMetadata
+}
+
+export type Division = Omit<Divisions, 'createdAt'> & {
+  metadata: ItemMetadata
 }
 
 export interface Document extends Documents {

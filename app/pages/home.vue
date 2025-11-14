@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { Category, Division, Results } from '#shared/types'
-import { deepClone, clampCharacters, sanitizeUrl, toTitleCase } from '#shared/utils'
+import { deepClone, clampCharacters } from '#shared/utils'
 import type { SelectItem } from '#ui/types'
 import { useTailwindBreakpoints } from '~/composables/useTailwindBreakpoints'
 
 definePageMeta({
   layout: 'home',
+  middleware: ['auth'],
 })
 
 const { categories, divisions } = await useItems()
@@ -97,8 +98,8 @@ const documentUpdated = async () => {
           :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
           :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
           <template #label="{ item }">
-            <UTooltip :text="item.name">
-              <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+            <UTooltip :text="item.metadata?.display_name || item.name">
+              <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
             </UTooltip>
           </template>
         </UCheckboxGroup>
@@ -121,8 +122,8 @@ const documentUpdated = async () => {
           :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
           :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
           <template #label="{ item }">
-            <UTooltip :text="item.name">
-              <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+            <UTooltip :text="item.metadata?.display_name || item.name">
+              <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
             </UTooltip>
           </template>
 

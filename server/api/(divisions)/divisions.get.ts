@@ -9,11 +9,11 @@ export default eventHandler(async (event) => {
     return response
   } catch (error: any) {
     if (error) {
-      console.error('error fetching categories', error)
+      console.error('error fetching divisions', error)
 
       throw createError({
         statusCode: 400,
-        message: `Error fetching categories:  ${error.message}`
+        message: `Error fetching divisions:  ${error.message}`
       })
     }
 

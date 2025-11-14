@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { z } from 'zod';
 import type { PropType, Ref } from 'vue';
-import type { Category, Division } from '#shared/types'; // Assuming this path is correct
-import { toTitleCase, toKebabCase, clampCharacters } from '#shared/utils'
+import type { Category, Division, FetchResponse } from '#shared/types'; // Assuming this path is correct
+import {  toSnakeCase, clampCharacters } from '#shared/utils'
 
 type Item = Category | Division;
 
@@ -43,10 +43,8 @@ for (const key in props.additionalFields) {
   (state as Record<string, any>)[key] = props.additionalFields[key];
 }
 
-onMounted(() => {
-  items.value = props.options;
-})
-const items: Ref<Item[]> = ref([]);
+const items: Ref<Item[]> = ref(props.options);
+
 const addView = ref(false);
 
 const onDelete = (item: Item) => {
@@ -71,7 +69,6 @@ const deleteItem = async (item: Item) => {
       method: 'DELETE',
       body: { id: item.id }
     })
-
 
     const index = items.value.findIndex(i => i.id === item.id);
 
@@ -102,21 +99,20 @@ const onSubmit = async (itemData: FormSchema | Item) => {
   const { name, ...payload } = itemData as FormSchema;
 
   try {
-    const data = await $fetch<Item>(`/api/${props.type}`, {
+    const {data, message} = await $fetch<FetchResponse<Item>>(`/api/${props.type}`, {
       method: 'POST',
       body: {
-        name: toKebabCase(name),
+        name: toSnakeCase(name),
         metadata: { ...payload }
       }
     })
-
 
     if (data) {
       items.value.push(data as unknown as Item);
 
       toast.add({
         title: 'Success',
-        description: `Success adding ${name}`,
+        description: message,
         icon: 'i-lucide-check',
         color: 'success'
       })
@@ -143,7 +139,7 @@ const onSubmit = async (itemData: FormSchema | Item) => {
       <div v-for="item in items" :key="item.id" class="flex flex-row items-center justify-between space-x-1 px-2 py-1">
         <UTooltip :text="item.name">
           <UBadge class="font-bold rounded-full">
-            <p class="text-xs"> {{ clampCharacters(toTitleCase(item.metadata?.display_name || item.name), 20) }}</p>
+            <p class="text-xs"> {{ clampCharacters(item.metadata?.display_name || item.name, 20) }}</p>
             <template #trailing>
               <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash" @click="onDelete(item)" />
             </template>
@@ -159,7 +155,7 @@ const onSubmit = async (itemData: FormSchema | Item) => {
 
     <UForm v-if="addView" :schema="Schema" :state="state" class="flex flex-col gap-4 max-w-md"
       @submit="onSubmit(state as FormSchema)">
-      <UFormField v-for="key in Object.keys(state)" :key="key" :name="key" :label="toTitleCase(key)"
+      <UFormField v-for="key in Object.keys(state)" :key="key" :name="key" :label="key.toUpperCase()"
         :description="`Enter the value for ${key}`" class="flex max-sm:flex-col justify-between items-start gap-4">
         <UInput v-model="(state as Record<string, any>)[key]" :placeholder="`New ${key}`" class="w-full" />
       </UFormField>

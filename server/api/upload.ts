@@ -1,8 +1,8 @@
 import { sseSend } from '~~/server/utils/sse'
-import { getClampedFileNameWithExtension } from '#shared/utils'
+import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
 
 const allowedTypes = [
-  'image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
+  'application/pdf', 'text/plain']
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
@@ -11,9 +11,9 @@ export default eventHandler(async (event) => {
     throw new Error('No files uploaded.')
   }
 
-  const filenames: string[] = []
+  const config = useRuntimeConfig()
 
-  const storage = useStorage(process.env.STORAGE_NAME)
+  const filenames: string[] = []
 
   for (const file of formData) {
     if (!file.type || !allowedTypes.includes(file.type)) {
@@ -27,6 +27,9 @@ export default eventHandler(async (event) => {
 
     const filename = file.filename as string
 
+    const storageName = `${config.public.storageUrl}:${sanitizeFileName(filename, true)}`
+
+    const storage = useStorage(storageName)
 
     if (file.name === 'file') {
       filenames.push(filename)

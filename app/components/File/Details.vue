@@ -26,9 +26,13 @@ const setData = (item: Results, clear: boolean = false) => {
 }
 
 onUnmounted(() => {
-  console.log('DETAILS.VUE unmounted')
+  console.log('DETAILS.VUE Unmounted!')
   setData(props.document, true)
   watcher()
+})
+onMounted(() => {
+  console.log('DETAILS.VUE Mounted!')
+  setData(props.document)
 })
 
 const watcher = watch(() => props.document, (doc) => {

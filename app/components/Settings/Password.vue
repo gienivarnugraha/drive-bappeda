@@ -19,17 +19,19 @@ const password = reactive<Partial<PasswordSchema>>({
 const updateUserPassword = async (event: FormSubmitEvent<PasswordSchema>) => {
   const { new: password } = event.data
 
-  const { data, error } = await supabase.auth.updateUser({
-    password
-  })
-  if (data) {
+  try {
+    const response = await $fetch('/api/password', {
+      method: 'put',
+      body: { password }
+    })
+
     toast.add({
       title: 'Success',
       description: 'Your settings have been updated.',
       icon: 'i-lucide-check',
       color: 'success'
     })
-  } else if (error) {
+  } catch (error: any) {
     console.log('error update password: ', error)
     toast.add({
       title: 'Error',

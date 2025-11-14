@@ -24,9 +24,9 @@ export default defineNuxtConfig({
 
   nitro: {
     storage: {
-      documents: {
+      public: {
         driver: 'fs',
-        base: '/public/documents'
+        base: '/public/'
       },
       'vercel-blobs': {
         driver: 'vercelBlob',
@@ -39,9 +39,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      storageUrl: process.env.STORAGE_URL,
-      storageName: process.env.STORAGE_NAME,
-      avatarUrl: process.env.AVATAR_URL,
+      storageUrl: `${process.env.STORAGE_URL}/documents/`,
+      avatarUrl: `${process.env.STORAGE_URL}/avatars/`,
     }
   },
 

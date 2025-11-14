@@ -4,14 +4,14 @@ import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 
 const toast = useToast()
 
-const { fetch, session } = useUserSession()
+const { fetch, loggedIn } = useUserSession()
 
 onMounted(() => {
-  // const session = useSupabaseSession()
+  // const loggedIn = useSupabaseSession()
 
-  console.log('session: ', !!session)
+  console.log('loggedIn: ', loggedIn.value)
 
-  if (!!session) {
+  if (loggedIn.value) {
     navigateTo('/home')
   }
 })

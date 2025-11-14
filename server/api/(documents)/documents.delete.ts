@@ -11,7 +11,7 @@ type Schema = {
 export default defineEventHandler(async (event) => {
     const payload = await readBody<Schema>(event)
 
-    const storage = useStorage(process.env.STORAGE_NAME)
+    const config = useRuntimeConfig()
 
     const { documentId } = payload
 
@@ -20,9 +20,11 @@ export default defineEventHandler(async (event) => {
     try {
         const document = await db.delete(tables.documents).where(eq(tables.documents.id, parseInt(documentId))).returning()
 
-        const thumbnailSrc = `${sanitizeFileName(document[0].filename)}.png`
+        const thumbnailSrc = `${sanitizeFileName(document[0].filename, true)}.png`
 
-        await storage.remove(document[0].filename)
+        const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(document[0].filename, true)}`)
+
+        await storage.remove(sanitizeFileName(document[0].filename))
 
         await storage.remove(thumbnailSrc)
 
@@ -32,7 +34,7 @@ export default defineEventHandler(async (event) => {
                 .delete(tables.documentsSummary)
                 .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' = ${document[0].uuid}`)
 
-            return { message: `Success Delete file: ${getClampedFileNameWithExtension(document[0].filename)}` }
+            return { message: `Success Delete summary: ${getClampedFileNameWithExtension(document[0].filename)}` }
 
         } catch (summaryError: any) {
 

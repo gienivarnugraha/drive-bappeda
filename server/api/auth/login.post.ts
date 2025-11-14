@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createError } from '#imports'
 import { useDrizzle } from '#imports'
 import { setUserSession } from '#imports'
+// @ts-ignore
 import bcrypt from 'bcrypt'
 
 export default defineEventHandler(async (event) => {

@@ -110,16 +110,24 @@ export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(ob
  * and removes the file extension.
  * 
  * @param {string} file - The file name to sanitize, e.g. "file object.pdf"
+ * @param {booleam} removeExtension - should extension removed? 
  * @returns {string} The sanitized filename, e.g. "file-object"
  */
-export function sanitizeFileName(file: string): string {
-    return file.toLowerCase()
-        // Remove file extension
-        .replace(/\.[^/.]+$/, '')
+export function sanitizeFileName(file: string, removeExtension: boolean = true): string {
+    file.toLowerCase()
         // Replace whitespace and other non-alphanumeric characters with hyphens (-)
         .replace(/[^a-z0-9-_]+/g, '-')
         // Remove leading and trailing hyphens
         .replace(/^-+|-+$/g, '')
+
+    if (removeExtension) {
+        return file
+            // Remove file extension
+            .replace(/\.[^/.]+$/, '')
+
+    } else {
+        return file
+    }
 }
 
 export const toKebabCase = (str: string) => {
@@ -138,6 +146,24 @@ export const toKebabCase = (str: string) => {
     // 3. Convert the entire string to lowercase and clean up any leading/trailing hyphens.
     return tempStr.toLowerCase().replace(/^-+|-+$/g, '');
 };
+
+export const toSnakeCase = (str: string) => {
+    if (!str) {
+        return str;
+    }
+
+    // 1. Replace all hyphens/spaces with underscores.
+    // 2. Insert an underscore before any uppercase letter (if it's not already preceded by a hyphen or underscore).
+    //    - $1: the matched character before the capital letter (e.g., 'a' in 'aB').
+    //    - $2: the capital letter (e.g., 'B' in 'aB').
+    // 3. Convert the entire string to lowercase.
+
+    return str
+        .replace(/[-\s]+/g, '_') // Replace hyphens and spaces with underscores
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // Insert underscore before a capital letter
+        .toLowerCase();
+}
+
 
 export const toTitleCase = (str: string) => {
     if (!str) return str;

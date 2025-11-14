@@ -2,10 +2,13 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import * as z from 'zod'
 import { v4 as uuid } from 'uuid'
+import type { User, FetchResponse } from "#shared/types";
 
 const toast = useToast()
 
 const addView = ref(false)
+
+const { user } = useUserSession()
 
 // --- 1. Zod Schema ---
 const schema = z.object({
@@ -78,9 +81,9 @@ function onFileClick(): void {
  * Uploads the selected avatar file to Supabase storage.
  * @returns {Promise<string | null>} The public URL of the uploaded file, or null on failure/no file.
  */
-async function uploadAvatar(): Promise<string | null> {
+async function uploadAvatar(): Promise<string | undefined> {
   if (!avatarFile.value) {
-    return null; // No file to upload
+    return undefined; // No file to upload
   }
 
   isUploading.value = true;
@@ -89,27 +92,36 @@ async function uploadAvatar(): Promise<string | null> {
   const fileExtension = file.name.split('.').pop();
   const filename = `${uuid()}.${fileExtension}`;
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filename, file, {
-      cacheControl: '3600',
-      upsert: false // Set to false to prevent accidental overwrites if UUIDs clash (unlikely)
+  const formData = new FormData()
+
+  formData.append('file', file, filename)
+
+  try {
+    const response = await $fetch('/api/avatar', {
+      method: 'post',
+      body: formData,
+      query: {
+        id: user.value?.id,
+        name: user.value?.name,
+      }
     })
 
-  isUploading.value = false;
+    return response?.data.url
+  } catch (error: any) {
+    console.log('error uploading files', error)
 
-  if (uploadError) {
-    console.error('Error uploading file:', uploadError);
     toast.add({
-      title: 'Upload Failed',
-      description: `Error uploading avatar: ${uploadError.message}`,
+      title: 'Error',
+      description: `Error uploading files: ${error.message}`,
       icon: 'i-lucide-x',
       color: 'error'
-    });
-    return null;
+    })
+
+  } finally {
+    isUploading.value = false;
+
   }
 
-  return uploadData.fullPath;
 }
 
 // --- 6. Form Submission Logic ---
@@ -125,21 +137,20 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
     return;
   }
 
-  // 6b. Sign up the user with the uploaded avatar URL (if successful)
-  const { data: signUpData, error: signUpError } = await $fetch('/api/admin/user', {
-    method: 'POST',
-    body: {
-      email,
-      password,
-      display_name,
-      avatar: avatarUrl,
-    }
-  })
+  try {
+    const response = await $fetch<FetchResponse<User>>('/api/user', {
+      method: 'POST',
+      body: {
+        email,
+        password,
+        display_name,
+        avatar: avatarUrl,
+      }
+    })
 
-  if (signUpData !== null || signUpData !== undefined) {
     toast.add({
       title: 'Success',
-      description: `User ${signUpData.user?.email} has been added!`,
+      description: `User ${response.data?.email} has been added!`,
       icon: 'i-lucide-check',
       color: 'success'
     });
@@ -157,15 +168,16 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
       previousObjectUrl.value = undefined;
     }
 
-  } else if (signUpError) {
-    console.error('Error adding new user: ', signUpError);
+  } catch (error: any) {
+    console.error('Error adding new user: ', error);
     toast.add({
       title: 'Error',
-      description: `Error adding user: ${signUpError.message}`,
+      description: `Error adding user: ${error.message}`,
       icon: 'i-lucide-x',
       color: 'error'
     });
   }
+
 }
 </script>
 

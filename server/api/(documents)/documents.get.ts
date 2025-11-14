@@ -1,5 +1,5 @@
 import { stringToNumberArray } from '#shared/utils'
-import { useDrizzle } from '#imports'
+import { useDrizzle, } from '~~/server/utils/drizzle'
 import { sql } from 'drizzle-orm'
 
 type Schema = {
@@ -22,31 +22,22 @@ export default defineEventHandler(async (event) => {
 
     const db = useDrizzle()
 
-    // const request = db.('get_documents', {
-    //     filter_category_ids: stringToNumberArray(category),
-    //     filter_division_ids: stringToNumberArray(division),
-    //     page_size: parseInt(perPage),
-    //     page_number: parseInt(page),
-    //     order_by_column: orderBy,
-    //     order_direction: orderDir,
-    // })
-    const filter_category_ids = stringToNumberArray(category) || null
-    const filter_division_ids = stringToNumberArray(division) || null
+    const filter_category_ids = category ? `{${stringToNumberArray(category)}}` : null
+    const filter_division_ids = division ? `{${stringToNumberArray(division)}}` : null
     const page_size = parseInt(perPage)
     const page_number = parseInt(page)
     const order_by_column = orderBy
     const order_direction = orderDir
 
-    const request = db.execute(
-        sql`SELECT * FROM get_documents(${page_size}, ${page_number}, ${filter_category_ids}, ${filter_division_ids}, ${order_by_column}, ${order_direction})`
-    )
-
     try {
-        const { rows: response } = await request
+        const { rows } = await db.execute(
+            sql`SELECT * FROM get_documents(${page_size},${page_number},${filter_category_ids},${filter_division_ids},${order_by_column},${order_direction}) as results`
+        )
 
-        return response
+        return rows
     } catch (error: any) {
-        console.error('Error fetching documents:', error)
+        console.error('Error fetching documents:'
+            , error)
 
         throw createError({
             statusCode: 400,

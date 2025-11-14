@@ -25,7 +25,7 @@ import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
 import type { DocumentMetadata, StorageMeta } from '#shared/types'
-import { getFileExtension, sanitizeFileName } from '#shared/utils'
+import { getFileExtension, sanitizeFileName, sanitizeUrl } from '#shared/utils'
 import { modifyRelation } from '~~/server/utils/db'
 import { sseSend } from '~~/server/utils/sse'
 import { getClampedFileNameWithExtension, getPdfData } from '#shared/utils'
@@ -37,8 +37,6 @@ const model = getModel('openai')
 const ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
 
 const idKey = 'doc_id'
-
-const storageName = process.env.STORAGE_NAME
 
 const listDocuments = (folderPath: string): Promise<string[]> => {
   return new Promise((resolve, reject) => {
@@ -109,27 +107,30 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
     }
 
   } else {
+    const config = useRuntimeConfig()
+
+    const filename = sanitizeUrl(`${config.public.storageUrl}/${file}`)
 
     switch (extension) {
       case '.pdf':
-        loader = new PDFLoader(file, {
+        loader = new PDFLoader(filename, {
           parsedItemSeparator: ' '
         })
         break
       case '.md':
-        loader = new TextLoader(file)
+        loader = new TextLoader(filename)
         break
       case '.txt':
-        loader = new TextLoader(file)
+        loader = new TextLoader(filename)
         break
       case '.csv':
-        loader = new CSVLoader(file)
+        loader = new CSVLoader(filename)
         break
       case '.doc':
-        loader = new DocxLoader(file, { type: 'doc' })
+        loader = new DocxLoader(filename, { type: 'doc' })
         break
       case '.docx':
-        loader = new DocxLoader(file)
+        loader = new DocxLoader(filename)
         break
       default:
         throw new Error(`Unsupported file extension: ${extension}`)
@@ -173,7 +174,9 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   let summaries: Document[] | undefined
 
-  const storage = useStorage(storageName)
+  const config = useRuntimeConfig()
+
+  const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(filename, true)}`)
 
   if (await storage.hasItem(fileSummary)) {
     sseSend('push:notif', { message: `file json exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
@@ -343,7 +346,6 @@ type DocumentData = {
  */
 export const processDocument = async (filepath: string, documentData: DocumentData) => {
 
-
   const documents = await loadDocument(filepath)
 
   const splitter = documentSplitter(filepath)
@@ -357,7 +359,6 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
   const db = useDrizzle()
 
   sseSend('push:notif', { message: `getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-
 
   try {
     let filenameExists = await db

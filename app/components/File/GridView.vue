@@ -32,7 +32,7 @@ const config = useRuntimeConfig()
 
 const storageUrl = config.public.storageUrl
 
-const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`${storageUrl}/${item.thumbnailSrc}`)
+const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`/documents/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {
   if (selected.value?.id === data.id) {

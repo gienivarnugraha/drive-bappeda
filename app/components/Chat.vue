@@ -2,13 +2,12 @@
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import { markdownToHtml } from '~/utils/markdown'
 import { v4 as uuid } from 'uuid'
-import { useUser } from '~/composables/useUser'
 
 defineProps<{
   collapsed?: boolean
 }>()
 
-const { user } = await useUser()
+const { user } = useUserSession()
 
 const question = ref<string>('')
 const threadId = uuid()
@@ -137,17 +136,17 @@ onUnmounted(() => {
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
     <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
-      side: 'left',
-      variant: 'outline',
-      avatar: {
-        icon: 'i-lucide-bot'
-      },
-    }" :user="{
+    side: 'left',
+    variant: 'outline',
+    avatar: {
+      icon: 'i-lucide-bot'
+    },
+  }" :user="{
     side: 'left',
     variant: 'solid',
     avatar: {
-      src: user.avatar,
-      alt: user.display_name
+      src: user?.avatar,
+      alt: user?.name
     }
   }">
       <template #content="{ message }">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Category, Division } from '#shared/types'
 import { useVModel } from "@vueuse/core";
-import { clampCharacters, toTitleCase } from '#shared/utils'
+import { clampCharacters } from '#shared/utils'
 
 type Items = Category | Division
 
@@ -66,7 +66,7 @@ onUnmounted(() => {
  * @param items The array of Category or Division objects.
  * @returns An object containing the split parts and a boolean flag.
  */
-const splitItems = (items: Category[] | Division[], limit: number = 2) => {
+const splitItems = (items: Items[], limit: number = 2) : { shouldSplit: boolean, restItems: Items[], beginningItems: Items[] }  => {
   // Determine if the array has more than 3 items
   const shouldSplit = items.length > limit;
 
@@ -75,6 +75,8 @@ const splitItems = (items: Category[] | Division[], limit: number = 2) => {
 
   // Get the remaining items (starting from index limit)
   const restItems = items.slice(limit);
+
+  console.log(items, restItems, beginningItems)
 
   return { shouldSplit, restItems, beginningItems };
 };
@@ -88,8 +90,8 @@ const splitItems = (items: Category[] | Division[], limit: number = 2) => {
         <UCheckboxGroup v-model="item_ids" indicator="hidden" size="sm" variant="card" :items="options" value-key="id"
           label-key="name" name="item_ids" :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
           <template #label="{ item }">
-            <UTooltip :text="item.name">
-              <span class="text-xs">{{ clampCharacters(toTitleCase(item.name), 15) }}</span>
+            <UTooltip :text="item.metadata.display_name || item.name">
+              <span class="text-xs">{{ clampCharacters(item.metadata.display_name || item.name, 15) }}</span>
             </UTooltip>
           </template>
         </UCheckboxGroup>
@@ -98,9 +100,9 @@ const splitItems = (items: Category[] | Division[], limit: number = 2) => {
       <div v-else class="flex flex-wrap gap-2">
 
         <UBadge v-for="item in splitItems(modelValue).beginningItems" :key="item.id" color="primary" variant="outline">
-          <UTooltip :text="item.name">
+          <UTooltip :text="item.metadata?.display_name || item.name">
             <span class="text-xs">
-              {{ clampCharacters(toTitleCase(item.name), 10) }}
+              {{ clampCharacters(item.metadata?.display_name?.toUpperCase() || item.name, 10) }}
             </span>
           </UTooltip>
         </UBadge>
@@ -112,7 +114,8 @@ const splitItems = (items: Category[] | Division[], limit: number = 2) => {
           <template #content>
             <div class="flex flex-wrap gap-2 max-w-sm bg-elevated/25 dark:bg-slate-900 rounded-md p-2">
               <UBadge v-for="restItem in splitItems(modelValue).restItems" :key="restItem.id" color="primary"
-                variant="outline" :label="toTitleCase(restItem.name)">
+                variant="outline">
+                {{restItem}}
               </UBadge>
 
             </div>

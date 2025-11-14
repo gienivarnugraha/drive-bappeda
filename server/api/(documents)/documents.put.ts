@@ -30,12 +30,13 @@ export default defineEventHandler(async (event) => {
 
 
     try {
-        await db
+        const response = await db
             .update(tables.documents)
             .set(rest)
             .where(eq(tables.documents.id, documentId))
+            .returning()
 
-        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}` }
+        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}`, data: response[0] }
     } catch (error: any) {
 
         console.error(`error Update file: ${inspect(error, true, null, true)}`)

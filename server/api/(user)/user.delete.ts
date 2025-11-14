@@ -1,0 +1,60 @@
+import { useDrizzle, tables } from '#imports';
+import { eq } from 'drizzle-orm';
+import { User } from '~~/server/database/schema';
+
+const deleteAvatar = async (avatar: string) => {
+    const config = useRuntimeConfig()
+
+    const storage = useStorage(config.public.avatarUrl)
+
+    try {
+        await storage.removeItem(avatar as string)
+
+        return { message: `Success Delete avatar: ${avatar}` }
+
+    } catch (error: any) {
+        console.error(`error Delete avatar:`, error)
+
+        throw createError({
+            statusCode: 400,
+            message: `Error Delete avatar:  ${error.message}`
+        })
+
+    }
+}
+
+export default defineEventHandler(async (event) => {
+    const { id, avatar } = await readBody<Pick<User, 'id' | 'avatar'>>(event);
+
+    const user = await getUserSession(event)
+
+    if (user && (id as unknown as string) === user.id) {
+        throw createError({
+            statusCode: 400,
+            message: `Cannot delete current user`
+        })
+    }
+
+    const db = useDrizzle()
+
+    try {
+        const response = await db.delete(tables.users).where(eq(tables.users.id, id as unknown as string)).returning()
+
+        if (avatar) {
+            await deleteAvatar(avatar)
+        }
+
+        return {
+            message: 'user deleted',
+            data: response[0]
+        }
+
+    } catch (error: any) {
+        console.log('error deleting user: ', error)
+        throw createError({
+            statusCode: 400,
+            message: `Error deleting user: ${error.message}`
+        })
+    }
+
+});

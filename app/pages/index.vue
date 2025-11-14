@@ -89,14 +89,14 @@ const cta = {
           <div class="mt-12 flex flex-col sm:flex-row justify-center gap-4">
             <UButton :label="cta.buttonText" size="xl" color="primary" variant="solid" icon="i-lucide-message-square"
               :to="cta.buttonLink" />
-            <UButton label="Learn More" size="xl" color="secondary" variant="ghost" icon="i-lucide-question-mark-circle"
+            <UButton label="Learn More" size="xl" color="secondary" variant="ghost" icon="i-lucide-circle-help"
               to="#features" />
           </div>
 
           <div
-            class="mt-16 relative aspect-video md:aspect-2/1  rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8">
-            <img src="/hero.png" class="text-primary-400 text-9xl absolute inset-0 m-auto object-cover opacity-75" />
-            <div class="relative z-10 text-gray-500 dark:text-gray-400 text-lg">
+            class="mt-16 relative aspect-video md:aspect-2/1  rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8 border border-gray-200 dark:border-gray-700">
+            <img src="/hero.png" class="text-primary-400 text-9xl absolute inset-0 m-auto object-cover " />
+            <!-- <div class="relative z-10 text-gray-500 dark:text-gray-400 text-lg">
               <p>Imagine your chatbot interface here!</p>
               <p class="text-sm mt-2">
                 Example: a screenshot of a conversation or a stylized icon.
@@ -105,7 +105,7 @@ const cta = {
                 <span class="italic">Placeholder for a compelling visual.</span>
                 <span class="font-bold"> Add an image of your chatbot in action!</span>
               </p>
-            </div>
+            </div> -->
           </div>
         </div>
       </UContainer>

@@ -2,13 +2,13 @@
 import type { TableColumn, DropdownMenuItem } from '#ui/types'
 import { useClipboard } from '@vueuse/core'
 import { sanitizeUrl } from '#shared/utils'
-import type { User } from '#shared/types'
+import type { User, FetchResponse } from '#shared/types'
 import { h, resolveComponent } from 'vue'
 
 const UAvatar = resolveComponent('UAvatar')
 
 const toast = useToast()
-const config = useRuntimeConfig()
+
 const { copy } = useClipboard()
 
 const page = ref(1)
@@ -26,9 +26,9 @@ const columns: TableColumn<User>[] = [
     {
         id: 'avatar',
         header: 'Avatar',
-        cell: ({ row }) => {
+        cell: ({ row }: any) => {
             return h(UAvatar, {
-                src: row.original.avatar ? sanitizeUrl(`${config.public.avatarUrl}/${row.original.avatar}`) : '',
+                src: row.original.avatar ? sanitizeUrl(`/avatars/${row.original.avatar}`) : '',
                 alt: row.original.name,
                 size: 'lg'
             })
@@ -37,25 +37,25 @@ const columns: TableColumn<User>[] = [
     {
         id: 'name',
         header: 'Nama',
-        cell: ({ row }) => {
+        cell: ({ row }: any) => {
             return row.original.name ?? ''
         }
     },
     { accessorKey: 'email', header: 'Email', },
     {
-        accessorKey: 'created_at',
+        accessorKey: 'createdAt',
         header: 'Dibuat',
-        cell: ({ row }) => {
-            return formatDateTime(row.getValue('created_at'))
+        cell: ({ row }: any) => {
+            return formatDateTime(row.getValue('createdAt'))
         }
     },
-    {
-        accessorKey: 'last_sign_in_at',
-        header: 'Terahir Login',
-        cell: ({ row }) => {
-            return formatDateTime(row.getValue('last_sign_in_at'))
-        }
-    },
+    // {
+    //     accessorKey: 'last_sign_in_at',
+    //     header: 'Terahir Login',
+    //     cell: ({ row }: any) => {
+    //         return formatDateTime(row.getValue('last_sign_in_at'))
+    //     }
+    // },
     {
         id: 'action'
     }
@@ -104,12 +104,18 @@ function getDropdownActions(user: User): DropdownMenuItem[][] {
 }
 
 const deleteAvatar = async (filename: string) => {
-    const { data, error } = await supabase
-        .storage
-        .from('avatars')
-        .remove([filename])
-
-    if (error) {
+    try {
+        const {data, message} = await $fetch<FetchResponse<User>>('/api/avatar', {
+            method: 'DELETE',
+            body: { filename }
+        })
+        toast.add({
+            title: 'Success avatar',
+            description: message,
+            icon: 'i-lucide-check',
+            color: 'success'
+        })
+    } catch (error: any) {
         toast.add({
             title: 'Error deleting avatar',
             description: error.message,
@@ -118,26 +124,35 @@ const deleteAvatar = async (filename: string) => {
         })
     }
 }
+
 const deleteUser = async (id: string) => {
-    const { data, error } = await $fetch('/api/admin/user', {
-        method: 'DELETE',
-        body: { id }
-    })
-
-    if (data) {
-        await deleteAvatar(data.user?.avatar)
-
-        toast.add({
-            title: 'Sukses menghapus pengguna!',
-            description: `Pengguna .... dihapus`,
+    try {
+        const {data, message} = await $fetch<FetchResponse<User>>('/api/user', {
+            method: 'DELETE',
+            body: { id }
         })
-    } else if (error) {
+
+        if (data) {
+            const filename = data?.avatar
+
+            await deleteAvatar(filename as string)
+
+            toast.add({
+                title: 'Sukses menghapus pengguna!',
+                description: `Pengguna .... dihapus`,
+            })
+
+        }
+
+
+    } catch (error: any) {
         toast.add({
             title: 'Error',
             description: error.message,
             icon: 'i-lucide-x',
             color: 'error'
         })
+
     }
 
 }
@@ -147,8 +162,8 @@ const deleteUser = async (id: string) => {
  * NOTE: This requires the user running the app to have the `admin` role
  * or appropriate RLS policies for `auth.users` table access.
  */
-const { data, pending, execute, error } = await useAsyncData<{ users: User[], total: number, nextPage: number, lastPage: number }>('users', async () =>
-    $fetch('/api/admin/user', {
+const { data, pending, execute, error } = await useAsyncData<User[]>('users', async () =>
+    $fetch('/api/user', {
         query: {
             page: page.value,
         },
@@ -186,9 +201,9 @@ const { data, pending, execute, error } = await useAsyncData<{ users: User[], to
                 <UAlert v-else-if="error" icon="i-lucide-alert-triangle" color="error" variant="subtle"
                     title="Data Access Error" :description="`Could not load user list. Details: ${error}`" />
 
-                <UTable v-else :data="data?.users" :ui="{
-                    separator: 'divide-y divide-gray-200 dark:divide-gray-800'
-                }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
+                <UTable v-else :data="data" :ui="{
+                separator: 'divide-y divide-gray-200 dark:divide-gray-800'
+            }" :columns="columns" :empty-state="{ icon: 'i-lucide-users', label: 'No users found' }">
 
                     <template #action-cell="{ row }">
                         <UDropdownMenu :items="getDropdownActions(row.original)">
