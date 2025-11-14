@@ -1,8 +1,7 @@
 import { sseSend } from '~~/server/utils/sse'
-import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
+import { getClampedFileNameWithExtension, sanitizeFileName, getFileExtension } from '#shared/utils'
 
-const allowedTypes = [
-  'application/pdf', 'text/plain']
+const allowedTypes = ['application/pdf', 'text/plain', 'image/png']
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
@@ -25,24 +24,28 @@ export default eventHandler(async (event) => {
 
     const filename = file.filename as string
 
-    const storageName = `documents:${sanitizeFileName(filename, true)}`
-
-    const storage = useStorage(storageName)
+    const storage = useStorage('public')
 
     if (file.name === 'file') {
       filenames.push(filename)
     }
 
-    if (await storage.hasItem(filename)) {
+    const filepath = `documents:${sanitizeFileName(filename, true)}:${filename}`
+
+    if (await storage.hasItem(filepath)) {
       sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} exists in storage... `, status: 'info' })
 
     } else {
       sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} upload started`, status: 'info' })
 
       try {
-        await storage.setItemRaw(filename, file.data)
+        await storage.setItemRaw(filepath, file.data)
+
+        sseSend('push:notif', { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
+
       } catch (error) {
         console.error('Error uploading file:', error)
+
         sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} not uploaded `, status: 'error' })
       }
 
@@ -50,7 +53,6 @@ export default eventHandler(async (event) => {
     }
   }
 
-  sseSend('push:notif', { message: `${filenames.join(', ')} sucessfully uploaded...`, status: 'info' })
 
   return { message: `${filenames.length} files uploaded successfully`, filenames }
 })

@@ -65,10 +65,8 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Missing pdfFilePath or outputFileName in request body.' });
     }
 
-
-    const config = useRuntimeConfig()
-
-    const storage = useStorage(`documents:filename:filename.pdf`)
+    const storage = useStorage('public')
+    const filepath = `documents:filename:filename.pdf`
 
     const outputKey = outputFileName.endsWith('.md') ? outputFileName : `${outputFileName}.md`;
 

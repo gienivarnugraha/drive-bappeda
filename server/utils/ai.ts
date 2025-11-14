@@ -59,7 +59,7 @@ export async function getVectorStore(): Promise<PGVectorStore> {
     tableName: 'documents_summary',
     columns: {
       idColumnName: "id",
-      vectorColumnName: "vector",
+      vectorColumnName: "embedding",
       contentColumnName: "content",
       metadataColumnName: "metadata",
     },

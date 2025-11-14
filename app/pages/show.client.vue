@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { sanitizeUrl, getPdfData } from '#shared/utils';
+import { sanitizeUrl, getPdfData, sanitizeFileName } from '#shared/utils';
 
 const route = useRoute()
 
@@ -7,15 +7,7 @@ const filename = route.query.filename
 
 const page = route.query.page ? Number(route.query.page) : 1
 
-const config = useRuntimeConfig()
-
-const storageUrl = config.public.storageUrl
-const storageName = config.public.storageName
-
-// https://hwhq1hnvu4gvftjq.public.blob.vercel-storage.com/1685513328242-laporan-akhir---kajian-kebijakan-pemerintah-kota-semarang-dalam-pengembangan-ekonomi-kreatif.jpg
-const pdfUrl = sanitizeUrl(`${storageUrl}/${filename}`)
-
-console.log(filename, pdfUrl, page)
+const pdfUrl = sanitizeUrl(`documents/${sanitizeFileName(filename as string, true)}/${filename}`)
 
 let pdf: Ref<string> = ref('')
 
@@ -47,5 +39,9 @@ onMounted(async () => {
 
             <PdfViewer v-else :pdf-url="pdfUrl" :page="page" />
         </div>
+
+        <template #fallback>
+            <USkeleton class="w-full h-[700px]" />
+        </template>
     </ClientOnly>
 </template>

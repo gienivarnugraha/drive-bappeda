@@ -84,16 +84,16 @@ function isValidHttpURL(file: string) {
  * @param {string} file - The file path or URL to load.
  * @returns {Promise<Document[]>} A promise that resolves to an array of loaded documents.
  */
-export const loadDocument = async (file: string): Promise<Document[]> => {
+export const loadDocument = async (filename: string): Promise<Document[]> => {
   let loader: any
 
-  sseSend('push:notif', { message: `loading document... ${getClampedFileNameWithExtension(file)}`, status: 'info' })
+  sseSend('push:notif', { message: `loading document... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
-  const extension = extname(file)
+  const extension = extname(filename)
 
-  if (isValidHttpURL(file) && extension === '.pdf') {
+  if (isValidHttpURL(filename) && extension === '.pdf') {
     try {
-      let pdf = await getPdfData(file)
+      let pdf = await getPdfData(filename)
 
       if (pdf) {
         loader = new PDFLoader(pdf, {
@@ -102,38 +102,52 @@ export const loadDocument = async (file: string): Promise<Document[]> => {
       }
 
     } catch (error) {
-      console.log('Error fetching pdf file:', error)
-      sseSend('push:notif', { message: `Error fetching pdf file... ${getClampedFileNameWithExtension(file)}`, status: 'error' })
+      console.log('Error fetching from http pdf file:', error)
+      sseSend('push:notif', { message: `Error fetching pdf file from http... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
     }
 
   } else {
-    const config = useRuntimeConfig()
 
-    const filename = sanitizeUrl(`${config.public.storageUrl}/${file}`)
+    const storage = useStorage('public')
 
-    switch (extension) {
-      case '.pdf':
-        loader = new PDFLoader(filename, {
-          parsedItemSeparator: ' '
-        })
-        break
-      case '.md':
-        loader = new TextLoader(filename)
-        break
-      case '.txt':
-        loader = new TextLoader(filename)
-        break
-      case '.csv':
-        loader = new CSVLoader(filename)
-        break
-      case '.doc':
-        loader = new DocxLoader(filename, { type: 'doc' })
-        break
-      case '.docx':
-        loader = new DocxLoader(filename)
-        break
-      default:
-        throw new Error(`Unsupported file extension: ${extension}`)
+    const filepath = `documents/${sanitizeFileName(filename, true)}/${filename}`
+
+    if (await storage.hasItem(filepath)) {
+      const documentpath = `./public/${filepath}`
+
+
+      switch (extension) {
+        case '.pdf':
+          loader = new PDFLoader(documentpath, {
+            parsedItemSeparator: ' '
+          })
+          break
+        case '.md':
+          loader = new TextLoader(documentpath)
+          break
+        case '.txt':
+          loader = new TextLoader(documentpath)
+          break
+        case '.csv':
+          loader = new CSVLoader(documentpath)
+          break
+        case '.doc':
+          loader = new DocxLoader(documentpath, { type: 'doc' })
+          break
+        case '.docx':
+          loader = new DocxLoader(documentpath)
+          break
+        default:
+          throw new Error(`Unsupported file extension: ${extension}`)
+      }
+    } else {
+      sseSend('push:notif', { message: `File not found... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
+
+      throw createError({
+        status: 400,
+        message: 'File not found'
+      })
+
     }
   }
 
@@ -174,9 +188,13 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   let summaries: Document[] | undefined
 
-  const storage = useStorage(`documents:${sanitizeFileName(filename, true)}`)
+  const storage = useStorage('public')
 
-  if (await storage.hasItem(fileSummary)) {
+  const filepath = `documents:${sanitizeFileName(filename, true)}`
+
+  console.log('sumaries filepath', filepath)
+
+  if (await storage.hasItem(`${filepath}:${fileSummary}`)) {
     sseSend('push:notif', { message: `file json exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
 
     const fileExists = await storage.getItemRaw(fileSummary)
@@ -189,7 +207,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
       const summariesContent = JSON.stringify(summaries)
 
-      await storage.setItemRaw(fileSummary, summariesContent)
+      await storage.setItemRaw(`${filepath}:${fileSummary}`, summariesContent)
 
       sseSend('push:notif', { message: `rewriting file... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
 
@@ -204,7 +222,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
     const content = JSON.stringify(summaries)
 
-    await storage.setItemRaw(fileSummary, content)
+    await storage.setItemRaw(`${filepath}:${fileSummary}`, content)
 
     sseSend('push:notif', { message: `writing new file... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
   }
@@ -331,6 +349,100 @@ export const getDocumentSummary = async (docs: Document[], ids: { fileId: string
   }
 }
 
+const addToVectorStore = async (docs: Document[], filename: string, documentData: DocumentData) => {
+  const vectorstore = await getVectorStore()
+
+  sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+  const ids = {
+    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
+    fileId: `${filename}_${uuid()}`
+  }
+
+  const fileMetadata = {
+    ...ids,
+    ...documentData,
+    filename
+  }
+
+  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
+
+  await storeToDB(slicedDocuments, fileMetadata)
+
+  const summaries = await generateSummaries(docs, ids, filename)
+
+  if (summaries) {
+
+    await vectorstore.addDocuments(summaries);
+
+    sseSend('push:notif', { message: `success adding to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
+
+  }
+}
+
+/**
+ * Stores the given documents to the database with the given metadata.
+ * @param doc The documents to be stored.
+ * @param data The metadata of the documents, including the fileId, filename, and docIds.
+ * @returns A promise that resolves when the data has been successfully stored to the database.
+ */
+
+const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
+  const queryOutput = z.object({
+    title: z.string().describe('Title of the document'),
+    summary: z.string().describe('Summary of the document'),
+  })
+
+  const { category_id, division_id, filename, fileId, ...rest } = data
+
+  sseSend('push:notif', { message: `generating title and summary... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+
+  const prompt = PromptTemplate.fromTemplate(`
+            You're a helpful AI assistant. 
+
+            - Summarize in indonesian language the following content of the document dont describe the object but the content
+            - and provide title of the document after you summarize
+
+            Content:
+            {content}
+            `)
+  const content = formatDocumentsAsString(doc)
+
+  const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
+
+  const db = useDrizzle()
+
+  try {
+    const response = await db.insert(tables.documents).values({
+      uuid: fileId,
+      title,
+      filename,
+      description: summary,
+      metadata: {
+        summary,
+        ...rest
+      }
+    }).returning()
+
+    sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
+    // insert to relation table
+    const relationResponse = await modifyRelation({ documentId: response[0].id, categoryIds: category_id, divisionIds: division_id }, 'edit')
+
+    if (relationResponse) {
+      sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })
+    }
+
+    sseSend('push:notif', { message: 'success adding document...', status: 'info' })
+  } catch (error: any) {
+    console.error('Failed to insert document to database', error)
+
+    sseSend('push:notif', { message: `error creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
+
+  }
+
+}
+
+
 type DocumentData = {
   category_id: number[],
   division_id: number[]
@@ -371,7 +483,7 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
         const vectorStoreExists = await db
           .select()
           .from(tables.documentsSummary)
-          .where(sql`${tables.documentsSummary} ->> souce_id = like ${filename}%`)
+          .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' LIKE ${`%${filename}%`}`)
 
         if (vectorStoreExists?.length) {
           sseSend('push:notif', { message: `vector store exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
@@ -379,7 +491,7 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
           return
         }
 
-        await addToVectorStore(docs, filename, documentData)
+        await addToVectorStore(docs, filepath, documentData)
 
       } catch (error: any) {
         console.error('error fetching vector store', error)
@@ -390,7 +502,7 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
 
       sseSend('push:notif', { message: `file not exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
-      await addToVectorStore(docs, filename, documentData)
+      await addToVectorStore(docs, filepath, documentData)
 
     }
 
@@ -399,97 +511,5 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
     sseSend('push:notif', { message: `error getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
   }
 
-
-}
-
-const addToVectorStore = async (docs: Document[], filename: string, documentData: DocumentData) => {
-  const vectorstore = await getVectorStore()
-
-  sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-
-  const ids = {
-    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
-    fileId: `${filename}_${uuid()}`
-  }
-
-  const fileMetadata = {
-    ...ids,
-    ...documentData,
-  }
-
-  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
-
-  await storeToDB(slicedDocuments, fileMetadata)
-
-  const summaries = await generateSummaries(docs, ids, filename)
-
-  if (summaries) {
-
-    await vectorstore.addDocuments(summaries);
-
-    sseSend('push:notif', { message: `success adding to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'success' })
-
-  }
-}
-
-/**
- * Stores the given documents to the database with the given metadata.
- * @param doc The documents to be stored.
- * @param data The metadata of the documents, including the fileId, filename, and docIds.
- * @returns A promise that resolves when the data has been successfully stored to the database.
- */
-
-const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
-  const queryOutput = z.object({
-    title: z.string().describe('Title of the document'),
-    summary: z.string().describe('Summary of the document'),
-  })
-
-  const { category_id, division_id, filename, fileId } = data
-
-  sseSend('push:notif', { message: `generating title and summary... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-
-  const prompt = PromptTemplate.fromTemplate(`
-            You're a helpful AI assistant. 
-
-            - Summarize in indonesian language the following content of the document dont describe the object but the content
-            - and provide title of the document after you summarize
-
-            Content:
-            {content}
-            `)
-  const content = formatDocumentsAsString(doc)
-
-  const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
-
-  const db = useDrizzle()
-
-  try {
-    const response = await db.insert(tables.documents).values({
-      uuid: fileId,
-      title,
-      filename,
-      description: summary,
-      metadata: {
-        summary,
-        ...data
-      }
-    }).returning()
-
-    sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
-    // insert to relation table
-    const relationResponse = await modifyRelation({ documentId: response[0].id, categoryIds: category_id, divisionIds: division_id }, 'edit')
-
-    if (relationResponse) {
-      sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })
-    }
-
-    sseSend('push:notif', { message: 'success adding document...', status: 'info' })
-  } catch (error: any) {
-    console.error('Failed to insert document to database', error)
-
-    sseSend('push:notif', { message: `error creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
-
-  }
 
 }

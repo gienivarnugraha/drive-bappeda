@@ -28,3 +28,4 @@ logs
 
 #public
 .public/documents/*
+.public/avatars/*

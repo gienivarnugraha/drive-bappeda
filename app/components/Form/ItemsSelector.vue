@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Category, Division } from '#shared/types'
 import { useVModel } from "@vueuse/core";
-import { clampCharacters, clampAndTitleCase, toTitleCase } from '#shared/utils'
+import { clampAndTitleCase, toTitleCase } from '#shared/utils'
 
 type Items = Category | Division
 
@@ -76,8 +76,8 @@ onUnmounted(() => {
         <UCheckboxGroup v-model="item_ids" indicator="hidden" size="sm" variant="card" :items="options" value-key="id"
           label-key="name" name="item_ids" :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
           <template #label="{ item }">
-            <UTooltip :text="item.metadata.display_name || item.name">
-              <span class="text-xs">{{ clampCharacters(item.metadata.display_name || item.name, 15) }}</span>
+            <UTooltip :text="toTitleCase(item.name)">
+              <span class="text-xs">{{ clampAndTitleCase(item.name, 15) }}</span>
             </UTooltip>
           </template>
         </UCheckboxGroup>

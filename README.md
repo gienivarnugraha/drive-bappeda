@@ -78,4 +78,5 @@ pnpm preview
 - generate thumbnail on pdf viewer not showing
 - optimize pdf viewer
 - convert pdfs to markdown to let ai ease to use
--  
+- validate password change
+- dirty user update only

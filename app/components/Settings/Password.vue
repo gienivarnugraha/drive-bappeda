@@ -17,12 +17,12 @@ const password = reactive<Partial<PasswordSchema>>({
 })
 
 const updateUserPassword = async (event: FormSubmitEvent<PasswordSchema>) => {
-  const { new: password } = event.data
+  const { new: newPassword } = event.data
 
   try {
-    const response = await $fetch('/api/password', {
+    await $fetch('/api/password', {
       method: 'put',
-      body: { password }
+      body: { password: newPassword }
     })
 
     toast.add({
@@ -31,8 +31,11 @@ const updateUserPassword = async (event: FormSubmitEvent<PasswordSchema>) => {
       icon: 'i-lucide-check',
       color: 'success'
     })
+
+    password.current = undefined
+    password.new = undefined
+
   } catch (error: any) {
-    console.log('error update password: ', error)
     toast.add({
       title: 'Error',
       description: error.message,

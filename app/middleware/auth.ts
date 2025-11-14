@@ -8,14 +8,12 @@ export default defineNuxtRouteMiddleware(async () => {
   // Don't run on client hydration when server rendered
   if (import.meta.client && nuxtApp.isHydrating && nuxtApp.payload.serverRendered) return
 
-  // return
-  console.log('middleware called')
-
   const { session, clear: clearSession, fetch: fetchSession, loggedIn } = useUserSession()
 
   if (!loggedIn.value) {
     return navigateTo('/login')
   }
+
   // Ignore if no tokens
   if (!session.value?.jwt) return
 

@@ -44,21 +44,25 @@ export default defineEventHandler(async (event) => {
 
         for (const filename of processFiles) {
 
-            const storage = useStorage(`documents:${sanitizeFileName(filename, true)}`)
+            const storage = useStorage('public')
 
-            const meta = await storage.getMeta(filename)
+            const filepath = `documents/${sanitizeFileName(filename, true)}`
+
+            const meta = await storage.getMeta(filepath)
+            console.log(meta)
 
             const metadata = {
                 category_id: categories,
                 division_id: divisions,
-                filename: meta.pathname as string,
+                filename,
+                filepath: `${filepath}/${filename}`,
                 fileSize: meta.size as number,
-                contentType: meta.contentType as string,
+                // contentType: meta.contentType as string,
                 extension: extname(filename),
-                thumbnailSrc: `${sanitizeFileName(filename)}.png`,
+                thumbnailSrc: `${filepath}/${sanitizeFileName(filename, true)}.png`,
             } as DocumentMetadata
 
-            await processDocument(`${meta.url}`, metadata)
+            await processDocument(filename, metadata)
         }
 
         sseSend('close')

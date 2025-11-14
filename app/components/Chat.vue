@@ -136,16 +136,16 @@ onUnmounted(() => {
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
     <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
-    side: 'left',
-    variant: 'outline',
-    avatar: {
-      icon: 'i-lucide-bot'
-    },
-  }" :user="{
+      side: 'left',
+      variant: 'outline',
+      avatar: {
+        icon: 'i-lucide-bot'
+      },
+    }" :user="{
     side: 'left',
     variant: 'solid',
     avatar: {
-      src: user?.avatar,
+      src: `avatars/${user?.avatar}`,
       alt: user?.name
     }
   }">

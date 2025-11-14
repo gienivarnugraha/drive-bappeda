@@ -3,10 +3,10 @@ import { eq } from 'drizzle-orm';
 import { User } from '~~/server/database/schema';
 
 const deleteAvatar = async (avatar: string) => {
-    const storage = useStorage('avatars')
+    const storage = useStorage('public')
 
     try {
-        await storage.removeItem(avatar as string)
+        await storage.removeItem(`avatars:${avatar}` as string)
 
         return { message: `Success Delete avatar: ${avatar}` }
 

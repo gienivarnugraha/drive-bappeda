@@ -30,14 +30,15 @@ export type Results = Document & {
 }
 
 export interface StorageMeta {
-  filename: string
+  filepath: string
   extension: string
-  contentType: string
+  // contentType: string
   thumbnailSrc: string
   fileSize: number
 }
 
 export interface DocumentMetadata extends StorageMeta {
+  filename: string
   summary: string
   fileId: string
   docIds: string[]

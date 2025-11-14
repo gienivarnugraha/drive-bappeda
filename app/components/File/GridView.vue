@@ -28,7 +28,7 @@ const isSelected = (item: Results) => item.id === selected.value?.id
 
 const emits = defineEmits(['update:modelValue'])
 
-const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`/documents/${item.thumbnailSrc}`)
+const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {
   if (selected.value?.id === data.id) {
@@ -44,42 +44,40 @@ const selectDocument = (data: Results) => {
 </script>
 
 <template>
-  <ClientOnly>
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-      <UCard v-for="(item, idx) in state" :key="item.id" :class="[isSelected(item) ? 'ring-2 ring-primary' : '']"
-        class="cursor-pointer" @click="selectDocument(item)">
-        <template #header>
-          <div class="flex flex-col gap-4 ">
-            <div class="flex justify-between align-center">
-              <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item.filename ?? '', 10) }}
-              </p>
-              <UTooltip :text="`Buka ${item.filename}`">
-                <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
-                  :to="`/show?filename=${item.filename}&page=3`" />
-
-              </UTooltip>
-            </div>
-
-          </div>
-        </template>
-
-        <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded" />
-
-        <template #footer>
-          <div class="grid gap-2">
-            <p class="text-primary text-xs font-bold line-clamp-1">
-              {{ toTitleCase(item.title ?? '') }}
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+    <UCard v-for="(item, idx) in state" :key="item.id" :class="[isSelected(item) ? 'ring-2 ring-primary' : '']"
+      class="cursor-pointer" @click="selectDocument(item)">
+      <template #header>
+        <div class="flex flex-col gap-4 ">
+          <div class="flex justify-between align-center">
+            <p class="text-gray text-xs"> {{ getClampedFileNameWithExtension(item.filename ?? '', 10) }}
             </p>
+            <UTooltip :text="`Buka ${item.filename}`">
+              <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-eye"
+                :to="`/show?filename=${item.filename}&page=3`" />
 
-            <p class="text-gray text-xs">
-              {{ formatBytes(item.metadata.fileSize ?? 0) }}
-            </p>
-
-            <FormItemsSelector :key="item.id" v-model="item.divisions" :options="categories" title="Bidang" />
-            <FormItemsSelector :key="item.id" v-model="item.categories" :options="divisions" title="Kategori" />
+            </UTooltip>
           </div>
-        </template>
-      </UCard>
-    </div>
-  </ClientOnly>
+
+        </div>
+      </template>
+
+      <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded" />
+
+      <template #footer>
+        <div class="grid gap-2">
+          <p class="text-primary text-xs font-bold line-clamp-1">
+            {{ toTitleCase(item.title ?? '') }}
+          </p>
+
+          <p class="text-gray text-xs">
+            {{ formatBytes(item.metadata.fileSize ?? 0) }}
+          </p>
+
+          <FormItemsSelector :key="item.id" v-model="item.divisions" :options="categories" title="Bidang" />
+          <FormItemsSelector :key="item.id" v-model="item.categories" :options="divisions" title="Kategori" />
+        </div>
+      </template>
+    </UCard>
+  </div>
 </template>

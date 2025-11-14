@@ -1,158 +1,5 @@
-<template>
-    <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="default" v-model:collapsed="showThumbnails" collapsible
-            class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="10" :ui="{
-                header: 'lg:border-b lg:border-default h-auto',
-                footer: 'lg:border-t lg:border-default'
-            }">
-            <template #header="{ collapsed }">
-                <Logo :collapsed="collapsed" />
-            </template>
-
-            <template #default="{ collapsed }">
-                <div v-if="!collapsed" class="w-48 bg-white shadow-lg rounded-lg p-3 mr-4 overflow-y-auto shrink-0"
-                    :class="{ 'border-r border-gray-200': !collapsed }">
-                    <h3 class="font-bold text-lg text-gray-800 mb-3">Thumbnails</h3>
-                    <div v-for="n in numPages" :key="`thumb-${n}`" :class="[
-                        'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
-                        { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
-                    ]" @click="scrollToPage(n)">
-                        <p class="text-xs text-gray-500 mb-1">Page {{ n }}</p>
-                        <div :id="`thumbnail-canvas-${n}`"
-                            class="thumbnail-canvas-container flex justify-center items-center">
-                        </div>
-                    </div>
-                </div>
-
-                <div v-else class=" flex flex-col justify-center gap-2">
-                    <UDashboardSidebarCollapse icon="i-lucide-list" />
-                </div>
-
-            </template>
-
-            <template #footer="{ collapsed }">
-                <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2024</span>
-            </template>
-        </UDashboardSidebar>
-
-        <UDashboardPanel id="main">
-            <template #header>
-                <UDashboardNavbar>
-                    <template #leading>
-                        <UDashboardSidebarCollapse icon="i-lucide-list" />
-
-                        <UTooltip text="Kembali">
-                            <UButton v-if="!isHome" variant="ghost" color="neutral" icon="i-lucide-chevron-left"
-                                to="/home" />
-                        </UTooltip>
-
-                        <UFieldGroup>
-                            <UButton icon="i-lucide-chevron-up" :disabled="currentPage === 1" @click="goToPrevPage"
-                                variant="ghost" />
-                            <UInput :model-value="currentPage" class="w-16 text-center" variant='ghost'>
-                                <template #trailing>
-                                    <span class='text-xs text-gray-500'> of {{ numPages }}</span>
-                                </template>
-                            </UInput>
-                            <UButton icon="i-lucide-chevron-down" :disabled="currentPage === numPages"
-                                @click="goToNextPage" variant="ghost" />
-                        </UFieldGroup>
-                    </template>
-
-                    <template #trailing>
-                        <p v-if="smAndLarger" class="">
-                            {{ getClampedFileNameWithExtension(filename, smAndLarger ? 25 : 10) }}
-                        </p>
-                    </template>
-
-                    <template #right>
-                        <UPopover :dismissible="false" :ui="{ content: 'p-4' }">
-                            <UButton v-if="!smAndLarger" icon="i-lucide-settings" color="neutral" variant="ghost" />
-
-                            <template #content="{ close }">
-                                <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="close" />
-
-                                <div class="flex items-center gap-4">
-                                    <UFieldGroup>
-                                        <UButton icon="i-lucide-zoom-in" @click="zoom('in')"
-                                            :disabled="currentScale === '2.0'" variant="ghost" color="neutral" />
-                                        <USelect v-model="currentScale" :options="zoomOptions" @change="updateZoom"
-                                            size="sm" class="w-16 z-20" variant="ghost" />
-                                        <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'"
-                                            @click="zoom('out')" variant="ghost" color="neutral" />
-                                    </UFieldGroup>
-                                    <div class="w-1 h-full border-l border-gray-700 dark:border-gray-500"></div>
-                                    <UColorModeButton />
-                                </div>
-                            </template>
-                        </UPopover>
-
-                        <UFieldGroup v-if="smAndLarger">
-                            <UButton icon="i-lucide-zoom-in" @click="zoom('in')" :disabled="currentScale === '2.0'"
-                                variant="ghost" />
-                            <USelect v-model="currentScale" :items="zoomOptions" @change="updateZoom" size="sm"
-                                class="w-16" variant="ghost" :ui="{ content: 'min-w-fit' }" />
-                            <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'" @click="zoom('out')"
-                                variant="ghost" />
-                        </UFieldGroup>
-
-                        <UColorModeButton v-if="smAndLarger" />
-
-                        <!-- <div class="flex items-center space-x-2 ml-auto">
-                            <UFieldGroup>
-                                <UInput v-model="searchTerm" placeholder="Search text..." @keydown.enter="performSearch"
-                                    class="w-48" size="sm">
-                                    <template #trailing>
-                                        <UButton icon="i-lucide-search" color="primary" variant="ghost" size="sm"
-                                            :disabled="!searchTerm" />
-                                    </template>
-    </UInput>
-    <UButton icon="i-lucide-chevron-up" @click="navigateSearchResult(-1)"
-        :disabled="!searchResults.length || currentSearchResultIndex === 0" color="gray" variant="outline" size="sm" />
-    <UButton icon="i-lucide-chevron-down" @click="navigateSearchResult(1)"
-        :disabled="!searchResults.length || currentSearchResultIndex === searchResults.length - 1" color="gray"
-        variant="outline" size="sm" />
-    </UFieldGroup>
-    <span v-if="searchResults.length" class="text-sm text-gray-600 whitespace-nowrap">
-        {{ currentSearchResultIndex + 1 }} / {{ searchResults.length }}
-    </span>
-    </div> -->
-
-                    </template>
-                </UDashboardNavbar>
-            </template>
-
-            <template #body>
-                <div class="flex w-full max-w-6xl max-h-[85vh]">
-
-
-                    <div ref="pages-container"
-                        class=" grow max-h-[85vh] overflow-y-scroll p-4 bg-gray-200 dark:bg-gray-800 shadow-inner rounded-xl relative"
-                        @scroll="updateCurrentPageOnScroll">
-                        <div v-for="n in numPages" :key="`main-page-${n}`" :id="`page-${n}`"
-                            class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center relative">
-                            <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
-                        </div>
-                        <div v-if="numPages === 0 && !loadingError" class="text-center text-gray-500 p-8">
-                            Loading PDF...
-                        </div>
-                        <div v-if="loadingError" class="text-center text-red-600 p-8 font-semibold">
-                            Error loading PDF: {{ loadingError }}
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </UDashboardPanel>
-
-    </UDashboardGroup>
-
-    <!-- <div class="flex flex-col items-center p-4 min-h-screen">
-        <div class="flex flex-row items-center p-4 justify-between shadow-lg rounded-lg mb-6 w-full max-w-6xl ">
-        </div>
-    </div> -->
-</template>
-
 <script setup>
+import { getClampedFileNameWithExtension } from '#shared/utils';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
 // Make sure to import pdf.worker.min.js and pdf.js for text layer functionality
@@ -599,3 +446,157 @@ watch(showThumbnails, async (newValue) => {
     /* Remove extra space below canvas */
 }
 </style>
+
+<template>
+    <UDashboardGroup unit="rem">
+        <UDashboardSidebar id="default" v-model:collapsed="showThumbnails" collapsible
+            class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="10" :ui="{
+                header: 'lg:border-b lg:border-default h-auto',
+                footer: 'lg:border-t lg:border-default'
+            }">
+            <template #header="{ collapsed }">
+                <Logo :collapsed="collapsed" />
+            </template>
+
+            <template #default="{ collapsed }">
+                <div v-if="!collapsed" class="w-48 bg-white shadow-lg rounded-lg p-3 mr-4 overflow-y-auto shrink-0"
+                    :class="{ 'border-r border-gray-200': !collapsed }">
+                    <h3 class="font-bold text-lg text-gray-800 mb-3">Thumbnails</h3>
+                    <div v-for="n in numPages" :key="`thumb-${n}`" :class="[
+                        'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
+                        { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
+                    ]" @click="scrollToPage(n)">
+                        <p class="text-xs text-gray-500 mb-1">Page {{ n }}</p>
+                        <div :id="`thumbnail-canvas-${n}`"
+                            class="thumbnail-canvas-container flex justify-center items-center">
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class=" flex flex-col justify-center gap-2">
+                    <UDashboardSidebarCollapse icon="i-lucide-list" />
+                </div>
+
+            </template>
+
+            <template #footer="{ collapsed }">
+                <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2024</span>
+            </template>
+        </UDashboardSidebar>
+
+        <UDashboardPanel id="main">
+            <template #header>
+                <UDashboardNavbar>
+                    <template #leading>
+                        <UDashboardSidebarCollapse icon="i-lucide-list" />
+
+                        <UTooltip text="Kembali">
+                            <UButton v-if="!isHome" variant="ghost" color="neutral" icon="i-lucide-chevron-left"
+                                to="/home" />
+                        </UTooltip>
+
+                        <UFieldGroup>
+                            <UButton icon="i-lucide-chevron-up" :disabled="currentPage === 1" @click="goToPrevPage"
+                                variant="ghost" />
+                            <UInput :model-value="currentPage" class="w-16 text-center" variant='ghost'>
+                                <template #trailing>
+                                    <span class='text-xs text-gray-500'> of {{ numPages }}</span>
+                                </template>
+                            </UInput>
+                            <UButton icon="i-lucide-chevron-down" :disabled="currentPage === numPages"
+                                @click="goToNextPage" variant="ghost" />
+                        </UFieldGroup>
+                    </template>
+
+                    <template #trailing>
+                        <p v-if="smAndLarger" class="">
+                            {{ getClampedFileNameWithExtension(filename, smAndLarger ? 25 : 10) }}
+                        </p>
+                    </template>
+
+                    <template #right>
+                        <UPopover :dismissible="false" :ui="{ content: 'p-4' }">
+                            <UButton v-if="!smAndLarger" icon="i-lucide-settings" color="neutral" variant="ghost" />
+
+                            <template #content="{ close }">
+                                <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="close" />
+
+                                <div class="flex items-center gap-4">
+                                    <UFieldGroup>
+                                        <UButton icon="i-lucide-zoom-in" @click="zoom('in')"
+                                            :disabled="currentScale === '2.0'" variant="ghost" color="neutral" />
+                                        <USelect v-model="currentScale" :options="zoomOptions" @change="updateZoom"
+                                            size="sm" class="w-16 z-20" variant="ghost" />
+                                        <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'"
+                                            @click="zoom('out')" variant="ghost" color="neutral" />
+                                    </UFieldGroup>
+                                    <div class="w-1 h-full border-l border-gray-700 dark:border-gray-500"></div>
+                                    <UColorModeButton />
+                                </div>
+                            </template>
+                        </UPopover>
+
+                        <UFieldGroup v-if="smAndLarger">
+                            <UButton icon="i-lucide-zoom-in" @click="zoom('in')" :disabled="currentScale === '2.0'"
+                                variant="ghost" />
+                            <USelect v-model="currentScale" :items="zoomOptions" @change="updateZoom" size="sm"
+                                class="w-16" variant="ghost" :ui="{ content: 'min-w-fit' }" />
+                            <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'" @click="zoom('out')"
+                                variant="ghost" />
+                        </UFieldGroup>
+
+                        <UColorModeButton v-if="smAndLarger" />
+
+                        <!-- <div class="flex items-center space-x-2 ml-auto">
+                            <UFieldGroup>
+                                <UInput v-model="searchTerm" placeholder="Search text..." @keydown.enter="performSearch"
+                                    class="w-48" size="sm">
+                                    <template #trailing>
+                                        <UButton icon="i-lucide-search" color="primary" variant="ghost" size="sm"
+                                            :disabled="!searchTerm" />
+                                    </template>
+    </UInput>
+    <UButton icon="i-lucide-chevron-up" @click="navigateSearchResult(-1)"
+        :disabled="!searchResults.length || currentSearchResultIndex === 0" color="gray" variant="outline" size="sm" />
+    <UButton icon="i-lucide-chevron-down" @click="navigateSearchResult(1)"
+        :disabled="!searchResults.length || currentSearchResultIndex === searchResults.length - 1" color="gray"
+        variant="outline" size="sm" />
+    </UFieldGroup>
+    <span v-if="searchResults.length" class="text-sm text-gray-600 whitespace-nowrap">
+        {{ currentSearchResultIndex + 1 }} / {{ searchResults.length }}
+    </span>
+    </div> -->
+
+                    </template>
+                </UDashboardNavbar>
+            </template>
+
+            <template #body>
+                <div class="flex w-full max-w-6xl max-h-[85vh]">
+
+
+                    <div ref="pages-container"
+                        class=" grow max-h-[85vh] overflow-y-scroll p-4 bg-gray-200 dark:bg-gray-800 shadow-inner rounded-xl relative"
+                        @scroll="updateCurrentPageOnScroll">
+                        <div v-for="n in numPages" :key="`main-page-${n}`" :id="`page-${n}`"
+                            class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center relative">
+                            <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
+                        </div>
+                        <div v-if="numPages === 0 && !loadingError" class="text-center text-gray-500 p-8">
+                            Loading PDF...
+                        </div>
+                        <div v-if="loadingError" class="text-center text-red-600 p-8 font-semibold">
+                            Error loading PDF: {{ loadingError }}
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </UDashboardPanel>
+
+    </UDashboardGroup>
+
+    <!-- <div class="flex flex-col items-center p-4 min-h-screen">
+        <div class="flex flex-row items-center p-4 justify-between shadow-lg rounded-lg mb-6 w-full max-w-6xl ">
+        </div>
+    </div> -->
+</template>

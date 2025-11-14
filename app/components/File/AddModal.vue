@@ -2,7 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
 import type { Category, Division } from '#shared/types'
-import { sanitizeFileName, getFileExtension } from '#shared/utils'
+import { sanitizeFileName, getFileExtension, toTitleCase } from '#shared/utils'
 import { generateThumbnail } from '~/utils/pdf'
 import { v4 as uuid } from 'uuid'
 
@@ -301,7 +301,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           description="Your unique division for logging in and your profile URL.">
           <UCheckboxGroup v-if="availableDivisions" v-model="state.divisions" indicator="hidden" size="sm"
             variant="card" :items="availableDivisions" value-key="id" label-key="name" name="divisions"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
+            <template #label="{ item }">
+              <span class="text-xs">{{ toTitleCase(item.name) }}</span>
+            </template>
+          </UCheckboxGroup>
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />
@@ -312,7 +316,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           description="Your unique division for logging in and your profile URL.">
           <UCheckboxGroup v-if="availableCategories" v-model="state.categories" indicator="hidden" size="sm"
             variant="card" :items="availableCategories" value-key="id" label-key="name" name="categories"
-            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }" />
+            :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
+            <template #label="{ item }">
+              <span class="text-xs">{{ toTitleCase(item.name) }}</span>
+            </template>
+          </UCheckboxGroup>
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 4" class="h-8 w-full" />

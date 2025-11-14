@@ -4,15 +4,17 @@ import bcrypt from 'bcrypt'
 import { User } from '~~/server/database/schema';
 
 export default defineEventHandler(async (event) => {
-    const password = await readBody<Pick<User, 'password'>>(event);
-
-    const user = await getUserSession(event)
+    const { password } = await readBody<Pick<User, 'password'>>(event);
 
     const db = useDrizzle()
 
-    if (await bcrypt.compare(password, user.password)) {
+    const userSession = await getUserSession(event)
+
+    const data = await db.select({ userPassword: tables.users.password }).from(tables.users).where(eq(tables.users.id, userSession?.user?.id as string))
+
+    if (await bcrypt.compare(password, data[0].userPassword)) {
         throw createError({
-            statusCode: 400,
+            statusCode: 422,
             message: `New password cannot be the same as the current password`
         })
     }
@@ -20,19 +22,17 @@ export default defineEventHandler(async (event) => {
     const hashedPassword = await bcrypt.hash(password, 2)
 
     try {
-        const data = await db.update(tables.users).set({
+        await db.update(tables.users).set({
             password: hashedPassword
-        }).returning();
-
-        console.log('password updated: ', data[0])
+        });
 
         return setResponseStatus(event, 201)
     } catch (error: any) {
-        console.log('error updateing password: ', error)
+        console.log('error updating password: ', error)
 
         throw createError({
             statusCode: 400,
-            message: `Error updateing password: ${error.message}`
+            message: `Error updating password: ${error.message}`
         })
     }
 });
