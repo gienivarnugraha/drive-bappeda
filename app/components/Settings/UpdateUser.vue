@@ -6,9 +6,7 @@ import { toKebabCase, deepClone, sanitizeUrl, sanitizeFileName } from '#shared/u
 
 const toast = useToast()
 
-const { user } = useUserSession()
-
-const config = useRuntimeConfig()
+const { user, fetch: fetchUser } = useUserSession()
 
 const profileSchema = z.object({
     // Use .trim() to handle whitespace from user input
@@ -76,24 +74,21 @@ async function uploadFile() {
 
     if (avatarFile.value) {
 
-        // extract the filename Output: ["file.pdf"]  <- Extracts the filename
-        const filename = profile.avatar?.match(/[^/]+$/)
-
         const formData = new FormData()
 
-        formData.append('file', avatarFile.value, `${sanitizeFileName(filename ? filename[0] : avatarFile.value.name), false}`)
+        formData.append('file', avatarFile.value)
 
         try {
-            const response = await $fetch('/api/avatar', {
+            const { data } = await $fetch('/api/avatar', {
                 method: 'post',
                 body: formData,
                 query: {
-                    id: user.value?.id,
-                    name: user.value?.name,
+                    avatar: user.value?.avatar,
                 }
             })
 
-            return response?.data.url
+            return data.filename
+
         } catch (error: any) {
             console.log('error uploading files', error)
 
@@ -128,6 +123,8 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
         })
 
         await nextTick()
+
+        await fetchUser()
 
         toast.add({
             title: 'Success',

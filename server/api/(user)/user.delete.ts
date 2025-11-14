@@ -3,9 +3,7 @@ import { eq } from 'drizzle-orm';
 import { User } from '~~/server/database/schema';
 
 const deleteAvatar = async (avatar: string) => {
-    const config = useRuntimeConfig()
-
-    const storage = useStorage(config.public.avatarUrl)
+    const storage = useStorage('avatars')
 
     try {
         await storage.removeItem(avatar as string)
@@ -38,16 +36,13 @@ export default defineEventHandler(async (event) => {
     const db = useDrizzle()
 
     try {
-        const response = await db.delete(tables.users).where(eq(tables.users.id, id as unknown as string)).returning()
+        await db.delete(tables.users).where(eq(tables.users.id, id as unknown as string))
 
         if (avatar) {
             await deleteAvatar(avatar)
         }
 
-        return {
-            message: 'user deleted',
-            data: response[0]
-        }
+        return setResponseStatus(event, 201)
 
     } catch (error: any) {
         console.log('error deleting user: ', error)

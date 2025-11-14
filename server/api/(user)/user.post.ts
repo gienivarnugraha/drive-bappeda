@@ -1,6 +1,7 @@
 import { useDrizzle, tables } from '#imports';
 // @ts-ignore
 import bcrypt from 'bcrypt'
+import { set } from 'date-fns';
 import { User } from '~~/server/database/schema';
 
 
@@ -11,20 +12,19 @@ export default defineEventHandler(async (event) => {
 
     const { password, ...rest } = payload
 
+    console.log(payload)
+
+
     const hashedPassword = await bcrypt.hash(password, 2)
 
     try {
-        const response = await db.insert(tables.users).values({
+        await db.insert(tables.users).values({
             password: hashedPassword,
             ...rest
-        }).returning();
+        });
 
-        console.log('new user created: ', response)
+        return setResponseStatus(event, 201)
 
-        return {
-            message: 'new user created: ',
-            data: response[0]
-        }
     } catch (error: any) {
         console.log('error creating user: ', error)
 

@@ -63,7 +63,7 @@ export const documentsSummary = pgTable('documents_summary', {
 
 // users table
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey().default(uuid_generate_v4()),
+  id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   password: text('password').notNull(),

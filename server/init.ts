@@ -26,7 +26,7 @@ async function run() {
                 name: 'John Doe',
                 email: 'john@example.com',
                 password: password.toString(),
-                avatar: 'https://example.com/avatar/john.png',
+                avatar: 'b7b8e6e3-7ed0-4626-8311-ab4addcb2040.png',
             },
         ]
 
@@ -67,14 +67,14 @@ async function run() {
         ]
 
         const divisions = [
-            { name: 'pemerintahan', metadata: { display_name: 'PEMERINTAHAN' } },
-            { name: 'kesehatan_masyarakat', metadata: { display_name: 'KESEHATAN MASYARAKAT' } },
-            { name: 'ekonomi', metadata: { display_name: 'EKONOMI' } },
-            { name: 'sumber_daya_alam', metadata: { display_name: 'SUMBER DAYA ALAM' } },
-            { name: 'infrastruktur', metadata: { display_name: 'INFRASTRUKTUR' } },
-            { name: 'kewilayahan', metadata: { display_name: 'KEWILAYAHAN' } },
+            { name: 'pemerintahan', metadata: { display_name: 'Pemerintahan' } },
+            { name: 'kesehatan_masyarakat', metadata: { display_name: 'Kesehatan Masyarakat' } },
+            { name: 'ekonomi', metadata: { display_name: 'Ekonomi' } },
+            { name: 'sumber_daya_alam', metadata: { display_name: 'Sumber Daya Alam' } },
+            { name: 'infrastruktur', metadata: { display_name: 'Infrastruktur' } },
+            { name: 'kewilayahan', metadata: { display_name: 'Kewilayahan' } },
             { name: 'ppe', metadata: { display_name: 'PPE' } },
-            { name: 'pemberdayaan manusia', metadata: { display_name: 'PEMBERDAYAAN MANUSIA' } },
+            { name: 'pemberdayaan manusia', metadata: { display_name: 'Pemberdayaan Manusia' } },
         ]
 
 

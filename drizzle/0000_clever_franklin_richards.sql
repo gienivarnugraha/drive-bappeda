@@ -24,12 +24,12 @@ CREATE TABLE "divisions" (
 --> statement-breakpoint
 CREATE TABLE "documents" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "documents_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"filename" text,
-	"title" text,
-	"description" text,
-	"metadata" jsonb,
+	"filename" text NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"metadata" jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
-	"uuid" text,
+	"uuid" text NOT NULL,
 	CONSTRAINT "documents_filename_unique" UNIQUE("filename")
 );
 --> statement-breakpoint
@@ -41,7 +41,7 @@ CREATE TABLE "documents_summary" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT 'b7b8e6e3-7ed0-4626-8311-ab4addcb2040' NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"password" text NOT NULL,

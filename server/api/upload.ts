@@ -11,8 +11,6 @@ export default eventHandler(async (event) => {
     throw new Error('No files uploaded.')
   }
 
-  const config = useRuntimeConfig()
-
   const filenames: string[] = []
 
   for (const file of formData) {
@@ -27,7 +25,7 @@ export default eventHandler(async (event) => {
 
     const filename = file.filename as string
 
-    const storageName = `${config.public.storageUrl}:${sanitizeFileName(filename, true)}`
+    const storageName = `documents:${sanitizeFileName(filename, true)}`
 
     const storage = useStorage(storageName)
 

@@ -1,5 +1,5 @@
 {
-  "id": "8808c5f0-41a0-4d12-9aff-5a8a809c0cc6",
+  "id": "f7e48e78-aa7b-4111-a32a-e89c2849095c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -270,25 +270,25 @@
           "name": "filename",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "title": {
           "name": "title",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "description": {
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "metadata": {
           "name": "metadata",
           "type": "jsonb",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -301,7 +301,7 @@
           "name": "uuid",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {
@@ -410,7 +410,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "'b7b8e6e3-7ed0-4626-8311-ab4addcb2040'"
+          "default": "gen_random_uuid()"
         },
         "name": {
           "name": "name",

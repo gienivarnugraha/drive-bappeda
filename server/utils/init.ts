@@ -174,9 +174,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   let summaries: Document[] | undefined
 
-  const config = useRuntimeConfig()
-
-  const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(filename, true)}`)
+  const storage = useStorage(`documents:${sanitizeFileName(filename, true)}`)
 
   if (await storage.hasItem(fileSummary)) {
     sseSend('push:notif', { message: `file json exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })

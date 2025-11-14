@@ -187,6 +187,8 @@ export const toTitleCase = (str: string) => {
 
 export const getClampedFileNameWithExtension = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + '.' + getFileExtension(filename))
 
+export const clampAndTitleCase = (name: string, limit: number = 10) => clampCharacters(toTitleCase(name), limit)
+
 export function getFileExtension(filename: string) {
     const lastDot = filename.lastIndexOf('.')
 

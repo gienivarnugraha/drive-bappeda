@@ -12,11 +12,11 @@ export type ItemMetadata = {
   display_name?: string
   description?: string
 }
-export type Category = Omit<Categories, 'createdAt'> & {
+export type Category = Omit<Categories, 'createdAt' | 'metadata'> & {
   metadata: ItemMetadata
 }
 
-export type Division = Omit<Divisions, 'createdAt'> & {
+export type Division = Omit<Divisions, 'createdAt' | 'metadata'> & {
   metadata: ItemMetadata
 }
 

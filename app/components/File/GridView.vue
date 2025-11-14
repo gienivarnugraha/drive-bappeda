@@ -28,10 +28,6 @@ const isSelected = (item: Results) => item.id === selected.value?.id
 
 const emits = defineEmits(['update:modelValue'])
 
-const config = useRuntimeConfig()
-
-const storageUrl = config.public.storageUrl
-
 const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`/documents/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {

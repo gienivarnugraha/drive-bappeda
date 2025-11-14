@@ -13,7 +13,7 @@ const { user } = useUserSession()
 // --- 1. Zod Schema ---
 const schema = z.object({
   email: z.string().email('Invalid email'),
-  display_name: z.string().min(6, 'Must be at least 6 characters'),
+  name: z.string().min(6, 'Must be at least 6 characters'),
   password: z.string().min(8, 'Must be at least 8 characters'),
   // Avatar is optional in the form, but we'll manage the URL string if uploaded
   avatar: z.string().optional().nullable()
@@ -24,7 +24,7 @@ type Schema = z.output<typeof schema>
 // --- 2. Reactive State ---
 const state = reactive<Schema>({
   email: '',
-  display_name: '',
+  name: '',
   password: '',
   avatar: null, // Use null for no avatar URL
 })
@@ -97,16 +97,12 @@ async function uploadAvatar(): Promise<string | undefined> {
   formData.append('file', file, filename)
 
   try {
-    const response = await $fetch('/api/avatar', {
+    const { data } = await $fetch('/api/avatar', {
       method: 'post',
       body: formData,
-      query: {
-        id: user.value?.id,
-        name: user.value?.name,
-      }
     })
 
-    return response?.data.url
+    return data.filename
   } catch (error: any) {
     console.log('error uploading files', error)
 
@@ -127,7 +123,7 @@ async function uploadAvatar(): Promise<string | undefined> {
 // --- 6. Form Submission Logic ---
 
 const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
-  const { email, password, display_name } = event.data
+  const { email, password, name } = event.data
 
   // 6a. Upload the avatar and get its public URL
   const avatarUrl = await uploadAvatar();
@@ -143,7 +139,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
       body: {
         email,
         password,
-        display_name,
+        name,
         avatar: avatarUrl,
       }
     })
@@ -158,7 +154,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
     // Optional: Clear form state after successful submission
     Object.assign(state, {
       email: '',
-      display_name: '',
+      name: '',
       password: '',
       avatar: null,
     });
@@ -191,9 +187,9 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
 
     <UForm v-if="addView" id="settings-add-user" :schema="schema" :state="state" class="flex flex-col gap-4 "
       @submit="onSubmit">
-      <UFormField name="display_name" label="Name" description="The user's display name." required
+      <UFormField name="name" label="Name" description="The user's display name." required
         class="flex max-sm:flex-col justify-between items-start gap-4">
-        <UInput v-model="state.display_name" autocomplete="off" />
+        <UInput v-model="state.name" autocomplete="off" />
       </UFormField>
 
       <UFormField name="email" label="Email" description="Used to log in." required
@@ -211,7 +207,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>): Promise<void> => {
       <UFormField name="avatar" label="Avatar" description="JPG, GIF or PNG. 1MB Max."
         class="flex max-sm:flex-col justify-between sm:items-center gap-4">
         <div class="flex flex-wrap items-center gap-3">
-          <UAvatar :src="state.avatar ?? undefined" :alt="state.display_name" size="lg" />
+          <UAvatar :src="state.avatar ?? undefined" :alt="state.name" size="lg" />
           <UButton :label="avatarFile ? 'Change File' : 'Choose File'" :loading="isUploading" color="neutral"
             @click="onFileClick" />
           <input ref="fileRef" type="file" class="hidden" accept=".jpg, .jpeg, .png, .gif" @change="onFileChange">

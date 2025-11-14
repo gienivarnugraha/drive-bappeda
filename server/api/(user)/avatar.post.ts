@@ -1,27 +1,27 @@
 import type { User } from '#shared/types';
 import { inspect } from 'node:util';
-import { sanitizeUrl, sanitizeFileName } from '~~/shared/utils';
+import { getFileExtension } from '~~/shared/utils';
+import { v4 as uuid } from 'uuid'
 
 // Define expected query types
-interface UploadQuery {
-  id: string;
-  name: string;
-}
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
 
 export default eventHandler(async (event) => {
   // Input Retrieval and Validation
   const formData = await readMultipartFormData(event);
-  const query = getQuery<UploadQuery>(event);
+
+  const query = getQuery<{ avatar: string }>(event);
+
 
   // Destructure and ensure required inputs are present
-  const { id, name } = query;
+  const { avatar } = query;
 
   const avatarFile = formData?.[0];
 
-  if (!id || !name) {
+  if (!ALLOWED_TYPES.includes(avatarFile?.type as string)) {
     throw createError({
       statusCode: 400,
-      message: 'Missing required query parameters: id and name.',
+      message: `Only ${ALLOWED_TYPES.join(', ')} files are allowed.`,
     });
   }
 
@@ -31,35 +31,40 @@ export default eventHandler(async (event) => {
       message: 'No avatar file data found in form submission.',
     });
   }
-  const config = useRuntimeConfig()
 
-  const storage = useStorage(config.public.avatarUrl)
+  const storage = useStorage('public')
 
   try {
-    // Upload Operation
-    // setItemRaw is appropriate for Buffer/Blob data from multipart form
-    await storage.setItemRaw(id, avatarFile.data);
+    if (avatar) {
+      const exists = await storage.hasItem(`avatars:${avatar}`)
 
-    // Optional: Log the result of the storage item (e.g., its metadata)
-    const storedItem = await storage.getItem(id);
-    console.log(`Stored item for ID ${id}:`, storedItem);
+      console.log('file exists: ', exists)
+      if (exists) {
+        await storage.removeItem(`avatars:${avatar}`)
+      }
+    }
 
 
-    const url = sanitizeUrl(`/avatars/${id}`);
+    const filename = `${uuid()}.${getFileExtension(avatarFile.filename as string)}`
 
-    // Success Response
+    try {
+      // setItemRaw is appropriate for Buffer/Blob data from multipart form
+      await storage.setItemRaw(`avatars:${filename}`, avatarFile.data);
+
+    } catch (seterror: any) {
+      console.error('set item error', seterror)
+    }
+
     return {
-      message: `Successfully uploaded avatar for: ${name}`,
+      message: `Successfully uploaded avatar`,
       data: {
-        url
-      }, // This is often undefined or simple confirmation from storage drivers
+        filename
+      },
     };
 
   } catch (error: any) {
-    // Unified Error Handling
-
     // Log detailed error information
-    console.error(`❌ Error uploading avatar for ${id} (${name}): ${inspect(error, true, null, true)}`);
+    console.error(`❌ Error uploading avatar for: ${inspect(error, true, null, true)}`);
 
     // Re-throw a standardized Nitro error
     throw createError({

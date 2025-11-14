@@ -26,11 +26,7 @@ export default defineNuxtConfig({
     storage: {
       public: {
         driver: 'fs',
-        base: '/public/'
-      },
-      'vercel-blobs': {
-        driver: 'vercelBlob',
-        access: 'public'
+        base: './public/'
       },
     }
   },

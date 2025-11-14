@@ -18,8 +18,6 @@ type Schema = {
 export default defineEventHandler(async (event) => {
     const payload = await readBody<Schema>(event)
 
-    const config = useRuntimeConfig()
-
     const { filenames, categories, divisions } = payload
 
     const db = useDrizzle()
@@ -46,7 +44,7 @@ export default defineEventHandler(async (event) => {
 
         for (const filename of processFiles) {
 
-            const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(filename, true)}`)
+            const storage = useStorage(`documents:${sanitizeFileName(filename, true)}`)
 
             const meta = await storage.getMeta(filename)
 

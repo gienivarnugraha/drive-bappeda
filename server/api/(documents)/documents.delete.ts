@@ -11,8 +11,6 @@ type Schema = {
 export default defineEventHandler(async (event) => {
     const payload = await readBody<Schema>(event)
 
-    const config = useRuntimeConfig()
-
     const { documentId } = payload
 
     const db = useDrizzle()
@@ -22,12 +20,11 @@ export default defineEventHandler(async (event) => {
 
         const thumbnailSrc = `${sanitizeFileName(document[0].filename, true)}.png`
 
-        const storage = useStorage(`${config.public.storageUrl}:${sanitizeFileName(document[0].filename, true)}`)
+        const storage = useStorage(`documents:${sanitizeFileName(document[0].filename, true)}`)
 
         await storage.remove(sanitizeFileName(document[0].filename))
 
         await storage.remove(thumbnailSrc)
-
 
         try {
             await db

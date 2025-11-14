@@ -89,20 +89,27 @@ const documentUpdated = async () => {
   <div class="flex flex-row">
     <div class="flex flex-col gap-4 ">
 
-      <div v-if="divisions.length === 0" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
-        <USkeleton v-for="value in 6" class="h-24 w-full" />
-      </div>
 
-      <div v-else class="my-2">
-        <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
-          :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
-          :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
-          <template #label="{ item }">
-            <UTooltip :text="item.metadata?.display_name || item.name">
-              <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
-            </UTooltip>
+
+      <div class="my-2">
+        <ClientOnly>
+          <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
+            :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
+            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+            <template #label="{ item }">
+              <UTooltip :text="item.metadata?.display_name || item.name">
+                <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
+              </UTooltip>
+            </template>
+          </UCheckboxGroup>
+
+          <template #fallback>
+            <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
+              <USkeleton v-for="value in 6" class="h-24 w-full" />
+            </div>
           </template>
-        </UCheckboxGroup>
+
+        </ClientOnly>
       </div>
 
       <USeparator class="h-2" />

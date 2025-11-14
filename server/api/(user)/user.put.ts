@@ -10,16 +10,26 @@ export default defineEventHandler(async (event) => {
     const db = useDrizzle()
 
     try {
-        const response = await db.update(tables.users).set({
+        const user = await db.update(tables.users).set({
             avatar, name
-        }).returning();
+        }).returning({
+            id: tables.users.id,
+            email: tables.users.email,
+            name: tables.users.name,
+            avatar: tables.users.avatar,
+        })
 
-        console.log('User updated: ', response)
+        await replaceUserSession(event, {
+            user: {
+                id: user[0].id,
+                email: user[0].email,
+                name: user[0].name,
+                avatar: user[0].avatar
+            },
+        })
 
-        return {
-            message: 'User updated: ',
-            data: response[0]
-        }
+        return setResponseStatus(event, 201)
+
     } catch (error: any) {
         console.log('error creating user: ', error)
 

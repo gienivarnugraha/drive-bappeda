@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
 
-    const storage = useStorage(`${config.public.storageUrl}/filename/filename.pdf`)
+    const storage = useStorage(`documents:filename:filename.pdf`)
 
     const outputKey = outputFileName.endsWith('.md') ? outputFileName : `${outputFileName}.md`;
 
