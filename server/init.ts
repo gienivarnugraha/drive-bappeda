@@ -3,6 +3,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from "drizzle-orm/node-postgres";
 //@ts-ignore
 import bcrypt from 'bcrypt';
+import { convertToMarkdown } from './convert';
 
 async function run() {
 
@@ -94,6 +95,11 @@ async function run() {
     }
 }
 
+async function convert() {
+    await convertToMarkdown('github-git-cheat-sheet.pdf')
 
-run().then((result) => console.log(result))
+}
+convert().then((result) => console.log(result)).catch(err => console.log(err))
+
+// run().then((result) => console.log(result))
 
