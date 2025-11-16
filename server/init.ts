@@ -95,11 +95,11 @@ async function run() {
     }
 }
 
-async function convert() {
-    await convertToMarkdown('github-git-cheat-sheet.pdf')
+// async function convert() {
+//     await convertToMarkdown('github-git-cheat-sheet.pdf')
 
-}
-convert().then((result) => console.log(result)).catch(err => console.log(err))
+// }
+// convert().then((result) => console.log(result)).catch(err => console.log(err))
 
-// run().then((result) => console.log(result))
+run().then((result) => console.log(result))
 

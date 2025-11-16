@@ -6,6 +6,12 @@ export { sql, eq, and, or } from 'drizzle-orm'
 import * as schema from '../database/schema'
 
 export const tables = schema
+export type Categories = typeof schema.categories.$inferSelect
+export type Divisions = typeof schema.divisions.$inferSelect
+export type Documents = typeof schema.documents.$inferSelect
+export type CategoriesDocumentsDivisions = typeof schema.categoriesDocumentsDivisions.$inferSelect
+export type DocumentsSummary = typeof schema.documentsSummary.$inferSelect
+export type User = typeof schema.users.$inferSelect
 
 // Create the pg Pool (same configuration as above)
 export const pool = new Pool({

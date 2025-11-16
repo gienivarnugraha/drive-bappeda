@@ -16,14 +16,14 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - SITE_URL=${SITE_URL}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - SUPABASE_KEY=${SUPABASE_SERVICE_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - STORAGE_NAME=${STORAGE_NAME}
-      - STORAGE_URL=${STORAGE_URL}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN} # for vercel only
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT}
+      - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
 
     # --- Healthcheck Definition ---
     healthcheck:
@@ -49,6 +49,30 @@ services:
       - nuxt-storage:/public
 
     # Optionally restart the container if it stops unexpectedly
+    restart: always
+
+   # --- 2. Python Backend API Service ---
+  md_converter:
+    container_name: md_converter
+    # Instructs Docker Compose to build the image using the './Dockerfile.python'
+    build:
+      context: .
+      dockerfile: ./python/Dockerfile
+    # Exposes port 8000 only internally, so the 'nuxt_app' service can access it.
+    expose:
+      - "8000"
+
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    # IMPORTANT: Define the command to start your Python server.
+    # This example assumes you are running a service (e.g., FastAPI/Uvicorn) 
+    # and have an entry file named 'app.py' with an application instance named 'app'.
+    # command: uvicorn app:app --host 0.0.0.0 --port 8090
+    
+    # If you need to access the API directly from your host machine (e.g., for testing):
+    # ports:
+    #   - "8000:8000"
+    
     restart: always
 
 # Define the named volumes outside the service block

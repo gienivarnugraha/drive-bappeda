@@ -1,9 +1,6 @@
 import { pgTable, uniqueIndex, timestamp, text, uuid, vector, index, integer, varchar, jsonb } from 'drizzle-orm/pg-core'
-import { v4 as uuid_generate_v4 } from 'uuid'
-
 
 // --- categories Table ---
-export type Categories = typeof categories.$inferSelect
 export const categories = pgTable('categories', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
@@ -14,7 +11,6 @@ export const categories = pgTable('categories', {
 ])
 
 // --- divisions Table ---
-export type Divisions = typeof divisions.$inferSelect
 export const divisions = pgTable('divisions', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
@@ -25,7 +21,6 @@ export const divisions = pgTable('divisions', {
 ])
 
 // --- documents Table ---
-export type Documents = typeof documents.$inferSelect
 export const documents = pgTable('documents', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   filename: text('filename').unique().notNull(),
@@ -39,7 +34,6 @@ export const documents = pgTable('documents', {
 ])
 
 // --- categories_documents_divisions Table (Junction Table) ---
-export type CategoriesDocumentsDivisions = typeof categoriesDocumentsDivisions.$inferSelect
 export const categoriesDocumentsDivisions = pgTable('categories_documents_divisions', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
@@ -51,7 +45,6 @@ export const categoriesDocumentsDivisions = pgTable('categories_documents_divisi
 // --- documents_summary Table ---
 // NOTE: 'embedding' has a USER-DEFINED type. You'll need to define a custom Drizzle type for this or use a column type that matches your specific embedding library (e.g., 'vector' for pgvector, or 'text' if storing a string representation).
 // For demonstration, I'm using text for 'embedding', but you should adjust this.
-export type DocumentsSummary = typeof documentsSummary.$inferSelect
 export const documentsSummary = pgTable('documents_summary', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   content: text('content'),
@@ -73,7 +66,6 @@ export const users = pgTable('users', {
   uniqueIndex("email_idx").on(table.email)
 ])
 
-export type User = typeof users.$inferSelect
 
 /* 
 -- DANGER: Dropping the function if it already exists to allow re-creation.

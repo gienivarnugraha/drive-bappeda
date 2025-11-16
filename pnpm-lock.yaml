@@ -107,9 +107,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3
-      typeorm:
-        specifier: ^0.3.25
-        version: 0.3.27(ioredis@5.8.2)(pg@8.16.3)(reflect-metadata@0.2.2)
+      tailwindcss:
+        specifier: ^4.1.17
+        version: 4.1.17
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -120,9 +120,6 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
-      '@types/pg':
-        specifier: ^8.15.6
-        version: 8.15.6
       drizzle-kit:
         specifier: ^0.31.6
         version: 0.31.6
@@ -6260,6 +6257,9 @@ packages:
   tailwindcss@4.1.16:
     resolution: {integrity: sha512-pONL5awpaQX4LN5eiv7moSiSPd/DLDzKVRJz8Q9PgzmAdd1R4307GQS2ZpfiN7ZmekdQrfhZZiSE5jkLR4WNaA==}
 
+  tailwindcss@4.1.17:
+    resolution: {integrity: sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q==}
+
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
@@ -8353,8 +8353,8 @@ snapshots:
       reka-ui: 2.6.0(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3))
       scule: 1.3.0
       tailwind-merge: 3.3.1
-      tailwind-variants: 3.1.1(tailwind-merge@3.3.1)(tailwindcss@4.1.16)
-      tailwindcss: 4.1.16
+      tailwind-variants: 3.1.1(tailwind-merge@3.3.1)(tailwindcss@4.1.17)
+      tailwindcss: 4.1.17
       tinyglobby: 0.2.15
       typescript: 5.9.3
       unplugin: 2.3.10
@@ -8989,7 +8989,8 @@ snapshots:
 
   '@speed-highlight/core@1.2.8': {}
 
-  '@sqltools/formatter@1.2.5': {}
+  '@sqltools/formatter@1.2.5':
+    optional: true
 
   '@standard-schema/spec@1.0.0': {}
 
@@ -9211,6 +9212,7 @@ snapshots:
       '@types/node': 24.9.1
       pg-protocol: 1.10.3
       pg-types: 2.2.0
+    optional: true
 
   '@types/phoenix@1.6.6':
     optional: true
@@ -9715,7 +9717,8 @@ snapshots:
 
   ansi-styles@6.2.3: {}
 
-  ansis@3.17.0: {}
+  ansis@3.17.0:
+    optional: true
 
   ansis@4.2.0: {}
 
@@ -9724,7 +9727,8 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  app-root-path@3.1.0: {}
+  app-root-path@3.1.0:
+    optional: true
 
   archiver-utils@5.0.2:
     dependencies:
@@ -9794,6 +9798,7 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+    optional: true
 
   axios@1.12.2(debug@4.4.3):
     dependencies:
@@ -9915,11 +9920,13 @@ snapshots:
       es-define-property: 1.0.1
       get-intrinsic: 1.3.0
       set-function-length: 1.2.2
+    optional: true
 
   call-bound@1.0.4:
     dependencies:
       call-bind-apply-helpers: 1.0.2
       get-intrinsic: 1.3.0
+    optional: true
 
   callsites@3.1.0: {}
 
@@ -10194,7 +10201,8 @@ snapshots:
 
   date-fns@4.1.0: {}
 
-  dayjs@1.11.18: {}
+  dayjs@1.11.18:
+    optional: true
 
   db0@0.3.4(drizzle-orm@0.44.7(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(pg@8.16.3)):
     optionalDependencies:
@@ -10214,7 +10222,8 @@ snapshots:
     dependencies:
       character-entities: 2.0.2
 
-  dedent@1.7.0: {}
+  dedent@1.7.0:
+    optional: true
 
   deep-is@0.1.4: {}
 
@@ -10232,6 +10241,7 @@ snapshots:
       es-define-property: 1.0.1
       es-errors: 1.3.0
       gopd: 1.2.0
+    optional: true
 
   define-lazy-prop@2.0.0: {}
 
@@ -10834,6 +10844,7 @@ snapshots:
   for-each@0.3.5:
     dependencies:
       is-callable: 1.2.7
+    optional: true
 
   foreground-child@3.3.1:
     dependencies:
@@ -11003,6 +11014,7 @@ snapshots:
   has-property-descriptors@1.0.2:
     dependencies:
       es-define-property: 1.0.1
+    optional: true
 
   has-symbols@1.1.0: {}
 
@@ -11290,7 +11302,8 @@ snapshots:
     dependencies:
       builtin-modules: 5.0.0
 
-  is-callable@1.2.7: {}
+  is-callable@1.2.7:
+    optional: true
 
   is-core-module@2.16.1:
     dependencies:
@@ -11348,6 +11361,7 @@ snapshots:
   is-typed-array@1.1.15:
     dependencies:
       which-typed-array: 1.1.19
+    optional: true
 
   is-unicode-supported@2.1.0: {}
 
@@ -11369,7 +11383,8 @@ snapshots:
 
   isarray@1.0.0: {}
 
-  isarray@2.0.5: {}
+  isarray@2.0.5:
+    optional: true
 
   isexe@2.0.0: {}
 
@@ -12773,7 +12788,8 @@ snapshots:
 
   pluralize@8.0.0: {}
 
-  possible-typed-array-names@1.1.0: {}
+  possible-typed-array-names@1.1.0:
+    optional: true
 
   postcss-calc@10.1.1(postcss@8.5.6):
     dependencies:
@@ -13057,7 +13073,8 @@ snapshots:
     dependencies:
       '@eslint-community/regexpp': 4.12.2
 
-  reflect-metadata@0.2.2: {}
+  reflect-metadata@0.2.2:
+    optional: true
 
   regex-recursion@6.0.2:
     dependencies:
@@ -13351,6 +13368,7 @@ snapshots:
       get-intrinsic: 1.3.0
       gopd: 1.2.0
       has-property-descriptors: 1.0.2
+    optional: true
 
   setimmediate@1.0.5: {}
 
@@ -13361,6 +13379,7 @@ snapshots:
       inherits: 2.0.4
       safe-buffer: 5.2.1
       to-buffer: 1.2.2
+    optional: true
 
   shebang-command@2.0.0:
     dependencies:
@@ -13439,7 +13458,8 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
-  sql-highlight@6.1.0: {}
+  sql-highlight@6.1.0:
+    optional: true
 
   srvx@0.8.16: {}
 
@@ -13552,13 +13572,15 @@ snapshots:
 
   tailwind-merge@3.3.1: {}
 
-  tailwind-variants@3.1.1(tailwind-merge@3.3.1)(tailwindcss@4.1.16):
+  tailwind-variants@3.1.1(tailwind-merge@3.3.1)(tailwindcss@4.1.17):
     dependencies:
-      tailwindcss: 4.1.16
+      tailwindcss: 4.1.17
     optionalDependencies:
       tailwind-merge: 3.3.1
 
   tailwindcss@4.1.16: {}
+
+  tailwindcss@4.1.17: {}
 
   tapable@2.3.0: {}
 
@@ -13610,6 +13632,7 @@ snapshots:
       isarray: 2.0.5
       safe-buffer: 5.2.1
       typed-array-buffer: 1.0.3
+    optional: true
 
   to-regex-range@5.0.1:
     dependencies:
@@ -13674,6 +13697,7 @@ snapshots:
       call-bound: 1.0.4
       es-errors: 1.3.0
       is-typed-array: 1.1.15
+    optional: true
 
   typeorm@0.3.27(ioredis@5.8.2)(pg@8.16.3)(reflect-metadata@0.2.2):
     dependencies:
@@ -13698,6 +13722,7 @@ snapshots:
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
+    optional: true
 
   typescript@5.9.3: {}
 
@@ -14197,6 +14222,7 @@ snapshots:
       get-proto: 1.0.1
       gopd: 1.2.0
       has-tostringtag: 1.0.2
+    optional: true
 
   which@2.0.2:
     dependencies:

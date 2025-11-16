@@ -1,0 +1,22 @@
+# Dependencies and Builds
+node_modules
+.output
+
+# pnpm lock file - We copy this explicitly in the Dockerfile,
+# but ignoring it here prevents accidental inclusion in other COPY operations.
+pnpm-lock.yaml
+
+# Nuxt
+.nuxt/
+.DS_Store
+
+# Version Control
+.git
+.gitignore
+
+# Environment
+.env
+.env.*
+
+# Logs and Temporary files
+npm-debug.log
