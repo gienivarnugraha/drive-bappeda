@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatBytes, deepClone, sanitizeUrl, dateToLocale } from '#shared/utils'
-import type { Results, Category, Division, Document } from '#shared/types'
+import type { Results, Category, Division, } from '#shared/types'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useItems } from '~/composables/useItems'
 import { z } from 'zod'

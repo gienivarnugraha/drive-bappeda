@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "nuxt build --log-level=verbose --dotenv=.env",
     "dev": "nuxt dev",
     "db:generate": "drizzle-kit generate",
     "preview": "nuxt preview",

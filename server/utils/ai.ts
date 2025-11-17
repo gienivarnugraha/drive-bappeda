@@ -11,12 +11,14 @@ export function getModel(model: 'google' | 'openai') {
       return new ChatGoogleGenerativeAI({
         temperature: 0,
         model: 'gemini-2.0-flash',
-        streaming: true
+        streaming: true,
+        apiKey: process.env.NUXT_GOOGLE_API_KEY as string
       })
     case 'openai':
       return new ChatOpenAI({
         temperature: 0.5,
         model: 'gpt-4o-mini',
+        apiKey: process.env.NUXT_OPENAI_API_KEY as string
         // streaming: true
       })
   }

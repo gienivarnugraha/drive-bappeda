@@ -59,7 +59,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: error.statusMessage,
+      description: error.message,
+      icon: 'i-lucide-x',
       color: 'error'
     });
 

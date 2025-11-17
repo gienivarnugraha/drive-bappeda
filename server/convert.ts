@@ -55,7 +55,7 @@ function runPythonConversion(input: string, output: string): Promise<string> {
 }
 
 export async function convertToMarkdown(file: string): Promise<{ message: string, data: string }> {
-    const openAiKey = process.env.OPENAI_API_KEY;
+    const openAiKey = process.env.NUXT_OPENAI_API_KEY;
     if (!openAiKey) {
         throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY is not configured on the server.' });
     }

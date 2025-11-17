@@ -1,6 +1,6 @@
 import { sseSend } from '~~/server/utils/sse'
 import { processDocument } from '~~/server/utils/init'
-import type { DocumentMetadata, Document } from '#shared/types'
+import type { DocumentMetadata } from '#shared/types'
 import { sanitizeFileName } from '#shared/utils'
 import { extname } from 'node:path'
 import { useDrizzle, tables } from '#imports'

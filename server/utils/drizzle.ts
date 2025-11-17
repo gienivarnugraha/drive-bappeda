@@ -10,11 +10,11 @@ export const tables = schema
 
 // Create the pg Pool (same configuration as above)
 export const pool = new Pool({
-    host: process.env.DB_HOST as string,
-    user: process.env.DB_USER as string,
-    database: process.env.DB_NAME as string,
-    password: process.env.DB_PASSWORD as string,
-    port: process.env.DB_PORT as unknown as number,
+    host: process.env.NUXT_DB_HOST as string,
+    user: process.env.NUXT_DB_USER as string,
+    database: process.env.NUXT_DB_NAME as string,
+    password: process.env.NUXT_DB_PASSWORD as string,
+    port: process.env.NUXT_DB_PORT as unknown as number,
     max: 20, // Max number of clients in the pool (default is 10)
     idleTimeoutMillis: 30000, // How long a client is allowed to remain idle
 });

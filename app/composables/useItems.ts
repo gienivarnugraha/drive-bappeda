@@ -2,7 +2,7 @@ import type { Category, Division } from '#shared/types'
 import { toTitleCase } from '#shared/utils'
 
 type Items = Category | Division
-export const useItems = async () => {
+const _useItems = async () => {
 
   const divisions = useState<Division[]>('divisions', () => [])
 
@@ -10,7 +10,9 @@ export const useItems = async () => {
 
   const fetchData = async (type: 'divisions' | 'categories'): Promise<Items[]> => {
     try {
-      return await $fetch<Items[]>(`/api/${type}`)
+      return await $fetch<Items[]>(`/api/${type}`, {
+        keepalive: true
+      })
 
     } catch (error: any) {
       throw createError({
@@ -19,6 +21,7 @@ export const useItems = async () => {
       })
     }
   }
+
 
   if (categories.value.length === 0) {
     categories.value = await fetchData('categories')
@@ -33,3 +36,6 @@ export const useItems = async () => {
     categories
   }
 }
+
+export const useItems = createSharedComposable(_useItems)
+

@@ -1,4 +1,4 @@
-import type { Document, Category, Division } from '#shared/types'
+import type { Category, Division } from '#shared/types'
 import { inspect } from 'node:util'
 import { modifyRelation } from '~~/server/utils/db'
 import { getClampedFileNameWithExtension } from '#shared/utils'

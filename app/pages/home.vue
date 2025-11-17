@@ -109,7 +109,7 @@ const documentUpdated = async () => {
       <USeparator class="h-2" />
 
       <UTooltip text="Tampilkan Semua Kategori">
-        <UButton variant="subtle" :label="`Tampilkan Semua Kategori (${categories.length})`" color="primary" size="xs"
+        <UButton variant="subtle" :label="`Tampilkan Semua Kategori (${categories?.length})`" color="primary" size="xs"
           class="max-w-fit" :icon="showMoreCategories ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
           @click="showMoreCategories = !showMoreCategories" />
       </UTooltip>

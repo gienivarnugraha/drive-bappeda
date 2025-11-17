@@ -21,14 +21,14 @@ export default defineEventHandler(async (event) => {
     if (!user) {
         throw createError({
             statusCode: 401,
-            statusMessage: 'User not Found!',
+            message: 'User not Found!',
         })
     }
 
     if (!(await bcrypt.compare(password, user.password))) {
         throw createError({
             statusCode: 401,
-            statusMessage: 'Wrong password!',
+            message: 'Wrong password!',
         })
     }
 
