@@ -1,13 +1,13 @@
 // import 'dotenv/config'
 import { join, resolve, extname, basename } from 'node:path'
 import { readdir, readFile, statSync, writeFile, existsSync, readFileSync } from 'node:fs'
-import { PDFLoader } from './scripts/pdfLoader'
+import { PDFLoader } from '~~/server/utils/scripts/pdfLoader'
 // import postgres from 'postgres';
 import { MultiFileLoader } from 'langchain/document_loaders/fs/multi_file'
 import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { Document, type DocumentInput } from '@langchain/core/documents'
-import { getModel, getVectorStore } from './ai'
-// import { generateAnswerFromDocument } from '../server/utils/rag';
+import { getModel, getVectorStore } from '~~/server/utils/ai'
+// import { generateAnswerFromDocument } from '~~/server/utils./server/utils/rag';
 import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from '@langchain/core/prompts'
 import { RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables'
 import { InMemoryStore } from '@langchain/core/stores'

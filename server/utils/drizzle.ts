@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { drizzle } from "drizzle-orm/node-postgres";
+// @ts-ignore
 import { Pool } from 'pg';
 export { sql, eq, and, or } from 'drizzle-orm'
 

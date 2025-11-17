@@ -1,7 +1,7 @@
 import { useDrizzle, tables } from '#imports';
 // @ts-ignore
 import bcrypt from 'bcrypt'
-import { User } from '~~/server/database/schema';
+import { User } from '#shared/types';
 
 export default defineEventHandler(async (event) => {
     const { password } = await readBody<Pick<User, 'password'>>(event);

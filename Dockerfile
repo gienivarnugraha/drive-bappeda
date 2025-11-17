@@ -1,70 +1,71 @@
-# syntax=docker/dockerfile:1.4
-# Use the syntax directive to enable BuildKit features like cache mounts
+# ----------------------------------------------------
+# Stage 1: Base Environment Setup
+# Sets up Node, Corepack/pnpm, and the working directory.
+# ----------------------------------------------------
+FROM node:22-alpine AS base
 
-# --- STAGE 1: BUILDER ---
-FROM node:22-alpine AS builder
-
-# 1. Enable pnpm and set environment variables
-# corepack is built into modern Node versions (>=14.19.0 or >=16.9.0)
+# Install corepack and enable pnpm
 RUN corepack enable
+
+# Set environment variables for pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-# Install OS dependencies required for native bindings (if needed)
-RUN apk update && \
-    apk add --no-cache python3 make g++
-
-# Set working directory for the builder stage
+# Set working directory for all subsequent stages
 WORKDIR /app
 
-# 2. Install Node.js Dependencies (Leveraging BuildKit Cache)
-# Copy only package files and the lockfile to leverage Docker layer caching
-# Note: Ensure you have a 'pnpm-lock.yaml' in your project root
+# ----------------------------------------------------
+# Stage 2: Production Dependencies (Runtime Only)
+# Installs only the dependencies needed for runtime.
+# This stage is for the final image.
+# ----------------------------------------------------
+FROM base AS prod_modules
+# Copy only lockfile and package.json to leverage Docker layer caching
 COPY package.json pnpm-lock.yaml ./
 
-# Use a cache mount for pnpm's content-addressable store
-# This significantly speeds up subsequent builds when dependencies haven't changed.
-RUN --mount=type=cache,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prefer-offline
+# Install only production dependencies
+RUN --mount=type=cache,id=pnpm_prod,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-# 3. Copy application source code
+# ----------------------------------------------------
+# Stage 3: Builder (Full Dependencies and Build)
+# Installs all dependencies (including dev) and runs the build script.
+# ----------------------------------------------------
+FROM base AS builder
+# Copy only lockfile and package.json for dependency installation cache
+COPY package.json pnpm-lock.yaml ./
+
+# Install all dependencies
+RUN --mount=type=cache,id=pnpm_full,target=/pnpm/store pnpm install --frozen-lockfile
+
+# Copy the rest of the source code
 COPY . .
 
-# Build Nuxt (generates the .output directory)
+# Run the build command (e.g., Nuxt/Next/Astro/SvelteKit/etc. build)
 RUN pnpm run build
 
-
-# --- STAGE 2: RUNNER ---
+# ----------------------------------------------------
+# Stage 4: Final Production Runner
+# Starts from a fresh, minimal node image and copies only artifacts.
+# ----------------------------------------------------
 FROM node:22-alpine AS runner
 
-# Set working directory
-WORKDIR /app
-
-# Only copy the essential production files from the builder stage
-# 1. Copy the built application (Nuxt/Nitro bundles the server code)
-COPY --from=builder /app/.output ./.output
-
-# 2. Copy production-only node_modules (required for dynamic imports/dependencies not bundled by Nitro)
-# We use 'pnpm deploy' or 'pnpm prune' (if using standard pnpm install)
-# Since Nuxt/Nitro typically bundles dependencies, this step is often just for sanity, 
-# or if you have specific run-time dependencies (like native modules).
-# We will explicitly prune the production dependencies in the builder stage to ensure they are available.
-
-# Re-run pruning in the builder stage (optional, but good practice for clarity):
-RUN --mount=type=cache,target=/pnpm/store \
-    pnpm prune --prod --json
-
-# Copy the generated node_modules (which should only contain production dependencies)
-# Note: The .output directory should be sufficient for a fully bundled Nuxt application.
-# If your app needs the node_modules directory at runtime, use the following:
-# COPY --from=builder /app/node_modules ./node_modules
-
-# Set environment variables
+# Set necessary environment variables (re-declared for clarity in final stage)
 ENV NODE_ENV=production
 ENV NITRO_PORT=3000
 ENV HOST=0.0.0.0
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
+WORKDIR /app
+
+# Copy production node_modules from the prod_modules stage
+COPY --from=prod_modules /app/node_modules /app/node_modules
+
+# Copy the built server output from the builder stage
+COPY --from=builder /app/.output ./.output
+
+# Expose the port
 EXPOSE 3000
 
-# Command to start the Nuxt 4 server
+# Start the application
 CMD ["node", ".output/server/index.mjs"]

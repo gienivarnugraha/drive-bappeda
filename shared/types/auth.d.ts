@@ -1,4 +1,4 @@
-import type { User as UserDB } from "~~/server/database/schema"
+import type { User as UserDB } from "#shared/types"
 
 declare module '#auth-utils' {
     interface User extends UserDB { }

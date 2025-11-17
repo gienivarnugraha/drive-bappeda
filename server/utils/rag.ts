@@ -3,7 +3,7 @@ import { ChatMessageHistory } from 'langchain/stores/message/in_memory'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } from '@langchain/core/runnables'
 import { formatDocumentsAsString } from 'langchain/util/document'
-import { getVectorStore, getModel } from './ai'
+import { getVectorStore, getModel } from '~~/server/utils/ai'
 import { MultiQueryRetriever } from 'langchain/retrievers/multi_query'
 import { z } from 'zod'
 

@@ -1,4 +1,4 @@
-import { tables, pool, useDrizzle } from './utils/drizzle';
+import { tables, pool, useDrizzle } from '~~/server/utils/drizzle';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from "drizzle-orm/node-postgres";
 //@ts-ignore

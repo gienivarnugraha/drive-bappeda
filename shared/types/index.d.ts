@@ -1,4 +1,4 @@
-import type { Categories, Documents, Divisions, User as UserDB } from "~~/server/database/schema"
+import type { Categories, Documents, Divisions, User as UserDB } from "~~/server/utils/drizzle"
 
 
 export type FetchResponse<T> = {

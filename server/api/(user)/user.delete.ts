@@ -1,6 +1,6 @@
 import { useDrizzle, tables } from '#imports';
 import { eq } from 'drizzle-orm';
-import { User } from '~~/server/database/schema';
+import { User } from '#shared/types';
 
 const deleteAvatar = async (avatar: string) => {
     const storage = useStorage('public')

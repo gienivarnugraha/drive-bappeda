@@ -2,7 +2,7 @@ import { useDrizzle, tables } from '#imports';
 // @ts-ignore
 import bcrypt from 'bcrypt'
 import { set } from 'date-fns';
-import { User } from '~~/server/database/schema';
+import { User } from '#shared/types';
 
 
 export default defineEventHandler(async (event) => {

@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { Buffer } from 'buffer';
 import { readFile, writeFile } from 'fs/promises';
-import { sanitizeFileName } from '../shared/utils';
+import { sanitizeFileName } from '#shared/utils';
 import { createError } from 'h3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
