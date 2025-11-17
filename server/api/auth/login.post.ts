@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createError } from '#imports'
 import { useDrizzle } from '#imports'
 import { setUserSession } from '#imports'
+import { getRefreshToken, getAccessToken } from '~~/server/utils/jwt'
 // @ts-ignore
 import bcrypt from 'bcrypt'
 
@@ -20,25 +21,26 @@ export default defineEventHandler(async (event) => {
     if (!user) {
         throw createError({
             statusCode: 401,
-            message: 'User not Found!',
+            statusMessage: 'User not Found!',
         })
     }
 
     if (!(await bcrypt.compare(password, user.password))) {
         throw createError({
             statusCode: 401,
-            message: 'Invalid credentials',
+            statusMessage: 'Wrong password!',
         })
     }
 
+    const { password: notUsed, ...payload } = user
+
     await setUserSession(event, {
-        user: {
-            email,
-            id: user.id,
-            name: user.name,
-            avatar: user.avatar
-        },
+        user: payload,
         loggedInAt: Date.now(),
+        jwt: {
+            accessToken: await getAccessToken(payload),
+            refreshToken: await getRefreshToken()
+        }
     })
 
     return setResponseStatus(event, 201)

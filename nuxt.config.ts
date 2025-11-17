@@ -11,10 +11,12 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/': { prerender: true },
-    '/login': { prerender: true },
-    '/api/**': {
-      cors: true
-    }
+    // '/login': { prerender: true },
+    // '/api/**': {
+    //   cors: true
+    // }
+  },
+  auth: {
   },
   nitro: {
     storage: {

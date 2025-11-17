@@ -42,7 +42,7 @@ const { data: count, execute: countExecute } = await useLazyAsyncData<number>('c
   immediate: true
 })
 
-const { data: documentData, pending: documentPending, execute } = await useAsyncData<Results[]>('documents', () =>
+const { data: documentData, pending: documentPending, execute, error: documentError } = await useAsyncData<Results[]>('documents', () =>
   $fetch<Results[]>('/api/documents', {
     query: {
       perPage: perPage.value,
@@ -88,19 +88,17 @@ const documentUpdated = async () => {
 <template>
   <div class="flex flex-row">
     <div class="flex flex-col gap-4 ">
-      <ClientOnly>
-        <div class="my-2">
-          <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
-            :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
-            <template #label="{ item }">
-              <UTooltip :text="item.metadata?.display_name || item.name">
-                <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
-              </UTooltip>
-            </template>
-          </UCheckboxGroup>
+      <ClientOnly class="my-2 flex flex-wrap w-full">
+        <UCheckboxGroup v-model="selectedDivision" indicator="hidden" size="xs" variant="card" legend="Bidang"
+          :items="availableDivisions" value-key="id" label-key="name" orientation="horizontal"
+          :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+          <template #label="{ item }">
+            <UTooltip :text="item.metadata?.display_name || item.name">
+              <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
+            </UTooltip>
+          </template>
+        </UCheckboxGroup>
 
-        </div>
         <template #fallback>
           <div class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
             <USkeleton v-for="value in 8" class="h-16 w-full" />
@@ -116,20 +114,17 @@ const documentUpdated = async () => {
           @click="showMoreCategories = !showMoreCategories" />
       </UTooltip>
 
-      <ClientOnly>
-        <div class="my-2 flex flex-wrap">
-          <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
-            :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
-            :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
-            <template #label="{ item }">
-              <UTooltip :text="item.metadata?.display_name || item.name">
-                <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
-              </UTooltip>
-            </template>
+      <ClientOnly class="my-2 flex flex-wrap w-full">
+        <UCheckboxGroup v-model="selectedCategory" indicator="hidden" size="xs" variant="card" legend="Kategori"
+          :items="showAvailableCategories" value-key="id" label-key="name" orientation="horizontal"
+          :ui="{ fieldset: 'flex flex-wrap space-x-2 space-y-2' }">
+          <template #label="{ item }">
+            <UTooltip :text="item.metadata?.display_name || item.name">
+              <span class="text-xs">{{ clampCharacters(item.metadata?.display_name || item.name, 15) }}</span>
+            </UTooltip>
+          </template>
 
-          </UCheckboxGroup>
-
-        </div>
+        </UCheckboxGroup>
 
         <template #fallback>
           <div class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
@@ -180,6 +175,9 @@ const documentUpdated = async () => {
         <div v-if="documentPending" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
           <USkeleton v-for="value in 6" class="h-36 w-full" />
         </div>
+
+        <UAlert v-else-if="documentError" icon="i-lucide-alert-triangle" color="error" variant="subtle"
+          title="Data Access Error" :description="`Could not load user list. Details: ${documentError}`" />
 
         <div v-else>
           <FileGridView v-if="layoutView === 'grid' && documentData" v-model="selected" :document="documentData" />

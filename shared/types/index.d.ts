@@ -1,30 +1,37 @@
-import type { Categories, Documents, Divisions, User as UserDB } from "~~/server/utils/drizzle"
+import type { tables } from "~~/server/utils/drizzle"
 
+export type Categories = typeof tables.categories.$inferSelect
+
+export type Divisions = typeof tables.divisions.$inferSelect
+
+export type Documents = typeof tables.documents.$inferSelect & {
+  metadata: DocumentMetadata
+}
+
+export type CategoriesDocumentsDivisions = typeof tables.categoriesDocumentsDivisions.$inferSelect
+
+export type DocumentsSummary = typeof tables.documentsSummary.$inferSelect
+
+export type User = typeof tables.users.$inferSelect
 
 export type FetchResponse<T> = {
   message: string
   data?: T
 }
 
-export interface User extends UserDB { }
-
 export type ItemMetadata = {
   display_name?: string
   description?: string
 }
 export type Category = Omit<Categories, 'createdAt' | 'metadata'> & {
-  metadata: ItemMetadata
+  metadata?: ItemMetadata
 }
 
 export type Division = Omit<Divisions, 'createdAt' | 'metadata'> & {
-  metadata: ItemMetadata
+  metadata?: ItemMetadata
 }
 
-export interface Document extends Documents {
-  metadata: DocumentMetadata
-}
-
-export type Results = Document & {
+export type Results = Documents & {
   categories: Category[]
   divisions: Division[]
 }
@@ -45,8 +52,6 @@ export interface DocumentMetadata extends StorageMeta {
   category_id: number[]
   division_id: number[]
 }
-
-
 
 export interface Notification {
   id: number

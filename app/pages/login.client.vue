@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
+import type { FormSubmitEvent, AuthFormField } from '#ui/types'
 
 const toast = useToast()
 
@@ -59,7 +59,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: error.message,
+      description: error.statusMessage,
       color: 'error'
     });
 
