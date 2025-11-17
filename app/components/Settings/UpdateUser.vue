@@ -6,7 +6,7 @@ import { toKebabCase, deepClone, sanitizeUrl, sanitizeFileName } from '#shared/u
 
 const toast = useToast()
 
-const { user, fetch: fetchUser } = useUserSession()
+const { data: user, } = useAuth()
 
 const profileSchema = z.object({
     // Use .trim() to handle whitespace from user input
@@ -124,7 +124,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
 
         await nextTick()
 
-        await fetchUser()
+        // await fetchUser()
 
         toast.add({
             title: 'Success',

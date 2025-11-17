@@ -1,7 +1,38 @@
+import type { UserSession, RefreshTokenEntry } from '#shared/types';
+import { SignJWT } from 'jose'
+
+// Map to store Refresh Tokens securely in-memory (for simple cases).
+// In a real app, this should be a persistent store like Redis or a Database.
+// The key is the Refresh Token string, and the value is the token entry.
+export const refreshTokensStore: Record<string, RefreshTokenEntry> = {};
+
+export const getAccessToken = async (data: UserSession) => {
+    const secret = new TextEncoder().encode(process.env.NUXT_AUTH_SESSION)
+
+    if (!secret) {
+        // Handle the case where the secret is not defined (CRITICAL ERROR)
+        throw new Error('NUXT_AUTH_SESSION environment variable is not defined.');
+    }
+
+    const accessToken = await new SignJWT(data).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('2h').sign(secret)
+
+    const refreshToken = Math.floor(Math.random() * (1000000000000000 - 1 + 1)) + 1
+    // 4. Store the Refresh Token and its associated data
+    refreshTokensStore[refreshToken] = {
+        accessToken, // Note: Storing the associated access token here is common for linking
+        data
+    };
+
+    return {
+        accessToken,
+        refreshToken
+    }
+}
 
 export function randomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min
 }
+
 
 export function randomFrom<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)]!

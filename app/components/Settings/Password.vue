@@ -19,11 +19,18 @@ const password = reactive<Partial<PasswordSchema>>({
 const updateUserPassword = async (event: FormSubmitEvent<PasswordSchema>) => {
   const { new: newPassword } = event.data
 
+  const requestEvent = useRequestEvent()
+
+
   try {
-    await $fetch('/api/password', {
-      method: 'put',
-      body: { password: newPassword }
-    })
+    const { data } = await useAsyncData(() => fetchWithCookie(requestEvent!, '/api/password', {
+      method: 'PUT',
+      body: {
+        password: password.new,
+      }
+    }))
+
+    console.log(data)
 
     toast.add({
       title: 'Success',

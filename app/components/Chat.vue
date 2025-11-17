@@ -7,7 +7,9 @@ defineProps<{
   collapsed?: boolean
 }>()
 
-const { user } = useUserSession()
+const { data: user } = useAuth()
+
+console.log(user.value)
 
 const question = ref<string>('')
 const threadId = uuid()

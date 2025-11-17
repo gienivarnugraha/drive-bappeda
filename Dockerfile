@@ -11,6 +11,9 @@ RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
+# Copy the rest of the source code
+COPY . /app
+
 # Set working directory for all subsequent stages
 WORKDIR /app
 
@@ -36,9 +39,6 @@ COPY package.json pnpm-lock.yaml ./
 
 # Install all dependencies
 RUN --mount=type=cache,id=pnpm_full,target=/pnpm/store pnpm install --frozen-lockfile
-
-# Copy the rest of the source code
-COPY . .
 
 # Run the build command (e.g., Nuxt/Next/Astro/SvelteKit/etc. build)
 RUN pnpm run build

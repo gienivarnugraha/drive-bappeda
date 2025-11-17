@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
+import type { FormSubmitEvent, AuthFormField } from '#ui/types'
 
 const toast = useToast()
 
-const { fetch, loggedIn } = useUserSession()
+const { status, data, signIn } = useAuth()
+
+definePageMeta({
+  auth: {
+    unauthenticatedOnly: true,
+    navigateAuthenticatedTo: '/home',
+  },
+})
 
 onMounted(() => {
   // const loggedIn = useSupabaseSession()
 
-  console.log('loggedIn: ', loggedIn.value)
+  console.log('loggedIn: ', status.value)
 
-  if (loggedIn.value) {
-    navigateTo('/home')
-  }
+  // if (loggedIn.value) {
+  //   navigateTo('/home')
+  // }
 })
 
 const fields: AuthFormField[] = [{
@@ -42,17 +49,10 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   const { email, password, } = payload.data
 
   try {
-    await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: {
-        email,
-        password
-      }
-    })
-
-    await fetch()
-
-    navigateTo('/home')
+    await signIn(
+      { email, password },
+      { callbackUrl: '/home' }
+    )
 
     toast.add({ title: 'Success', description: `Welcome Back ${email}!`, color: 'success' })
 

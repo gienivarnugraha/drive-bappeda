@@ -2,16 +2,18 @@ import type { User } from '#shared/types';
 import { inspect } from 'node:util';
 import { getFileExtension } from '~~/shared/utils';
 import { v4 as uuid } from 'uuid'
+import { getUserSession } from '~~/server/utils/jwt'
 
 // Define expected query types
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
 
 export default eventHandler(async (event) => {
   // Input Retrieval and Validation
+  await getUserSession(event)
+
   const formData = await readMultipartFormData(event);
 
   const query = getQuery<{ avatar: string }>(event);
-
 
   // Destructure and ensure required inputs are present
   const { avatar } = query;

@@ -1,7 +1,5 @@
 import { z } from 'zod'
-import { createError } from '#imports'
-import { useDrizzle } from '#imports'
-import { setUserSession } from '#imports'
+import { getAccessToken } from '#shared/utils';
 // @ts-ignore
 import bcrypt from 'bcrypt'
 
@@ -31,15 +29,20 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    await setUserSession(event, {
-        user: {
-            email,
-            id: user.id,
-            name: user.name,
-            avatar: user.avatar
-        },
-        loggedInAt: Date.now(),
+    const { accessToken, refreshToken } = await getAccessToken({
+        email,
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+        loggedInAt: Date.now()
     })
 
-    return setResponseStatus(event, 201)
+
+    return {
+        token: {
+            accessToken,
+            refreshToken
+        },
+    }
 })

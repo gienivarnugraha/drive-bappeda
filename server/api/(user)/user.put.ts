@@ -1,13 +1,15 @@
 import { useDrizzle, tables } from '#imports';
 // @ts-ignore
-import bcrypt from 'bcrypt'
 import { User } from '#shared/types';
+import { getUserSession } from '~~/server/utils/jwt'
 
 
 export default defineEventHandler(async (event) => {
     const { avatar, name } = await readBody<Pick<User, 'avatar' | 'name'>>(event);
 
     const db = useDrizzle()
+
+    await getUserSession(event)
 
     try {
         const user = await db.update(tables.users).set({
@@ -17,15 +19,6 @@ export default defineEventHandler(async (event) => {
             email: tables.users.email,
             name: tables.users.name,
             avatar: tables.users.avatar,
-        })
-
-        await replaceUserSession(event, {
-            user: {
-                id: user[0].id,
-                email: user[0].email,
-                name: user[0].name,
-                avatar: user[0].avatar
-            },
         })
 
         return setResponseStatus(event, 201)

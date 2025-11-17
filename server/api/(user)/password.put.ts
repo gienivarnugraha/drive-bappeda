@@ -3,6 +3,9 @@ import { useDrizzle, tables } from '#imports';
 import bcrypt from 'bcrypt'
 import { User } from '#shared/types';
 
+import { getToken, } from '#auth'
+import { useRequestFetch } from 'nuxt/app';
+import { getUserSession } from '~~/server/utils/jwt';
 export default defineEventHandler(async (event) => {
     const { password } = await readBody<Pick<User, 'password'>>(event);
 
@@ -10,7 +13,12 @@ export default defineEventHandler(async (event) => {
 
     const userSession = await getUserSession(event)
 
-    const data = await db.select({ userPassword: tables.users.password }).from(tables.users).where(eq(tables.users.id, userSession?.user?.id as string))
+    const data = await db
+        .select({ userPassword: tables.users.password })
+        .from(tables.users)
+        .where(
+            eq(tables.users.id, userSession?.user?.id as string)
+        )
 
     if (await bcrypt.compare(password, data[0].userPassword)) {
         throw createError({

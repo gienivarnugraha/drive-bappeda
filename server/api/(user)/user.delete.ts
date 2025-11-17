@@ -1,7 +1,7 @@
 import { useDrizzle, tables } from '#imports';
 import { eq } from 'drizzle-orm';
 import { User } from '#shared/types';
-
+import { getUserSession } from '~~/server/utils/jwt'
 const deleteAvatar = async (avatar: string) => {
     const storage = useStorage('public')
 
@@ -24,9 +24,10 @@ const deleteAvatar = async (avatar: string) => {
 export default defineEventHandler(async (event) => {
     const { id, avatar } = await readBody<Pick<User, 'id' | 'avatar'>>(event);
 
-    const user = await getUserSession(event)
+    const userSession = await getUserSession(event)
 
-    if (user && (id as unknown as string) === user.id) {
+
+    if (userSession && (id as unknown as string) === userSession.id) {
         throw createError({
             statusCode: 400,
             message: `Cannot delete current user`

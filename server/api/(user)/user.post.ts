@@ -1,9 +1,8 @@
 import { useDrizzle, tables } from '#imports';
 // @ts-ignore
 import bcrypt from 'bcrypt'
-import { set } from 'date-fns';
 import { User } from '#shared/types';
-
+import { getUserSession } from '~~/server/utils/jwt'
 
 export default defineEventHandler(async (event) => {
     const payload = await readBody<User>(event);
@@ -12,8 +11,7 @@ export default defineEventHandler(async (event) => {
 
     const { password, ...rest } = payload
 
-    console.log(payload)
-
+    await getUserSession(event)
 
     const hashedPassword = await bcrypt.hash(password, 2)
 

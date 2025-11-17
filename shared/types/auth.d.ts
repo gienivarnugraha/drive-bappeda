@@ -1,20 +1,19 @@
-import type { User as UserDB } from "#shared/types"
+import type { UserSession } from "#shared/types"
 
-declare module '#auth-utils' {
-    interface User extends UserDB { }
+// file: ~/next-auth.d.ts
+import type { DefaultSession } from 'next-auth'
 
-    interface UserSession {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        extended?: any
-        jwt?: {
-            accessToken: string
-            refreshToken: string
-        }
-        loggedInAt: number
-    }
-
-    interface SecureSessionData {
+declare module 'auth' {
+    /* Returned by `useAuth`, `getSession` and `getServerSession` */
+    interface Session extends DefaultSession {
+        user: UserSession
     }
 }
 
-export { }
+// file: ~/next-auth.d.ts
+declare module 'auth/jwt' {
+    /** Returned by the `jwt` callback and `getToken` */
+    interface JWT {
+        sessionToken?: string
+    }
+}

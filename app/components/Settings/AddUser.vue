@@ -8,7 +8,7 @@ const toast = useToast()
 
 const addView = ref(false)
 
-const { user } = useUserSession()
+const { data: user } = useAuth()
 
 // --- 1. Zod Schema ---
 const schema = z.object({
