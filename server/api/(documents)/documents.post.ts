@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
     const { filenames, categories, divisions } = payload
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const processFiles: string[] = []
 
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
                 thumbnailSrc: `${filepath}/${sanitizeFileName(filename, true)}.png`,
             } as DocumentMetadata
 
-            await processDocument(filename, metadata)
+            await processDocument(event, filename, metadata)
         }
 
         sseSend('close')

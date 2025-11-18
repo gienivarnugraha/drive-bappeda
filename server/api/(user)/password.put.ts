@@ -6,13 +6,16 @@ import type { User } from '#shared/types';
 export default defineEventHandler(async (event) => {
     const { password } = await readBody<Pick<User, 'password'>>(event);
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const userSession = await getUserSession(event)
 
-    const data = await db.select({ userPassword: tables.users.password }).from(tables.users).where(eq(tables.users.id, userSession?.user?.id as string))
+    //const data = await db.select({ userPassword: tables.users.password }).from(tables.users).where(eq(tables.users.id, userSession?.user?.id as string))
+    const data = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, userSession?.user?.id as string),
+    })
 
-    if (await bcrypt.compare(password, data[0].userPassword)) {
+    if (await bcrypt.compare(password, data?.password)) {
         throw createError({
             statusCode: 422,
             message: `New password cannot be the same as the current password`

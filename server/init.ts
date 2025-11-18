@@ -3,13 +3,20 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from "drizzle-orm/node-postgres";
 //@ts-ignore
 import bcrypt from 'bcrypt';
+import { Pool } from 'pg';
 import { convertToMarkdown } from './convert';
 
 async function run() {
 
     console.error('⏳ Starting migrations...');
 
-    const db = useDrizzle()
+    const pool = new Pool({
+        connectionString: process.env.PG_DB,
+        max: 20, // Max number of clients in the pool (default is 10)
+        idleTimeoutMillis: 30000, // How long a client is allowed to remain idle
+    });
+
+    const db = drizzle(pool)
 
     try {
         await migrate(db, { migrationsFolder: './drizzle' });
@@ -79,11 +86,11 @@ async function run() {
         ]
 
 
-        await useDrizzle().insert(tables.categories).values(categories).onConflictDoNothing({ target: tables.categories.name })
+        await db.insert(tables.categories).values(categories).onConflictDoNothing({ target: tables.categories.name })
 
-        await useDrizzle().insert(tables.divisions).values(divisions).onConflictDoNothing({ target: tables.divisions.name })
+        await db.insert(tables.divisions).values(divisions).onConflictDoNothing({ target: tables.divisions.name })
 
-        await useDrizzle().insert(tables.users).values(users).onConflictDoNothing({ target: tables.users.email })
+        await db.insert(tables.users).values(users).onConflictDoNothing({ target: tables.users.email })
 
         return { result: 'success' }
 
@@ -91,7 +98,7 @@ async function run() {
         console.error('Script terminated due to error.', error);
         process.exit(1);
     } finally {
-        await db.$client.end(); // Always close the pool when done
+        await pool.end(); // Always close the pool when done
     }
 }
 

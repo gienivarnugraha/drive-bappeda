@@ -4,9 +4,10 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { InMemoryStore } from '@langchain/core/stores'
 import { CacheBackedEmbeddings } from 'langchain/embeddings/cache_backed'
 import { useDrizzle } from '~~/server/utils/drizzle'
+import { H3Event } from 'h3'
 
-export function getModel(model: 'google' | 'openai') {
-  const config = useRuntimeConfig()
+export function getModel(event: H3Event, model: 'google' | 'openai') {
+  const config = useRuntimeConfig(event)
   switch (model) {
     case 'google':
       return new ChatGoogleGenerativeAI({
@@ -25,8 +26,8 @@ export function getModel(model: 'google' | 'openai') {
   }
 }
 
-export function getEmbedding(model: 'google' | 'openai') {
-  const config = useRuntimeConfig()
+export function getEmbedding(event: H3Event, model: 'google' | 'openai') {
+  const config = useRuntimeConfig(event)
 
   switch (model) {
     case 'google':
@@ -43,8 +44,8 @@ export function getEmbedding(model: 'google' | 'openai') {
   }
 }
 
-export function cachedEmbeddings(): CacheBackedEmbeddings {
-  const underlyingEmbeddings = getEmbedding('openai')
+export function cachedEmbeddings(event: H3Event): CacheBackedEmbeddings {
+  const underlyingEmbeddings = getEmbedding(event, 'openai')
 
   const inMemoryStore = new InMemoryStore<Uint8Array>()
 
@@ -57,9 +58,9 @@ export function cachedEmbeddings(): CacheBackedEmbeddings {
   )
 }
 
-export async function getVectorStore(): Promise<PGVectorStore> {
-  const embedding = cachedEmbeddings()
-  const db = useDrizzle()
+export async function getVectorStore(event: H3Event): Promise<PGVectorStore> {
+  const embedding = cachedEmbeddings(event)
+  const db = useDrizzle(event)
 
   return await PGVectorStore.initialize(embedding, {
     pool: db.$client,

@@ -1,6 +1,6 @@
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { eq } from 'drizzle-orm';
-import { User } from '#shared/types';
+import type { User } from '#shared/types';
 
 const deleteAvatar = async (avatar: string) => {
     const storage = useStorage('public')
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     try {
         await db.delete(tables.users).where(eq(tables.users.id, id as unknown as string))

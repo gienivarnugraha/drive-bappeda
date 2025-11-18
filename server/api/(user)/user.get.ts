@@ -3,7 +3,7 @@ import { getTableColumns } from 'drizzle-orm';
 
 // Destructure to exclude the 'content' column
 export default defineEventHandler(async (event) => {
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const { password, ...rest } = getTableColumns(tables.users);
 

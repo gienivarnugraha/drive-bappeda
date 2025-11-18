@@ -7,7 +7,7 @@ import type { User } from '#shared/types';
 export default defineEventHandler(async (event) => {
     const payload = await readBody<User>(event);
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const { password, ...rest } = payload
 

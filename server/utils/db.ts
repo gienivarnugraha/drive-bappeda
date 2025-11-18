@@ -4,6 +4,7 @@ import { DataSource, type DataSourceOptions } from 'typeorm'
 import type { Documents } from '#shared/types'
 import { inspect } from 'node:util'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { H3Event } from 'h3';
 
 // export const postgresConnectionOptions = {
 //   type: 'postgres',
@@ -42,11 +43,11 @@ import { useDrizzle, tables } from '~~/server/utils/drizzle'
 //   }
 // }
 
-export const modifyRelation = async (data: { documentId: Documents['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
+export const modifyRelation = async (event: H3Event, data: { documentId: Documents['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
 
   const { documentId, categoryIds, divisionIds } = data
 
-  const db = useDrizzle()
+  const db = useDrizzle(event)
 
   let request
 

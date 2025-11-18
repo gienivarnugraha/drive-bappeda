@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import { createError } from '#imports'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { useDrizzle } from '~~/server/utils/drizzle'
 import { setUserSession } from '#imports'
 import { getRefreshToken, getAccessToken } from '~~/server/utils/jwt'
 // @ts-ignore
 import bcrypt from 'bcrypt'
 
 export default defineEventHandler(async (event) => {
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const { email, password } = await readValidatedBody(event, z.object({
         email: z.string().email(),
@@ -38,8 +38,8 @@ export default defineEventHandler(async (event) => {
         user: payload,
         loggedInAt: Date.now(),
         jwt: {
-            accessToken: await getAccessToken(payload),
-            refreshToken: await getRefreshToken()
+            accessToken: await getAccessToken(event, payload),
+            refreshToken: await getRefreshToken(event)
         }
     })
 

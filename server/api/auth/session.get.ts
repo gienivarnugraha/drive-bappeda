@@ -2,7 +2,7 @@ import { verify } from '@tsndr/cloudflare-worker-jwt'
 
 export default eventHandler(async (event) => {
     const session = await getUserSession(event)
-    const config = useRuntimeConfig()
+    const config = useRuntimeConfig(event)
 
     if (!session.jwt?.accessToken) {
         throw createError({

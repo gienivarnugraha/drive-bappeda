@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
     const hashedPassword = await hashPassword(password)
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     try {
         const user = await db.insert(tables.users).values({
@@ -23,10 +23,10 @@ export default defineEventHandler(async (event) => {
 
         await setUserSession(event, {
             user: {
-                id: user[0].id,
-                email: user[0].email,
-                name: user[0].name,
-                avatar: user[0].avatar
+                id: user[0]?.id,
+                email: user[0]?.email,
+                name: user[0]?.name,
+                avatar: user[0]?.avatar
             },
             loggedInAt: Date.now(),
         })

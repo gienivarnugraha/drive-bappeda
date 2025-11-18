@@ -21,12 +21,12 @@ export default defineEventHandler(async (event) => {
 
     const divisionIds = divisions.length ? divisions.map(division => division.id) : []
 
-    await modifyRelation({ documentId }, 'delete')
+    await modifyRelation(event, { documentId }, 'delete')
 
     // add the relation again after deleting
-    await modifyRelation({ documentId, categoryIds, divisionIds }, 'edit')
+    await modifyRelation(event, { documentId, categoryIds, divisionIds }, 'edit')
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
 
     try {

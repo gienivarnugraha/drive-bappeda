@@ -4,13 +4,14 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from 'pg';
 export { sql, eq, and, or } from 'drizzle-orm'
 import { useRuntimeConfig } from 'nuxt/app';
+import { H3Event } from 'h3'
 
 import * as schema from '../database/schema'
 
 export const tables = schema
 
-export function useDrizzle() {
-    const config = useRuntimeConfig()
+export function useDrizzle(event: H3Event) {
+    const config = useRuntimeConfig(event)
     // Create the pg Pool (same configuration as above)
     const pool = new Pool({
         connectionString: config.PG_DB,

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
     const { category, division, perPage, page, orderBy, orderDir } = query
 
-    const db = useDrizzle()
+    const db = useDrizzle(event)
 
     const filter_category_ids = category ? `{${stringToNumberArray(category)}}` : null
     const filter_division_ids = division ? `{${stringToNumberArray(division)}}` : null

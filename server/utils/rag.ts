@@ -6,6 +6,7 @@ import { formatDocumentsAsString } from 'langchain/util/document'
 import { getVectorStore, getModel } from '~~/server/utils/ai'
 import { MultiQueryRetriever } from 'langchain/retrievers/multi_query'
 import { z } from 'zod'
+import { H3Event } from 'h3';
 
 const messageHistories: { [sessionId: string]: ChatMessageHistory } = {}
 
@@ -28,9 +29,9 @@ const getMessageHistoryForSession = (sessionId: string) => {
  * @returns {MultiVectorRetriever} - An instance of MultiVectorRetriever that can be used to search for similar documents.
  */
 // export const getRetriever = (): MultiVectorRetriever => {
-export const getRetriever = async (): Promise<MultiQueryRetriever> => {
-  const vectorstore = await getVectorStore()
-  const model = getModel('google')
+export const getRetriever = async (event: H3Event): Promise<MultiQueryRetriever> => {
+  const vectorstore = await getVectorStore(event)
+  const model = getModel(event, 'google')
 
   return MultiQueryRetriever.fromLLM({
     llm: model,
@@ -38,8 +39,8 @@ export const getRetriever = async (): Promise<MultiQueryRetriever> => {
   })
 }
 
-const getContextChain = async () => {
-  const retriever = await getRetriever()
+const getContextChain = async (event: H3Event,) => {
+  const retriever = await getRetriever(event)
 
   return RunnableSequence.from([
     input => input.question,
@@ -48,10 +49,12 @@ const getContextChain = async () => {
   ])
 }
 
-const config = useRuntimeConfig()
+export function generateAnswerFromDocument(event: H3Event,) {
 
-//    - if the context contains a chart, add the answer format as <Chart> component in new line
-const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant. 
+  const config = useRuntimeConfig()
+
+  //    - if the context contains a chart, add the answer format as <Chart> component in new line
+  const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant. 
 
     Given a user question, and context. 
     Your task is to provide detailed answer to the user's question based ONLY on the provided context include relevant table or image if needed
@@ -74,17 +77,17 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
     Answer:
     Source:
     `
-// - End the answer with __END__
+  // - End the answer with __END__
 
-const answerPrompt = ChatPromptTemplate.fromMessages([
-  ['system', ANSWER_TEMPLATE],
-  // new MessagesPlaceholder("history"),
-  new MessagesPlaceholder('question'),
-  new MessagesPlaceholder('context')
-])
+  const answerPrompt = ChatPromptTemplate.fromMessages([
+    ['system', ANSWER_TEMPLATE],
+    // new MessagesPlaceholder("history"),
+    new MessagesPlaceholder('question'),
+    new MessagesPlaceholder('context')
+  ])
 
-export function generateAnswerFromDocument() {
-  const model = getModel('google')
+
+  const model = getModel(event, 'google')
 
 
   // Use z.discriminatedUnion for the best performance and type inference in TypeScript

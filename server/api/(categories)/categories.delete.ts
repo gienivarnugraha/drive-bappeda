@@ -5,7 +5,7 @@ import { useDrizzle, tables } from '~~/server/utils/drizzle'
 export default eventHandler(async (event) => {
   const payload = await readBody<Pick<Category, 'id'>>(event)
 
-  const db = useDrizzle()
+  const db = useDrizzle(event)
 
   let request = db
     .delete(tables.categories)
@@ -15,7 +15,7 @@ export default eventHandler(async (event) => {
   try {
     const response = await request
 
-    return { message: `Success Delete category: ${response[0].name}`, data: response[0] }
+    return { message: `Success Delete category: ${response[0]?.name}`, data: response[0] }
 
   } catch (error: any) {
     console.error(`error Delete category: ${inspect(error, true, null, true)}`)

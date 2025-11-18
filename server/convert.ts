@@ -5,6 +5,7 @@ import { sanitizeFileName } from '#shared/utils';
 import { createError } from 'h3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { type H3Event } from 'h3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -54,8 +55,8 @@ function runPythonConversion(input: string, output: string): Promise<string> {
     });
 }
 
-export async function convertToMarkdown(file: string): Promise<{ message: string, data: string }> {
-    const config = useRuntimeConfig()
+export async function convertToMarkdown(event: H3Event, file: string): Promise<{ message: string, data: string }> {
+    const config = useRuntimeConfig(event)
     const openAiKey = config.OPENAI_API_KEY;
     if (!openAiKey) {
         throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY is not configured on the server.' });
