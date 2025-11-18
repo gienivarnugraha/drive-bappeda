@@ -4,22 +4,21 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    'nuxt-auth-utils'
+    'nuxt-auth-utils',
+    // '@nuxt/image'
   ],
   devtools: {
     enabled: false
   },
   routeRules: {
     '/': { prerender: true },
-    // '/login': { prerender: true },
-    // '/api/**': {
-    //   cors: true
-    // }
+    '/login': { prerender: true },
+    '/api/**': {
+      cors: true
+    }
   },
   runtimeConfig: {
 
-  },
-  auth: {
   },
   nitro: {
     storage: {

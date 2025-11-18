@@ -1,7 +1,7 @@
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 
 export default eventHandler(async (event) => {
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   try {
     const response = await db.$count(tables.documents)

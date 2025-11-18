@@ -55,8 +55,8 @@ function runPythonConversion(input: string, output: string): Promise<string> {
     });
 }
 
-export async function convertToMarkdown(event: H3Event, file: string): Promise<{ message: string, data: string }> {
-    const config = useRuntimeConfig(event)
+export async function convertToMarkdown(file: string): Promise<{ message: string, data: string }> {
+    const config = useRuntimeConfig()
     const openAiKey = config.OPENAI_API_KEY;
     if (!openAiKey) {
         throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY is not configured on the server.' });

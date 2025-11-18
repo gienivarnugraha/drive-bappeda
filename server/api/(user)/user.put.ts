@@ -7,7 +7,7 @@ import type { User } from '#shared/types';
 export default defineEventHandler(async (event) => {
     const { avatar, name } = await readBody<Pick<User, 'avatar' | 'name'>>(event);
 
-    const db = useDrizzle(event)
+    const db = useDrizzle()
 
     try {
         const user = await db.update(tables.users).set({

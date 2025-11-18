@@ -12,11 +12,13 @@ const props = defineProps({
 
 const state: Ref<Results[]> = ref([])
 
-onMounted(() => {
+onMounted(async () => {
   if (props.document) {
     state.value = props.document
   }
 })
+
+const thumbnail = ref('')
 
 const { isFileDetailsSlideoverOpen } = useDashboard()
 
@@ -27,8 +29,6 @@ const selected = ref<Results | null>(null)
 const isSelected = (item: Results) => item.id === selected.value?.id
 
 const emits = defineEmits(['update:modelValue'])
-
-const thumbnail = (item: DocumentMetadata) => sanitizeUrl(`/${item.thumbnailSrc}`)
 
 const selectDocument = (data: Results) => {
   if (selected.value?.id === data.id) {
@@ -62,7 +62,9 @@ const selectDocument = (data: Results) => {
         </div>
       </template>
 
-      <img :src="thumbnail(item.metadata)" class="w-full h-24 sm:h-30 object-cover rounded" />
+      <!-- <img :src="item.metadata.thumbnailSrc" class="w-full h-24 sm:h-30 object-cover rounded" /> -->
+      <img :src="`/file?filename=${encodeURIComponent(item.metadata.thumbnailSrc)}`"
+        class="w-full h-24 sm:h-30 object-cover rounded" />
 
       <template #footer>
         <div class="grid gap-2">

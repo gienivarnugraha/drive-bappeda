@@ -7,7 +7,7 @@ import { getRefreshToken, getAccessToken } from '~~/server/utils/jwt'
 import bcrypt from 'bcrypt'
 
 export default defineEventHandler(async (event) => {
-    const db = useDrizzle(event)
+    const db = useDrizzle()
 
     const { email, password } = await readValidatedBody(event, z.object({
         email: z.string().email(),
@@ -38,8 +38,8 @@ export default defineEventHandler(async (event) => {
         user: payload,
         loggedInAt: Date.now(),
         jwt: {
-            accessToken: await getAccessToken(event, payload),
-            refreshToken: await getRefreshToken(event)
+            accessToken: await getAccessToken(payload),
+            refreshToken: await getRefreshToken()
         }
     })
 

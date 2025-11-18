@@ -29,9 +29,9 @@ const getMessageHistoryForSession = (sessionId: string) => {
  * @returns {MultiVectorRetriever} - An instance of MultiVectorRetriever that can be used to search for similar documents.
  */
 // export const getRetriever = (): MultiVectorRetriever => {
-export const getRetriever = async (event: H3Event): Promise<MultiQueryRetriever> => {
-  const vectorstore = await getVectorStore(event)
-  const model = getModel(event, 'google')
+export const getRetriever = async (): Promise<MultiQueryRetriever> => {
+  const vectorstore = await getVectorStore()
+  const model = getModel('google')
 
   return MultiQueryRetriever.fromLLM({
     llm: model,
@@ -39,8 +39,8 @@ export const getRetriever = async (event: H3Event): Promise<MultiQueryRetriever>
   })
 }
 
-const getContextChain = async (event: H3Event,) => {
-  const retriever = await getRetriever(event)
+const getContextChain = async () => {
+  const retriever = await getRetriever()
 
   return RunnableSequence.from([
     input => input.question,
@@ -49,7 +49,7 @@ const getContextChain = async (event: H3Event,) => {
   ])
 }
 
-export function generateAnswerFromDocument(event: H3Event,) {
+export function generateAnswerFromDocument() {
 
   const config = useRuntimeConfig()
 
@@ -87,7 +87,7 @@ export function generateAnswerFromDocument(event: H3Event,) {
   ])
 
 
-  const model = getModel(event, 'google')
+  const model = getModel('google')
 
 
   // Use z.discriminatedUnion for the best performance and type inference in TypeScript

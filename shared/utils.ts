@@ -15,6 +15,28 @@ export function dateToLocale(date: string | null) {
     }
 }
 
+/**
+ * Simple helper function to determine MIME type based on file extension.
+ * You might use a package like 'mime-types' in a real app.
+ */
+export function getMimeType(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+
+    switch (ext) {
+        case 'png': return 'image/png';
+        case 'jpg':
+        case 'jpeg': return 'image/jpeg';
+        case 'gif': return 'image/gif';
+        case 'webp': return 'image/webp';
+        case 'pdf': return 'application/pdf';
+        case 'doc': return 'application/msword';
+        case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        case 'xls': return 'application/vnd.ms-excel';
+        case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        default: return 'application/octet-stream';
+    }
+}
+
 export const stringToNumberArray = (input: string[] | string): number[] | undefined => {
     // 1. Handle null input immediately
     if (input === undefined || input.length === 0 || input.includes('0')) {

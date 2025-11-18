@@ -3,7 +3,12 @@ import { formatBytes, deepClone, sanitizeUrl, dateToLocale } from '#shared/utils
 import type { Results, Category, Division, } from '#shared/types'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useItems } from '~/composables/useItems'
+import { getThumbnail } from '~/utils/file'
 import { z } from 'zod'
+
+const props = defineProps<{
+  document: Results
+}>()
 
 const { smallerThanLg } = useTailwindBreakpoints()
 
@@ -11,43 +16,18 @@ const { isFileDetailsSlideoverOpen } = useDashboard()
 
 const { divisions, categories } = await useItems()
 
+const isEditing: Ref<boolean> = ref(false)
 
-const props = defineProps<{
-  document: Results
-}>()
+const toast = useToast()
 
 const isSubmitting: Ref<boolean> = ref(false)
 
-const setData = (item: Results, clear: boolean = false) => {
+const setData = async (item: Results, clear: boolean = false) => {
   state.title = clear ? '' : item.title
   state.description = clear ? '' : item.description
   state.categories = clear ? [] : deepClone(item.categories)
   state.divisions = clear ? [] : deepClone(item.divisions)
 }
-
-onUnmounted(() => {
-  setData(props.document, true)
-  watcher()
-})
-onMounted(() => {
-  setData(props.document)
-})
-
-const watcher = watch(() => props.document, (doc) => {
-  setData(doc)
-
-  if (isEditing.value) {
-    isEditing.value = false
-  }
-})
-
-const isEditing: Ref<boolean> = ref(false)
-
-const toast = useToast()
-
-const config = useRuntimeConfig()
-
-const storageUrl = config.public.storageUrl
 
 const schema = z.object({
   title: z.string().nullable(),
@@ -63,6 +43,28 @@ const state = reactive<Schema>({
   description: '',
   categories: [],
   divisions: [],
+})
+
+onUnmounted(() => {
+  setData(props.document, true)
+  watcher()
+})
+
+onMounted(() => {
+  if (!isEmpty(props.document)) {
+    setData(props.document)
+  }
+
+})
+
+const watcher = watch(() => props.document, (doc) => {
+  if (isEmpty(props.document)) return
+
+  setData(doc)
+
+  if (isEditing.value) {
+    isEditing.value = false
+  }
 })
 
 const emits = defineEmits(['update:document'])
@@ -163,8 +165,9 @@ function isEmpty(obj: Object) {
     <template #body>
       <div class="flex flex-col px-2 overflow-y-auto  max-w-full  lg:max-w-84">
         <UForm :schema="schema" :state="state" class="space-y-4 " @submit="onSubmit">
-          <img :src="sanitizeUrl(`${storageUrl}/${document.metadata.thumbnailSrc}`)"
-            class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail">
+          <img loading="lazy" decoding="auto"
+            :src="`/file?filename=${encodeURIComponent(document.metadata.thumbnailSrc)}`"
+            class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail" />
 
           <UFormField v-if="isEditing" label="Judul File" name="title">
             <UTextarea v-model="state.title" class="w-full" :rows="2" />

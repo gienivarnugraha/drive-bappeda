@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const db = useDrizzle(event)
+    const db = useDrizzle()
 
     try {
         await db.delete(tables.users).where(eq(tables.users.id, id as unknown as string))

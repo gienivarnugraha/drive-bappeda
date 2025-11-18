@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
     const hashedPassword = await hashPassword(password)
 
-    const db = useDrizzle(event)
+    const db = useDrizzle()
 
     try {
         const user = await db.insert(tables.users).values({

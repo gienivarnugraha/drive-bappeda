@@ -95,7 +95,7 @@ const cta = {
 
           <div
             class="mt-16 relative aspect-video md:aspect-2/1  rounded-lg shadow-xl overflow-hidden flex items-center justify-center p-8 border border-gray-200 dark:border-gray-700">
-            <img src="/hero.png" class="text-primary-400 text-9xl absolute inset-0 m-auto object-cover " />
+            <img src="/hero.png" class="absolute inset-0 m-auto object-cover " />
             <!-- <div class="relative z-10 text-gray-500 dark:text-gray-400 text-lg">
               <p>Imagine your chatbot interface here!</p>
               <p class="text-sm mt-2">

@@ -5,7 +5,7 @@ import { useDrizzle, tables } from '~~/server/utils/drizzle'
 export default eventHandler(async (event) => {
   const payload = await readBody<Pick<Category, 'id'>>(event)
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   let request = db
     .delete(tables.categories)

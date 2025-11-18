@@ -7,7 +7,7 @@ import { toSnakeCase, toTitleCase } from '#shared/utils'
 export default eventHandler(async (event) => {
   const { name, metadata } = await readBody<Category>(event)
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   let request = db
     .insert(tables.categories)

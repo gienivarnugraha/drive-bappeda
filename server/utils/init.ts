@@ -184,9 +184,9 @@ export const documentSplitter = (file: string) => {
   return splitter
 }
 
-const generateSummaries = async (event: H3Event, docs: Document[], ids: { fileId: string, docIds: string[] }, filename: string) => {
+const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filename: string) => {
 
-  const model = getModel(event, 'openai')
+  const model = getModel('openai')
 
   const fileSummary = `${sanitizeFileName(filename)}_summary.json`
   sseSend('push:notif', { message: `checking if backup summary exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })
@@ -354,8 +354,8 @@ export const getDocumentSummary = async (model: ChatGoogleGenerativeAI | ChatOpe
   }
 }
 
-const addToVectorStore = async (event: H3Event, docs: Document[], filename: string, documentData: DocumentData) => {
-  const vectorstore = await getVectorStore(event)
+const addToVectorStore = async (docs: Document[], filename: string, documentData: DocumentData) => {
+  const vectorstore = await getVectorStore()
 
 
   sseSend("push:notif", { message: `adding data to vector store... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
@@ -373,9 +373,9 @@ const addToVectorStore = async (event: H3Event, docs: Document[], filename: stri
 
   const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
 
-  await storeToDB(event, slicedDocuments, fileMetadata)
+  await storeToDB(slicedDocuments, fileMetadata)
 
-  const summaries = await generateSummaries(event, docs, ids, filename)
+  const summaries = await generateSummaries(docs, ids, filename)
 
   if (summaries) {
 
@@ -393,13 +393,13 @@ const addToVectorStore = async (event: H3Event, docs: Document[], filename: stri
  * @returns A promise that resolves when the data has been successfully stored to the database.
  */
 
-const storeToDB = async (event: H3Event, doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
+const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
   const queryOutput = z.object({
     title: z.string().describe('Title of the document'),
     summary: z.string().describe('Summary of the document'),
   })
 
-  const model = getModel(event, 'openai')
+  const model = getModel('openai')
 
   const { category_id, division_id, filename, fileId, ...rest } = data
 
@@ -418,7 +418,7 @@ const storeToDB = async (event: H3Event, doc: Document[], data: Omit<DocumentMet
 
   const { title, summary } = await prompt.pipe(model.withStructuredOutput(queryOutput)).invoke({ content })
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   try {
     const response = await db.insert(tables.documents).values({
@@ -434,7 +434,7 @@ const storeToDB = async (event: H3Event, doc: Document[], data: Omit<DocumentMet
 
     sseSend('push:notif', { message: `success creating new data... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
     // insert to relation table
-    const relationResponse = await modifyRelation(event, { documentId: response[0].id, categoryIds: category_id, divisionIds: division_id }, 'edit')
+    const relationResponse = await modifyRelation({ documentId: response[0]?.id, categoryIds: category_id, divisionIds: division_id }, 'edit')
 
     if (relationResponse) {
       sseSend('push:notif', { message: 'success adding document relations...', status: 'info' })
@@ -462,7 +462,7 @@ type DocumentData = {
  * @param {string} file - The file path with extension
  * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
  */
-export const processDocument = async (event: H3Event, filepath: string, documentData: DocumentData) => {
+export const processDocument = async (filepath: string, documentData: DocumentData) => {
 
   const documents = await loadDocument(filepath)
 
@@ -474,7 +474,7 @@ export const processDocument = async (event: H3Event, filepath: string, document
 
   const filename = basename(filepath, extension)
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   sseSend('push:notif', { message: `getting ids from database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
@@ -499,7 +499,7 @@ export const processDocument = async (event: H3Event, filepath: string, document
           return
         }
 
-        await addToVectorStore(event, docs, filepath, documentData)
+        await addToVectorStore(docs, filepath, documentData)
 
       } catch (error: any) {
         console.error('error fetching vector store', error)
@@ -510,7 +510,7 @@ export const processDocument = async (event: H3Event, filepath: string, document
 
       sseSend('push:notif', { message: `file not exists in database... ${getClampedFileNameWithExtension(filename)}`, status: 'info' })
 
-      await addToVectorStore(event, docs, filepath, documentData)
+      await addToVectorStore(docs, filepath, documentData)
 
     }
 

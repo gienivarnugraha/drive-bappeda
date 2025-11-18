@@ -43,11 +43,11 @@ import { H3Event } from 'h3';
 //   }
 // }
 
-export const modifyRelation = async (event: H3Event, data: { documentId: Documents['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
+export const modifyRelation = async (data: { documentId: Documents['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
 
   const { documentId, categoryIds, divisionIds } = data
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   let request
 

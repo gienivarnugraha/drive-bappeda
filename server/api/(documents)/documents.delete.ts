@@ -2,6 +2,7 @@ import { inspect } from 'node:util'
 import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { sql } from 'drizzle-orm'
+import { modifyRelation } from '~~/server/utils/db'
 
 type Schema = {
     documentId: string
@@ -12,9 +13,11 @@ export default defineEventHandler(async (event) => {
 
     const { documentId } = payload
 
-    const db = useDrizzle(event)
+    const db = useDrizzle()
 
     try {
+        await modifyRelation({ documentId: parseInt(documentId) }, 'delete')
+
         const document = await db.delete(tables.documents).where(eq(tables.documents.id, parseInt(documentId))).returning()
 
         const storage = useStorage('public')
@@ -30,7 +33,7 @@ export default defineEventHandler(async (event) => {
                 .delete(tables.documentsSummary)
                 .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' = ${document[0]?.uuid}`)
 
-            return { message: `Success Delete summary: ${getClampedFileNameWithExtension(document[0]?.filename)}` }
+            return { message: `Success Delete summary: ${getClampedFileNameWithExtension(document[0]?.filename as string)}` }
 
         } catch (summaryError: any) {
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '#ui/types'
-import { sanitizeUrl } from '#shared/utils'
 import type { User } from '#auth-utils'
+import { getThumbnail } from '../utils/file';
 
 defineProps<{
   collapsed?: boolean
@@ -17,11 +17,12 @@ const user = ref({
 
 const { user: profile, session, clear } = useUserSession()
 
-const setData = (data: User) => {
+const setData = async (data: User) => {
   user.value.name = data.name || ''
-  user.value.avatar.src = sanitizeUrl(`/avatars/${data.avatar || ''}`)
+  user.value.avatar.src = `/file?filename=avatars/${encodeURIComponent(data.avatar as string)}`
   user.value.avatar.alt = data.name || ''
 }
+
 
 const watcher = watch(() => profile.value, (val) => {
   if (val) {

@@ -4,8 +4,8 @@ import { H3Event, appendResponseHeader } from 'h3'
 import { parse, parseSetCookie, serialize } from 'cookie-es'
 
 
-export const getAccessToken = async (event: H3Event, payload: User) => {
-    const config = useRuntimeConfig(event)
+export const getAccessToken = async (payload: User) => {
+    const config = useRuntimeConfig()
     // Create a token
     return await sign({
         ...payload,
@@ -15,8 +15,8 @@ export const getAccessToken = async (event: H3Event, payload: User) => {
     )
 }
 
-export const getRefreshToken = async (event: H3Event) => {
-    const config = useRuntimeConfig(event)
+export const getRefreshToken = async () => {
+    const config = useRuntimeConfig()
     // Create a token
     return await sign({
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
@@ -25,8 +25,8 @@ export const getRefreshToken = async (event: H3Event) => {
     )
 }
 
-export const verifyToken = async (event: H3Event, token: string) => {
-    const config = useRuntimeConfig(event)
+export const verifyToken = async (token: string) => {
+    const config = useRuntimeConfig()
     // Verify token
     const verifiedToken = await verify(token, config.session.password as string)
 
@@ -41,7 +41,7 @@ export const verifyToken = async (event: H3Event, token: string) => {
 
 export const refreshToken = async (event: H3Event) => {
 
-    const config = useRuntimeConfig(event)
+    const config = useRuntimeConfig()
 
     const session = await getUserSession(event)
 

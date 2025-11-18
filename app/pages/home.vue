@@ -180,9 +180,9 @@ const documentUpdated = async () => {
           title="Data Access Error" :description="`Could not load user list. Details: ${documentError}`" />
 
         <div v-else>
-          <FileGridView v-if="layoutView === 'grid' && documentData" v-model="selected" :document="documentData" />
+          <LazyFileGridView v-if="layoutView === 'grid' && documentData" v-model="selected" :document="documentData" />
 
-          <FileTableView v-if="layoutView === 'table' && documentData" v-model="selected" :document="documentData" />
+          <LazyFileTableView v-if="layoutView === 'table' && documentData" v-model="selected" :document="documentData" />
         </div>
 
         <p class="text-xs">
@@ -191,7 +191,7 @@ const documentUpdated = async () => {
       </div>
 
       <div class="h-12 w-8 relative">
-        <FileDetails v-if="selected" :document="selected" @update:document="documentUpdated" />
+        <LazyFileDetails v-if="selected" :document="selected" @update:document="documentUpdated" />
       </div>
     </div>
   </div>
