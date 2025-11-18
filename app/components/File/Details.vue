@@ -26,12 +26,10 @@ const setData = (item: Results, clear: boolean = false) => {
 }
 
 onUnmounted(() => {
-  console.log('DETAILS.VUE Unmounted!')
   setData(props.document, true)
   watcher()
 })
 onMounted(() => {
-  console.log('DETAILS.VUE Mounted!')
   setData(props.document)
 })
 
@@ -85,7 +83,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
   } catch (error) {
-    console.log('error editing document:', error)
+    console.error('error editing document:', error)
   } finally {
     isSubmitting.value = false
     isEditing.value = false
@@ -122,7 +120,7 @@ const deleteFile = async () => {
 
     toast.add({ title: 'Success', description: `${message} `, color: 'success' })
   } catch (error) {
-    console.log('error deleting document: ', error)
+    console.error('error deleting document: ', error)
   } finally {
     isSubmitting.value = false
     isEditing.value = false
@@ -143,8 +141,8 @@ function isEmpty(obj: Object) {
       <UButton v-if="!isEmpty(document)" variant="solid" class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
         :label="isFileDetailsSlideoverOpen ? 'Tutup File' : 'Buka File'" :ui="{
-          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-        }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
     </UTooltip>
 
     <template #header>
@@ -155,8 +153,8 @@ function isEmpty(obj: Object) {
       <div class="flex justify-between items-center space-x-1">
         <UButton color="neutral" variant="ghost" :icon="isEditing ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
           @click="isEditing = !isEditing" :ui="{
-            trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-          }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
         <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
       </div>
 

@@ -1,4 +1,4 @@
-import { tables, pool, useDrizzle } from '~~/server/utils/drizzle';
+import { tables, useDrizzle } from '~~/server/utils/drizzle';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from "drizzle-orm/node-postgres";
 //@ts-ignore
@@ -7,21 +7,21 @@ import { convertToMarkdown } from './convert';
 
 async function run() {
 
-    console.log('⏳ Starting migrations...');
+    console.error('⏳ Starting migrations...');
 
-    const db = drizzle(pool)
+    const db = useDrizzle()
 
     try {
         await migrate(db, { migrationsFolder: './drizzle' });
 
-        console.log('Running DB seed task...')
+        console.error('Running DB seed task...')
 
 
         const saltRounds = 2;
 
         const password = await bcrypt.hash('password123', saltRounds);
 
-        console.log(password)
+        console.error(password)
         const users = [
             {
                 name: 'John Doe',
@@ -88,10 +88,10 @@ async function run() {
         return { result: 'success' }
 
     } catch (error) {
-        console.log('Script terminated due to error.', error);
+        console.error('Script terminated due to error.', error);
         process.exit(1);
     } finally {
-        await pool.end(); // Always close the pool when done
+        await db.$client.end(); // Always close the pool when done
     }
 }
 
@@ -99,7 +99,7 @@ async function run() {
 //     await convertToMarkdown('github-git-cheat-sheet.pdf')
 
 // }
-// convert().then((result) => console.log(result)).catch(err => console.log(err))
+// convert().then((result) => console.error(result)).catch(err => console.error(err))
 
-run().then((result) => console.log(result))
+run().then((result) => console.error(result))
 

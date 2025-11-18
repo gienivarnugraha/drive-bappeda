@@ -90,18 +90,6 @@ export function getUuidFromFilename(filename: string): string {
     return match ? match[1] as string : filename
 }
 
-export function base64ToArrayBuffer(data: string) {
-    const input = data.substring(data.indexOf(',') + 1)
-    const binaryString = window.atob(input)
-    const binaryLen = binaryString.length
-    const bytes = new Uint8Array(binaryLen)
-    for (let i = 0; i < binaryLen; i++) {
-        const ascii = binaryString.charCodeAt(i)
-        bytes[i] = ascii
-    }
-    return bytes
-};
-
 export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
 

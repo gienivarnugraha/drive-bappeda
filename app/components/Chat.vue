@@ -78,7 +78,7 @@ const handleSubmit = async () => {
 
   } catch (error: any) {
     if (error === 'AbortError') {
-      console.log('Request aborted')
+      console.error('Request aborted')
     } else {
       console.error(error)
       status.value = 'error'
@@ -96,7 +96,7 @@ const abortRequest = () => {
   if (controller) {
     controller.abort()
 
-    console.log(question.value)
+    console.error(question.value)
 
     status.value = 'ready'
   }
@@ -136,12 +136,12 @@ onUnmounted(() => {
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
     <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
-      side: 'left',
-      variant: 'outline',
-      avatar: {
-        icon: 'i-lucide-bot'
-      },
-    }" :user="{
+    side: 'left',
+    variant: 'outline',
+    avatar: {
+      icon: 'i-lucide-bot'
+    },
+  }" :user="{
     side: 'left',
     variant: 'solid',
     avatar: {

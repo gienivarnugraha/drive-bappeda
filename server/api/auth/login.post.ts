@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { createError } from '#imports'
-import { useDrizzle } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { setUserSession } from '#imports'
 import { getRefreshToken, getAccessToken } from '~~/server/utils/jwt'
 // @ts-ignore

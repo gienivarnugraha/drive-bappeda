@@ -1,7 +1,7 @@
-import { useDrizzle, tables } from '#imports';
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 // @ts-ignore
 import bcrypt from 'bcrypt'
-import { User } from '#shared/types';
+import type { User } from '#shared/types';
 
 export default defineEventHandler(async (event) => {
     const { password } = await readBody<Pick<User, 'password'>>(event);
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
         return setResponseStatus(event, 201)
     } catch (error: any) {
-        console.log('error updating password: ', error)
+        console.error('error updating password: ', error)
 
         throw createError({
             statusCode: 400,

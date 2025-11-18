@@ -90,7 +90,7 @@ async function uploadFile() {
             return data.filename
 
         } catch (error: any) {
-            console.log('error uploading files', error)
+            console.error('error uploading files', error)
 
             toast.add({
                 title: 'Error',
@@ -138,7 +138,7 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             previousObjectUrl.value = undefined;
         }
     } catch (error: any) {
-        console.log('error updating user', error)
+        console.error('error updating user', error)
 
         toast.add({
             title: 'Error',

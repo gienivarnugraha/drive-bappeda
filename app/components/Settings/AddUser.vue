@@ -104,7 +104,7 @@ async function uploadAvatar(): Promise<string | undefined> {
 
     return data.filename
   } catch (error: any) {
-    console.log('error uploading files', error)
+    console.error('error uploading files', error)
 
     toast.add({
       title: 'Error',

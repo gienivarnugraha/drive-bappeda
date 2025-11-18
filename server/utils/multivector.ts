@@ -54,7 +54,7 @@ for (let i = 0; i < docs.length; i++) {
 const query = "what is langchain?";
 const relevantDocs = await retriever.getRelevantDocuments(query);
 
-console.log(relevantDocs);
+console.error(relevantDocs);
 /*
 Output will contain the full original documents,
 even though the search was performed on the summaries.

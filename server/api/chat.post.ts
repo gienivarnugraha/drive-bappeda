@@ -3,24 +3,24 @@ import { generateAnswerFromDocument } from '~~/server/utils/rag'
 export default defineEventHandler(async (event) => {
   const { question, uuid } = await readBody(event)
 
-  console.log(question)
+  console.error(question)
 
   // Create abort controller for this request
   const controller = new AbortController()
   const signal = controller.signal
 
   event.node.req.on('close', () => {
-    console.log('Client disconnected')
+    console.error('Client disconnected')
     controller.abort()
   })
 
   event.node.req.on('aborted', () => {
-    console.log('Request aborted')
+    console.error('Request aborted')
     controller.abort()
   })
 
   event.node.res.on('aborted', () => {
-    console.log('response aborted')
+    console.error('response aborted')
     controller.abort()
   })
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     //         for await (const message of await response.stream(question, {
     //             configurable: { sessionId: uuid },
     //         })) {
-    //             console.log(message)
+    //             console.error(message)
     //             // @ts-ignore
     //             if (message.type === 'end') {
 
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
     // return readable
     const answer = await response.invoke(question, { signal, configurable: { sessionId: uuid } })
 
-    console.log(answer, uuid)
+    console.error(answer, uuid)
 
     return {
       type: 'text',

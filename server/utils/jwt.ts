@@ -1,31 +1,34 @@
 import { sign, verify } from '@tsndr/cloudflare-worker-jwt'
-import { User } from '#auth-utils'
+import { type User } from '#auth-utils'
 import { H3Event, appendResponseHeader } from 'h3'
 import { parse, parseSetCookie, serialize } from 'cookie-es'
 
 
 export const getAccessToken = async (payload: User) => {
+    const config = useRuntimeConfig()
     // Create a token
     return await sign({
         ...payload,
         exp: Math.floor(Date.now() / 1000) + (2 * (60 * 60)), // +2h
     },
-        process.env.NUXT_SESSION_PASSWORD as string
+        config.session.password as string
     )
 }
 
 export const getRefreshToken = async () => {
+    const config = useRuntimeConfig()
     // Create a token
     return await sign({
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
     },
-        `${process.env.NUXT_SESSION_PASSWORD}-secret` as string
+        `${config.session.password}-secret` as string
     )
 }
 
 export const verifyToken = async (token: string) => {
+    const config = useRuntimeConfig()
     // Verify token
-    const verifiedToken = await verify(token, process.env.NUXT_SESSION_PASSWORD as string)
+    const verifiedToken = await verify(token, config.session.password as string)
 
     // Abort if token isn't valid
     if (!verifiedToken)
@@ -38,7 +41,7 @@ export const verifyToken = async (token: string) => {
 
 export const refreshToken = async (event: H3Event) => {
 
-    const runtimeConfig = useRuntimeConfig()
+    const config = useRuntimeConfig()
 
     const session = await getUserSession(event)
 
@@ -49,7 +52,7 @@ export const refreshToken = async (event: H3Event) => {
         })
     }
 
-    if (!await verify(session.jwt.refreshToken, `${process.env.NUXT_SESSION_PASSWORD!}-secret`)) {
+    if (!await verify(session.jwt.refreshToken, `${config.session.password!}-secret`)) {
         throw createError({
             statusCode: 401,
             message: 'refresh token is invalid',
@@ -61,7 +64,7 @@ export const refreshToken = async (event: H3Event) => {
             ...session.user,
             exp: Math.floor(Date.now() / 1000) + 30, // 30 seconds
         },
-        process.env.NUXT_SESSION_PASSWORD!,
+        config.session.password!,
     )
 
     await setUserSession(event, {
@@ -77,9 +80,9 @@ export const refreshToken = async (event: H3Event) => {
             appendResponseHeader(event, 'Set-Cookie', setCookie)
             // Update session cookie for next fetch requests
             const { name, value } = parseSetCookie(setCookie)
-            if (name === runtimeConfig.session.name) {
+            if (name === config.session.name) {
 
-                console.log('updating headers.cookie to', value)
+                console.error('updating headers.cookie to', value)
 
                 const cookies = parse(event.headers.get('cookie') || '')
                 // set or overwrite existing cookie

@@ -58,7 +58,7 @@ const ANSWER_TEMPLATE = `You're a helpful deep research AI assistant.
     if you are not sure with the answer, you can ask the user again to confirm the question
 
     - Return the answer with markdown format
-    - Always attach source of information at the end of the answer like document file name, page number, and line location in markdown link with url format: ${process.env.NUXT_SITE_URL}/show?filename=filename&page=page-number&line=line-number as markdown link
+    - Always attach source of information at the end of the answer like document file name, page number, and line location in markdown link with url format: ${config.public.SITE_URL}/show?filename=filename&page=page-number&line=line-number as markdown link
     - if the context contains a table, add the answer format as table in Markdown use title case for heading in new line
     - if the context contains a formula, add the answer format as formula in Markdown katex in new line
     - if the context contains a list, add the answer format as Markdown lists in new line

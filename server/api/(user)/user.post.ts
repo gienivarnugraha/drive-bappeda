@@ -1,8 +1,7 @@
-import { useDrizzle, tables } from '#imports';
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 // @ts-ignore
 import bcrypt from 'bcrypt'
-import { set } from 'date-fns';
-import { User } from '#shared/types';
+import type { User } from '#shared/types';
 
 
 export default defineEventHandler(async (event) => {
@@ -11,9 +10,6 @@ export default defineEventHandler(async (event) => {
     const db = useDrizzle()
 
     const { password, ...rest } = payload
-
-    console.log(payload)
-
 
     const hashedPassword = await bcrypt.hash(password, 2)
 
@@ -26,7 +22,7 @@ export default defineEventHandler(async (event) => {
         return setResponseStatus(event, 201)
 
     } catch (error: any) {
-        console.log('error creating user: ', error)
+        console.error('error creating user: ', error)
 
         throw createError({
             statusCode: 400,

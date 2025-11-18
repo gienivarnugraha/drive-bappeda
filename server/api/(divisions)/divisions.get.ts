@@ -1,4 +1,4 @@
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 
 export default eventHandler(async (event) => {
   const db = useDrizzle()

@@ -18,8 +18,6 @@ export default defineEventHandler(async (event) => {
 
     const { category, division, perPage, page, orderBy, orderDir } = query
 
-    console.log('documents query:', query)
-
     const db = useDrizzle()
 
     const filter_category_ids = category ? `{${stringToNumberArray(category)}}` : null

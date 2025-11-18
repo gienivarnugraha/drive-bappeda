@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
+import type { FormSubmitEvent, StepperItem } from '#ui/types'
 import type { Category, Division } from '#shared/types'
 import { sanitizeFileName, getFileExtension, toTitleCase } from '#shared/utils'
 import { generateThumbnail } from '~/utils/pdf'
@@ -51,6 +51,7 @@ async function upload(files: File[]) {
     formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
 
     if (thumbnails.value.length > 0) {
+      // @ts-ignore
       formData.append('thumbnail', thumbnails.value[index].blob, `${sanitizeFileName(file.name)}.png`)
     }
 
@@ -64,7 +65,7 @@ async function upload(files: File[]) {
 
     return filenames
   } catch (error: any) {
-    console.log(error)
+    console.error(error)
     toast.add({ title: 'Error', description: `${error.statusMessage}`, color: 'error' })
   } finally {
     fileUploading.value = false
@@ -82,7 +83,7 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
 
     toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
   } catch (error) {
-    console.log(error)
+    console.error(error)
   } finally {
     isSubmitting.value = false
   }
@@ -103,9 +104,6 @@ const onChange = () => {
             // @ts-ignore
             blob
           })
-
-          console.log('thumbnails:', thumbnails.value.length)
-
         }, 'image/png', 1)
       })
     }
@@ -192,9 +190,6 @@ const stream = async () => {
         }
 
         stepActive.value = 2
-
-        console.log(data.status, stepActive.value)
-
 
         addModalOpen.value = false
 

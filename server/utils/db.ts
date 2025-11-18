@@ -1,9 +1,9 @@
 import { SqlDatabase } from 'langchain/sql_db'
 import { DataSource, type DataSourceOptions } from 'typeorm'
 
-import type { Category, Division, Document } from '#shared/types'
+import type { Documents } from '#shared/types'
 import { inspect } from 'node:util'
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 
 // export const postgresConnectionOptions = {
 //   type: 'postgres',
@@ -42,11 +42,9 @@ import { useDrizzle, tables } from '#imports'
 //   }
 // }
 
-export const modifyRelation = async (data: { documentId: Document['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
+export const modifyRelation = async (data: { documentId: Documents['id'], categoryIds?: number[], divisionIds?: number[] }, action: 'edit' | 'delete') => {
 
   const { documentId, categoryIds, divisionIds } = data
-
-  console.log(data)
 
   const db = useDrizzle()
 

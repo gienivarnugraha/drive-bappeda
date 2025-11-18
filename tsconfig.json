@@ -2,9 +2,9 @@
   // https://nuxt.com/docs/guide/concepts/typescript
   "files": [],
   "include": [],
-  "paths": {
-    "~~": "./shared/utils.ts"
-  },
+  // "paths": {
+  //   "~~": "./shared/utils.ts"
+  // },
   "references": [
     {
       "path": "./.nuxt/tsconfig.app.json"

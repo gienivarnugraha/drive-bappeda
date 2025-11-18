@@ -1,4 +1,4 @@
-import { useDrizzle, tables } from "#imports";
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { getTableColumns } from 'drizzle-orm';
 
 // Destructure to exclude the 'content' column
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
         return data;
     } catch (error) {
 
-        console.log('error listing user: ', error)
+        console.error('error listing user: ', error)
     }
 
 

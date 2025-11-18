@@ -1,4 +1,3 @@
-import type { User } from '#shared/types';
 import { inspect } from 'node:util';
 import { getFileExtension } from '~~/shared/utils';
 import { v4 as uuid } from 'uuid'
@@ -38,7 +37,6 @@ export default eventHandler(async (event) => {
     if (avatar) {
       const exists = await storage.hasItem(`avatars:${avatar}`)
 
-      console.log('file exists: ', exists)
       if (exists) {
         await storage.removeItem(`avatars:${avatar}`)
       }

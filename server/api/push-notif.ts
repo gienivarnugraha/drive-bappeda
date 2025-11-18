@@ -18,7 +18,7 @@ export default eventHandler(async (event) => {
 
   // Handle client disconnect
   event.node.req.on('close', () => {
-    console.log('SSE client disconnected')
+    console.error('SSE client disconnected')
 
     clients = clients.filter(client => client !== event.node.req)
 

@@ -1,6 +1,6 @@
 import type { Division } from '#shared/types'
 import { inspect } from 'node:util'
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 
 export default eventHandler(async (event) => {
   const payload = await readBody<Pick<Division, 'id'>>(event)

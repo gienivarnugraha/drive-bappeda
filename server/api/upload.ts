@@ -1,5 +1,5 @@
 import { sseSend } from '~~/server/utils/sse'
-import { getClampedFileNameWithExtension, sanitizeFileName, getFileExtension } from '#shared/utils'
+import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
 
 const allowedTypes = ['application/pdf', 'text/plain', 'image/png']
 

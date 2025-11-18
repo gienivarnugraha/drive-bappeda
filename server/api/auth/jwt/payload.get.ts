@@ -2,6 +2,8 @@ import jwt from '@tsndr/cloudflare-worker-jwt'
 
 export default eventHandler(async (event) => {
   const session = await getUserSession(event)
+  const config = useRuntimeConfig()
+
   if (!session.jwt?.accessToken) {
     throw createError({
       statusCode: 401,
@@ -10,7 +12,7 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    return await jwt.verify(session.jwt.accessToken, process.env.NUXT_SESSION_PASSWORD!, {
+    return await jwt.verify(session.jwt.accessToken, config.session.password!, {
       throwError: true,
     })
   }

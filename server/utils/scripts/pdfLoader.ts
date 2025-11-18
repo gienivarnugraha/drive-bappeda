@@ -8,7 +8,6 @@ import { BufferLoader } from 'langchain/document_loaders/fs/buffer'
  * ```typescript
  * const loader = new PDFLoader("path/to/bitcoin.pdf");
  * const docs = await loader.load();
- * console.log({ docs });
  * ```
  */
 export class PDFLoader extends BufferLoader {

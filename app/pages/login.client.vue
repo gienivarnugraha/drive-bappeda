@@ -9,7 +9,7 @@ const { fetch, loggedIn } = useUserSession()
 onMounted(() => {
   // const loggedIn = useSupabaseSession()
 
-  console.log('loggedIn: ', loggedIn.value)
+  console.error('loggedIn: ', loggedIn.value)
 
   if (loggedIn.value) {
     navigateTo('/home')

@@ -1,4 +1,4 @@
-import { useDrizzle, tables } from '#imports';
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { eq } from 'drizzle-orm';
 import { User } from '#shared/types';
 
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
         return setResponseStatus(event, 201)
 
     } catch (error: any) {
-        console.log('error deleting user: ', error)
+        console.error('error deleting user: ', error)
         throw createError({
             statusCode: 400,
             message: `Error deleting user: ${error.message}`

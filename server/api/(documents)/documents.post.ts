@@ -3,7 +3,7 @@ import { processDocument } from '~~/server/utils/init'
 import type { DocumentMetadata } from '#shared/types'
 import { sanitizeFileName } from '#shared/utils'
 import { extname } from 'node:path'
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { inArray } from 'drizzle-orm'
 
 
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
             processFiles.push(...difference)
         }
 
-        console.log('processFiles', processFiles)
+        console.error('processFiles', processFiles)
 
         if (processFiles.length === 0) {
             sseSend('push:notif', { message: `${filenames.join(', ')} already processed...`, status: 'success' })
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
             const filepath = `documents/${sanitizeFileName(filename, true)}`
 
             const meta = await storage.getMeta(filepath)
-            console.log(meta)
+            console.error(meta)
 
             const metadata = {
                 category_id: categories,

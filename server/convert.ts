@@ -30,7 +30,7 @@ function runPythonConversion(input: string, output: string): Promise<string> {
 
         // Capture output
         pythonProcess.stdout.on('data', (data) => {
-            console.log('on stdout:', data.toString())
+            console.error('on stdout:', data.toString())
         });
 
         // Capture errors
@@ -40,7 +40,7 @@ function runPythonConversion(input: string, output: string): Promise<string> {
 
         // Handle process exit
         pythonProcess.on('close', (data) => {
-            console.log('on close:', data)
+            console.error('on close:', data)
             if (data !== 0) {
                 reject(new Error(`Python script exited with data ${data}.\nError: ${errorOutput}`));
             }
@@ -48,14 +48,15 @@ function runPythonConversion(input: string, output: string): Promise<string> {
 
         // Handle spawn errors (e.g., python not found)
         pythonProcess.on('error', (err) => {
-            console.log('on error', err)
+            console.error('on error', err)
             reject(new Error(`Failed to start Python process: ${err.message}. Check if 'python3' is in PATH.`));
         });
     });
 }
 
 export async function convertToMarkdown(file: string): Promise<{ message: string, data: string }> {
-    const openAiKey = process.env.NUXT_OPENAI_API_KEY;
+    const config = useRuntimeConfig()
+    const openAiKey = config.OPENAI_API_KEY;
     if (!openAiKey) {
         throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY is not configured on the server.' });
     }
@@ -73,13 +74,13 @@ export async function convertToMarkdown(file: string): Promise<{ message: string
 
     const input = join(filepath, file)
 
-    console.log('input: ', input)
-    console.log('output: ', output)
+    console.error('input: ', input)
+    console.error('output: ', output)
 
     try {
         const markdownContent = await runPythonConversion(input, output);
 
-        console.log(markdownContent)
+        console.error(markdownContent)
 
         return {
             message: `PDF successfully converted and saved to storage at: ${output}`,

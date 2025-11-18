@@ -1,7 +1,6 @@
-import type { Category, Division, Document } from '#shared/types'
 import { inspect } from 'node:util'
 import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { sql } from 'drizzle-orm'
 
 type Schema = {

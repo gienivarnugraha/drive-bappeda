@@ -66,7 +66,7 @@
 
 //       const result = await structuredLlm.invoke(promptValue)
 
-//       console.log('write:', result)
+//       console.error('write:', result)
 
 //       return { query: result.query }
 //     } catch (error) {
@@ -79,7 +79,7 @@
 //       const executeQueryTool = new QuerySqlTool(db)
 
 //       const result = await executeQueryTool.invoke(state.query)
-//       console.log('execute:', result)
+//       console.error('execute:', result)
 
 //       return { result }
 //     } catch (error) {
@@ -102,7 +102,7 @@
 //                 SQL Query: ${state.query}
 //                 SQL Result: ${state.result}`
 
-//       console.log(promptValue)
+//       console.error(promptValue)
 
 //       const response = await llm.invoke(promptValue)
 //       return { answer: response.content }

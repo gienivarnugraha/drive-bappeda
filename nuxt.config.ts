@@ -16,6 +16,17 @@ export default defineNuxtConfig({
     //   cors: true
     // }
   },
+  runtimeConfig: {
+    PG_DB: '',
+    OPENAI_API_KEY: '',
+    GOOGLE_API_KEY: '',
+    public: {
+      SITE_URL: 'http://localhost:3000',
+    },
+    session: {
+      password: '',
+    }
+  },
   auth: {
   },
   nitro: {

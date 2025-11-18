@@ -29,7 +29,7 @@ import { getFileExtension, sanitizeFileName, sanitizeUrl } from '#shared/utils'
 import { modifyRelation } from '~~/server/utils/db'
 import { sseSend } from '~~/server/utils/sse'
 import { getClampedFileNameWithExtension, getPdfData } from '#shared/utils'
-import { useDrizzle, tables } from '#imports'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { ilike } from 'drizzle-orm'
 
 const model = getModel('openai')
@@ -102,7 +102,7 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
       }
 
     } catch (error) {
-      console.log('Error fetching from http pdf file:', error)
+      console.error('Error fetching from http pdf file:', error)
       sseSend('push:notif', { message: `Error fetching pdf file from http... ${getClampedFileNameWithExtension(filename)}`, status: 'error' })
     }
 
@@ -192,7 +192,6 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   const filepath = `documents:${sanitizeFileName(filename, true)}`
 
-  console.log('sumaries filepath', filepath)
 
   if (await storage.hasItem(`${filepath}:${fileSummary}`)) {
     sseSend('push:notif', { message: `file json exists... ${getClampedFileNameWithExtension(fileSummary)}`, status: 'info' })

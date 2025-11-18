@@ -1,4 +1,5 @@
 import { pgTable, uniqueIndex, timestamp, text, uuid, vector, index, integer, varchar, jsonb } from 'drizzle-orm/pg-core'
+import { type DocumentMetadata } from '#shared/types'
 
 // --- categories Table ---
 export const categories = pgTable('categories', {
