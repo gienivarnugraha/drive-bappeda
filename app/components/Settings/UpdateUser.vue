@@ -1,30 +1,25 @@
 <script setup lang="ts">
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
-import * as z from 'zod'
 import type { FetchResponse, User } from '#shared/types'
-import { toKebabCase, deepClone, sanitizeUrl, sanitizeFileName } from '#shared/utils'
 
 const toast = useToast()
 
 const { user, fetch: fetchUser } = useUserSession()
 
-const profileSchema = z.object({
-    // Use .trim() to handle whitespace from user input
-    name: z.string().trim().min(3, 'Display name must be at least 3 characters'),
-    avatar: z.string().url('Avatar must be a valid URL or an object URL').optional()
-});
+type ProfileSchema = { name: string | undefined, avatar: string | undefined }
 
-type ProfileSchema = z.output<typeof profileSchema>
-
-const profile = reactive<Partial<ProfileSchema>>({
+const profile = reactive<ProfileSchema>({
     name: undefined,
     avatar: undefined,
 })
 
 onMounted(() => {
-    const userClone = deepClone(user.value)
-    profile.name = userClone.name
-    profile.avatar = sanitizeUrl(`/avatars/${userClone.avatar || ''}`)
+    profile.name = user.value?.name
+    profile.avatar = `/file?filename=avatars/${encodeURIComponent(user.value?.avatar as string)}`
+})
+
+onUnmounted(() => {
+    clear()
 })
 
 const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
@@ -32,8 +27,6 @@ const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
 const avatarFile: Ref<File | undefined> = ref(undefined);
 
 const previousObjectUrl: Ref<string | undefined> = ref(undefined);
-
-// --- File Handling Logic ---
 
 /**
  * Handles the change event from a file input element.
@@ -79,7 +72,7 @@ async function uploadFile() {
         formData.append('file', avatarFile.value)
 
         try {
-            const { data } = await $fetch('/api/avatar', {
+            await $fetch('/api/avatar', {
                 method: 'post',
                 body: formData,
                 query: {
@@ -87,7 +80,14 @@ async function uploadFile() {
                 }
             })
 
-            return data.filename
+            toast.add({
+                title: 'Success',
+                description: 'Your avatar have been updated.',
+                icon: 'i-lucide-check',
+                color: 'success'
+            })
+
+            clear()
 
         } catch (error: any) {
             console.error('error uploading files', error)
@@ -111,14 +111,11 @@ function onFileClick() {
 async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
     const { name } = event.data
 
-    const avatar = await uploadFile()
-
     try {
         await $fetch<FetchResponse<User>>('/api/user', {
             method: 'put',
             body: {
                 name,
-                avatar
             }
         })
 
@@ -149,10 +146,19 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
     }
 }
 
+const clear = () => {
+    if (previousObjectUrl.value) {
+        URL.revokeObjectURL(previousObjectUrl.value);
+        previousObjectUrl.value = undefined;
+    }
+    avatarFile.value = undefined;
+    profile.avatar = `/file?filename=avatars/${encodeURIComponent(user.value?.avatar as string)}`
+}
+
 </script>
 
 <template>
-    <UForm id="settings-update-user" :schema="profileSchema" :state="profile" @submit="profileUpdate">
+    <UForm id="settings-update-user" :state="profile" @submit="profileUpdate">
         <UPageCard title="Profile" description="These informations will be displayed publicly." variant="naked"
             orientation="horizontal" class="mb-4">
             <UButton label="Save changes" color="neutral" type="submit" class="w-fit lg:ms-auto" />
@@ -170,10 +176,13 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
             <UFormField name="avatar" label="Avatar" description="JPG, GIF or PNG. 1MB Max."
                 class="flex max-sm:flex-col justify-between sm:items-center gap-4">
                 <div class="flex flex-wrap items-center gap-3">
+                    <UButton v-if="avatarFile" icon="i-lucide-x" color="error" variant="ghost" @click="clear" />
                     <UAvatar :src="profile.avatar" :alt="profile.name" size="lg" />
                     <UButton label="Choose" color="neutral" @click="onFileClick" />
                     <input ref="fileRef" type="file" class="hidden" accept=".jpg, .jpeg, .png, .gif"
                         @change="onFileChange">
+                    <UButton v-if="avatarFile" label="Upload" icon="i-lucide-upload" color="success"
+                        @click="uploadFile" />
                 </div>
             </UFormField>
         </UPageCard>

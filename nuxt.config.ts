@@ -18,13 +18,21 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+    PG_DB: process.env.PG_DB,
+    public: {
+      SITE_URL: process.env.SITE_URL
+    },
+    session: {
+      password: process.env.NUXT_SESSION_PASSWORD as string
+    }
   },
   nitro: {
     storage: {
       public: {
-        driver: 'fs',
-        base: './public/'
+        driver: 'fs-lite',
+        base: './storage/'
       },
     }
   },

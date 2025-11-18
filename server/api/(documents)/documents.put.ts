@@ -1,7 +1,7 @@
 import type { Category, Division } from '#shared/types'
 import { inspect } from 'node:util'
 import { modifyRelation } from '~~/server/utils/db'
-import { getClampedFileNameWithExtension } from '#shared/utils'
+import { clampFilename } from '#shared/utils'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 
 type Schema = {
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
             .where(eq(tables.documents.id, documentId))
             .returning()
 
-        return { message: `Success Update file: ${getClampedFileNameWithExtension(rest.title || '')}`, data: response[0] }
+        return { message: `Success Update file: ${clampFilename(rest.title || '')}`, data: response[0] }
     } catch (error: any) {
 
         console.error(`error Update file: ${inspect(error, true, null, true)}`)

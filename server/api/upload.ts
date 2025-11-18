@@ -1,5 +1,5 @@
 import { sseSend } from '~~/server/utils/sse'
-import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
+import { clampFilename, sanitizeFileName } from '#shared/utils'
 
 const allowedTypes = ['application/pdf', 'text/plain', 'image/png']
 
@@ -33,10 +33,10 @@ export default eventHandler(async (event) => {
     const filepath = `documents:${sanitizeFileName(filename, true)}:${filename}`
 
     if (await storage.hasItem(filepath)) {
-      sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} exists in storage... `, status: 'info' })
+      sseSend('push:notif', { message: `${clampFilename(filename)} exists in storage... `, status: 'info' })
 
     } else {
-      sseSend('push:notif', { message: `${getClampedFileNameWithExtension(filename)} upload started`, status: 'info' })
+      sseSend('push:notif', { message: `${clampFilename(filename)} upload started`, status: 'info' })
 
       try {
         await storage.setItemRaw(filepath, file.data)
@@ -46,10 +46,10 @@ export default eventHandler(async (event) => {
       } catch (error) {
         console.error('Error uploading file:', error)
 
-        sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} not uploaded `, status: 'error' })
+        sseSend('push:notif', { message: `File ${clampFilename(filename)} not uploaded `, status: 'error' })
       }
 
-      sseSend('push:notif', { message: `File ${getClampedFileNameWithExtension(filename)} uploaded `, status: 'info' })
+      sseSend('push:notif', { message: `File ${clampFilename(filename)} uploaded `, status: 'info' })
     }
   }
 

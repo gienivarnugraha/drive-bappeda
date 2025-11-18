@@ -9,7 +9,7 @@ export const getAccessToken = async (payload: User) => {
     // Create a token
     return await sign({
         ...payload,
-        exp: Math.floor(Date.now() / 1000) + (2 * (60 * 60)), // +2h
+        exp: Math.floor(Date.now() / 1000) + (6 * (60 * 60)), // +2h
     },
         config.session.password as string
     )
@@ -62,7 +62,7 @@ export const refreshToken = async (event: H3Event) => {
     const accessToken = await sign(
         {
             ...session.user,
-            exp: Math.floor(Date.now() / 1000) + 30, // 30 seconds
+            exp: Math.floor(Date.now() / 1000) + (6 * (60 * 60)), // +2h
         },
         config.session.password!,
     )

@@ -1,10 +1,7 @@
 <script setup>
-import { getClampedFileNameWithExtension } from '#shared/utils';
+import { clampAndTitleCase } from '#shared/utils';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-
-// Make sure to import pdf.worker.min.js and pdf.js for text layer functionality
-// import 'pdfjs-dist/web/pdf_viewer.css'; // Basic PDF.js viewer CSS for text layer
-import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer';
+import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
@@ -26,12 +23,15 @@ const { smAndLarger } = useTailwindBreakpoints()
 const route = useRoute()
 const filename = route.query.filename
 const isHome = computed(() => route.name === 'home')
-
-let pdfDocument = undefined;
 // --- State Variables ---
 const pagesContainer = useTemplateRef('pages-container');
 const currentPage = ref(1);
 const thumbnailCurrentPage = ref(1); // Separate state for thumbnail highlight
+
+let pdfDocument = undefined;
+const pageCache = new Map();
+const renderedThumbnails = new Set();
+
 const numPages = ref(0);
 const loadingError = ref(null);
 
@@ -47,7 +47,7 @@ const zoomOptions = ref([
 
 const zoom = (type) => {
     // 1. Find the current index based on the currentScale's value
-    let currentZoomIndex = zoomOptions.findIndex((option) => currentScale.value === option.value);
+    let currentZoomIndex = zoomOptions.value.findIndex((option) => currentScale.value === option.value);
 
     // If the current scale is not found (shouldn't happen), default to 100% (index 1)
     if (currentZoomIndex === -1) {
@@ -64,11 +64,11 @@ const zoom = (type) => {
     }
 
     // 3. Constrain the new index within the array bounds
-    const maxIndex = zoomOptions.length - 1;
+    const maxIndex = zoomOptions.value.length - 1;
     const constrainedIndex = Math.min(Math.max(0, newIndex), maxIndex);
 
     // 4. Update the reactive currentScale value
-    currentScale.value = zoomOptions[constrainedIndex].value;
+    currentScale.value = zoomOptions.value[constrainedIndex].value;
 
     updateZoom()
 };
@@ -81,7 +81,16 @@ const thumbnailScale = 0.2; // Smaller scale for thumbnails
 const searchTerm = ref('');
 const searchResults = ref([]); // Stores { pageNum: N, rects: [] }
 const currentSearchResultIndex = ref(0);
-const findController = ref(null); // PDF.js find controller instance
+
+// --- Caching Logic ---
+const getCachedPage = async (pageNum) => {
+    if (pageCache.has(pageNum)) {
+        return pageCache.get(pageNum);
+    }
+    const page = await pdfDocument.getPage(pageNum);
+    pageCache.set(pageNum, page);
+    return page;
+};
 
 
 // --- Rendering Logic ---
@@ -89,7 +98,7 @@ const findController = ref(null); // PDF.js find controller instance
 const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
     if (!pdfDocument) return;
 
-    const page = await pdfDocument.getPage(pageNum);
+    const page = await getCachedPage(pageNum);
     const viewport = page.getViewport({ scale: parseFloat(scale) });
 
     const pageWrapper = document.getElementById(containerId);
@@ -127,10 +136,7 @@ const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
 
         pageWrapper.appendChild(textLayerDiv);
 
-        const textLayer = new TextLayerBuilder({
-            pdfPage: textContent,
-        });
-        // textLayer.setTextContent(textContent);
+        const textLayer = new TextLayerBuilder({ textContentSource: textContent, page: page });
         textLayer.render({
             viewport
         });
@@ -141,8 +147,9 @@ const renderAllPages = async () => {
     if (pdfDocument) {
         for (let i = 1; i <= numPages.value; i++) {
             await renderPage(i, `page-${i}`, currentScale.value, false);
-            if (showThumbnails.value) {
+            if (!renderedThumbnails.has(i)) {
                 await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
+                renderedThumbnails.add(i);
             }
         }
     }
@@ -152,6 +159,9 @@ const loadPDF = async () => {
     loadingError.value = null;
     pdfDocument = null;
     numPages.value = 0;
+    pageCache.clear();
+    renderedThumbnails.clear();
+
     currentPage.value = 1;
     thumbnailCurrentPage.value = 1;
     searchResults.value = [];
@@ -214,9 +224,11 @@ const goToPrevPage = () => {
 };
 
 const updateZoom = async () => {
-    await renderAllPages();
-    // After re-render, scroll back to the current page
-    setTimeout(() => scrollToPage(currentPage.value, 'instant'), 50);
+    if (!pdfDocument) return;
+    for (let i = 1; i <= numPages.value; i++) {
+        await renderPage(i, `page-${i}`, currentScale.value, false);
+    }
+    nextTick(() => scrollToPage(currentPage.value, 'instant'));
 };
 
 const updateCurrentPageOnScroll = () => {
@@ -260,7 +272,7 @@ const performSearch = async () => {
     currentSearchResultIndex.value = 0;
 
     for (let pageNum = 1; pageNum <= numPages.value; pageNum++) {
-        const page = await pdfDocument.getPage(pageNum);
+        const page = await getCachedPage(pageNum);
         const textContent = await page.getTextContent();
         const findMatches = [];
 
@@ -308,9 +320,9 @@ const displaySearchResult = (index) => {
 
         const pageWrapper = document.getElementById(`page-${result.page}`);
         if (!pageWrapper) return;
-
+        const pageNum = Math.min(Math.max(1, parseInt(props.page)), numPages.value);
         // Get the current viewport for the page to correctly position highlights
-        const page = await pdfDocument.getPage(result.page);
+        const page = await getCachedPage(pageNum);
         const scaleValue = parseFloat(currentScale.value);
         const viewport = page.getViewport({ scale: scaleValue });
 
@@ -357,12 +369,24 @@ onMounted(() => {
     loadPDF();
 });
 
+onUnmounted(() => {
+    console.log('pdf viewer unmounted')
+    pageCache.clear();
+    renderedThumbnails.clear();
+    unwatch()
+});
+
 // Re-render thumbnails if showThumbnails changes (only applies if PDF is already loaded)
-watch(showThumbnails, async (newValue) => {
+const unwatch = watch(showThumbnails, async (newValue) => {
     if (newValue && pdfDocument && numPages.value > 0) {
         await nextTick(); // Ensure the thumbnail divs are in the DOM
+        console.log('thumbnails rendered thru watch')
         for (let i = 1; i <= numPages.value; i++) {
-            await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
+            // await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
+            if (!renderedThumbnails.has(i)) {
+                await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
+                renderedThumbnails.add(i);
+            }
         }
     }
 });
@@ -449,8 +473,8 @@ watch(showThumbnails, async (newValue) => {
 
 <template>
     <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="default" v-model:collapsed="showThumbnails" collapsible
-            class="bg-elevated/25 min-h-full " :collapsed-size="0" :default-size="10" :ui="{
+        <UDashboardSidebar id="default" v-model:open="showThumbnails" collapsible class="bg-elevated/25 min-h-full "
+            :collapsed-size="0" :default-size="5" :ui="{
                 header: 'lg:border-b lg:border-default h-auto',
                 footer: 'lg:border-t lg:border-default'
             }">
@@ -510,7 +534,7 @@ watch(showThumbnails, async (newValue) => {
 
                     <template #trailing>
                         <p v-if="smAndLarger" class="">
-                            {{ getClampedFileNameWithExtension(filename, smAndLarger ? 25 : 10) }}
+                            {{ clampAndTitleCase(filename, smAndLarger ? 25 : 10) }}
                         </p>
                     </template>
 
@@ -526,7 +550,7 @@ watch(showThumbnails, async (newValue) => {
                                         <UButton icon="i-lucide-zoom-in" @click="zoom('in')"
                                             :disabled="currentScale === '2.0'" variant="ghost" color="neutral" />
                                         <USelect v-model="currentScale" :options="zoomOptions" @change="updateZoom"
-                                            size="sm" class="w-16 z-20" variant="ghost" />
+                                            size="sm" class="w-24 z-20" variant="ghost" />
                                         <UButton icon="i-lucide-zoom-out" :disabled="currentScale === '0.75'"
                                             @click="zoom('out')" variant="ghost" color="neutral" />
                                     </UFieldGroup>
@@ -547,7 +571,7 @@ watch(showThumbnails, async (newValue) => {
 
                         <UColorModeButton v-if="smAndLarger" />
 
-                        <!-- <div class="flex items-center space-x-2 ml-auto">
+                        <div class="flex items-center space-x-2 ml-auto">
                             <UFieldGroup>
                                 <UInput v-model="searchTerm" placeholder="Search text..." @keydown.enter="performSearch"
                                     class="w-48" size="sm">
@@ -555,17 +579,18 @@ watch(showThumbnails, async (newValue) => {
                                         <UButton icon="i-lucide-search" color="primary" variant="ghost" size="sm"
                                             :disabled="!searchTerm" />
                                     </template>
-    </UInput>
-    <UButton icon="i-lucide-chevron-up" @click="navigateSearchResult(-1)"
-        :disabled="!searchResults.length || currentSearchResultIndex === 0" color="gray" variant="outline" size="sm" />
-    <UButton icon="i-lucide-chevron-down" @click="navigateSearchResult(1)"
-        :disabled="!searchResults.length || currentSearchResultIndex === searchResults.length - 1" color="gray"
-        variant="outline" size="sm" />
-    </UFieldGroup>
-    <span v-if="searchResults.length" class="text-sm text-gray-600 whitespace-nowrap">
-        {{ currentSearchResultIndex + 1 }} / {{ searchResults.length }}
-    </span>
-    </div> -->
+                                </UInput>
+                                <UButton icon="i-lucide-chevron-up" @click="navigateSearchResult(-1)"
+                                    :disabled="!searchResults.length || currentSearchResultIndex === 0" color="gray"
+                                    variant="outline" size="sm" />
+                                <UButton icon="i-lucide-chevron-down" @click="navigateSearchResult(1)"
+                                    :disabled="!searchResults.length || currentSearchResultIndex === searchResults.length - 1"
+                                    color="gray" variant="outline" size="sm" />
+                            </UFieldGroup>
+                            <span v-if="searchResults.length" class="text-sm text-gray-600 whitespace-nowrap">
+                                {{ currentSearchResultIndex + 1 }} / {{ searchResults.length }}
+                            </span>
+                        </div>
 
                     </template>
                 </UDashboardNavbar>
@@ -594,9 +619,4 @@ watch(showThumbnails, async (newValue) => {
         </UDashboardPanel>
 
     </UDashboardGroup>
-
-    <!-- <div class="flex flex-col items-center p-4 min-h-screen">
-        <div class="flex flex-row items-center p-4 justify-between shadow-lg rounded-lg mb-6 w-full max-w-6xl ">
-        </div>
-    </div> -->
 </template>

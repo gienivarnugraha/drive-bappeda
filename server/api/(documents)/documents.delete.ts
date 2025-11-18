@@ -1,5 +1,5 @@
 import { inspect } from 'node:util'
-import { getClampedFileNameWithExtension, sanitizeFileName } from '#shared/utils'
+import { clampFilename, sanitizeFileName } from '#shared/utils'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { sql } from 'drizzle-orm'
 import { modifyRelation } from '~~/server/utils/db'
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
                 .delete(tables.documentsSummary)
                 .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' = ${document[0]?.uuid}`)
 
-            return { message: `Success Delete summary: ${getClampedFileNameWithExtension(document[0]?.filename as string)}` }
+            return { message: `Success Delete summary: ${clampFilename(document[0]?.filename as string)}` }
 
         } catch (summaryError: any) {
 

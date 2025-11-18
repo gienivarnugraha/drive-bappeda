@@ -28,5 +28,5 @@ documents
 .history
 
 #public
-.public/documents/*
-.public/avatars/*
+.storage/documents/*
+.storage/avatars/*

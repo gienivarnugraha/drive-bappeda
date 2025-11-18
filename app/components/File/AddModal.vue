@@ -76,16 +76,13 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
   isSubmitting.value = true
 
   try {
-    const response = await $fetch('/api/documents', {
+    await $fetch('/api/documents', {
       method: 'post',
       body: data
     })
 
-    toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
   } catch (error) {
     console.error(error)
-  } finally {
-    isSubmitting.value = false
   }
 }
 
@@ -114,12 +111,13 @@ const onChange = () => {
 let eventSource: EventSource | null = null
 
 const isEventSourceClosed = computed(() => eventSource?.readyState !== 2)
-// onUnmounted(() => {
-//   if (eventSource) {
-//     eventSource.close()
-//   }
-//   isProcessing.value = false
-// })
+onUnmounted(() => {
+  console.log('add modal unmounted')
+  //   if (eventSource) {
+  //     eventSource.close()
+  //   }
+  //   isProcessing.value = false
+})
 
 const stepperItems = ref<StepperItem[]>([
   {
@@ -188,10 +186,15 @@ const stream = async () => {
         if (eventSource) {
           eventSource.close()
         }
+        isProcessing.value = false
+
+        isSubmitting.value = false
 
         stepActive.value = 2
 
         addModalOpen.value = false
+
+        toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
 
       }
     }
@@ -274,7 +277,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField>
           <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
-            description="PDF, Word files" layout="list" multiple class="w-full min-h-48" @change="onChange">
+            description="PDF, DOCX, CSV, TXT, MD file" layout="list" multiple class="w-full min-h-48"
+            @change="onChange">
 
             <template #actions="{ open }">
               <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />

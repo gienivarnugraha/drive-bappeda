@@ -10,7 +10,7 @@ type Data = {
 }
 
 export const sseSend = function (event: string, data?: Omit<Data, 'id'>) {
-  console.error('SSE:', data?.status, data?.message)
+  console.info('SSE:', data?.status, data?.message)
 
   sseEvent.emit<Data>(event, {
     id: uuid(),

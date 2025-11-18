@@ -34,16 +34,31 @@ export default eventHandler(async (event) => {
   const storage = useStorage('public')
 
   try {
+    let filename: string
+
     if (avatar) {
+      // existing user
+      filename = `${avatar}.${getFileExtension(avatarFile.filename as string)}`
+
+      // avatar is already has extension
       const exists = await storage.hasItem(`avatars:${avatar}`)
 
       if (exists) {
         await storage.removeItem(`avatars:${avatar}`)
       }
+
+      const session = await getUserSession(event)
+
+      const db = useDrizzle()
+
+      await db.update(tables.users).set({
+        avatar: filename
+      }).where(eq(tables.users.id, session?.user?.id as string))
+
+    } else {
+      // new user
+      filename = `${uuid()}.${getFileExtension(avatarFile.filename as string)}`
     }
-
-
-    const filename = `${uuid()}.${getFileExtension(avatarFile.filename as string)}`
 
     try {
       // setItemRaw is appropriate for Buffer/Blob data from multipart form

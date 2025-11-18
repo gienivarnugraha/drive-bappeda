@@ -11,8 +11,6 @@ const encoded = encodeURIComponent(filename as string)
 
 let pdf: Ref<string> = ref(`/file?filename=documents/${sanitizeFileName(encoded, true)}/${encoded}`)
 
-console.log(pdf.value)
-
 // either URL, Base64, binary, or document proxy
 </script>
 

@@ -3,7 +3,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 // @ts-ignore
 import { Pool } from 'pg';
 export { sql, eq, and, or } from 'drizzle-orm'
-import { H3Event } from 'h3'
 
 import * as schema from '../database/schema'
 

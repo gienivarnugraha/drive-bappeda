@@ -1,3 +1,6 @@
+export const DOCUMENT_ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
+
+export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
 export function randomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min
@@ -7,6 +10,12 @@ export function randomFrom<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)]!
 }
 
+/**
+ * Converts a date string to a localized date string.
+ * If the date string is null, returns an empty string.
+ * @param {string | null} date - The date string to convert.
+ * @returns {string} - The localized date string.
+ */
 export function dateToLocale(date: string | null) {
     if (date) {
         return new Date(date).toLocaleDateString()
@@ -37,6 +46,14 @@ export function getMimeType(filename: string): string {
     }
 }
 
+/**
+ * Converts an array of strings to an array of numbers.
+ * If the input is null, an empty array, or contains the string '0', returns undefined.
+ * If the input is a single string, attempts to parse it as a number.
+ * For arrays of strings, maps each string to a number using parseInt and filters out NaNs for robustness.
+ * @param {string[] | string} input - Array of strings or single string to convert to numbers.
+ * @returns {number[] | undefined} - Converted array of numbers, or undefined if input is invalid.
+ */
 export const stringToNumberArray = (input: string[] | string): number[] | undefined => {
     // 1. Handle null input immediately
     if (input === undefined || input.length === 0 || input.includes('0')) {
@@ -81,6 +98,14 @@ export function sanitizeUrl(url: string): string {
 }
 
 
+/**
+ * Trims a string to a specified length, appending an ellipsis if the string is longer than the limit.
+ * If the string is null or undefined, an empty string is returned.
+ * If the string is shorter than or equal to the limit, the original string is returned.
+ * @param {string} text The string to trim.
+ * @param {number} [limit=25] The maximum length of the string.
+ * @returns {string} The trimmed string.
+ */
 export function clampCharacters(text: string, limit: number = 25) {
     if (text === null || text === undefined) {
         return ''
@@ -90,30 +115,6 @@ export function clampCharacters(text: string, limit: number = 25) {
     }
     return text.substring(0, limit) + '...';
 }
-
-/**
- * Extracts the first standard UUID (Universally Unique Identifier) found in a string (like a filename).
- *
- * @param {string} filename The string to search within.
- * @returns {string } The extracted UUID string, or null if no UUID is found.
- */
-export function getUuidFromFilename(filename: string): string {
-    // Regex explanation:
-    // [0-9a-fA-F]: Matches any hex character (0-9, a-f, A-F).
-    // {8}-{4}-{4}-{4}-{12}: Defines the 8-4-4-4-12 pattern of a standard UUID.
-    const uuidRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/
-
-    // The .match() method returns an array of results or null if no match is found.
-    const match = filename.match(uuidRegex)
-
-    // If a match is found, the full matched string (the UUID) is at index 1
-    // because we used capturing parentheses () around the entire pattern.
-    // If no match is found, match is null.
-    return match ? match[1] as string : filename
-}
-
-export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
-
 
 /**
  * Sanitizes a filename by removing whitespace and replacing with hyphens (-),
@@ -140,6 +141,23 @@ export function sanitizeFileName(file: string, removeExtension: boolean = true):
     }
 }
 
+/**
+ * Converts a string to kebab case.
+ * 
+ * Kebab case is a string transformation where every word is separated by a hyphen (-),
+ * and all words are in lowercase.
+ * This function is useful for converting strings like camelCase or PascalCase to kebab case.
+ * 
+ * @example
+ * toKebabCase('myVariableName') // returns "my-variable-name"
+ * @example
+ * toKebabCase('my_variable_name') // returns "my-variable-name"
+ * @example
+ * toKebabCase('my--variable') // returns "my-variable"
+ *
+ * @param {string} str - The input string to be converted to kebab case.
+ * @returns {string} The input string converted to kebab case.
+ */
 export const toKebabCase = (str: string) => {
     if (!str) return str;
 
@@ -156,6 +174,17 @@ export const toKebabCase = (str: string) => {
     // 3. Convert the entire string to lowercase and clean up any leading/trailing hyphens.
     return tempStr.toLowerCase().replace(/^-+|-+$/g, '');
 };
+
+/**
+ * Converts a given string to snake case.
+ * 
+ * Snake case is a string transformation in which the first letter of every word is
+ * underscored and the entire string is converted to lowercase.
+ * This function is useful for converting strings like camelCase or title case to snake case.
+ * 
+ * @param {string} str - The input string to be converted to snake case.
+ * @returns {string} The input string converted to snake case.
+ */
 
 export const toSnakeCase = (str: string) => {
     if (!str) {
@@ -175,6 +204,19 @@ export const toSnakeCase = (str: string) => {
 }
 
 
+/**
+ * Converts a given string to title case.
+ * 
+ * Title case is a string transformation in which the first letter of every word is capitalized.
+ * This function is useful for converting strings like camelCase or snake_case to title case.
+ * 
+ * 1. Prepares for spacing: inserts a space before capital letters that are not at the start of the string,
+ *    and converts all non-alphanumeric separators (hyphens, underscores) into a single space.
+ * 2. Title case: capitalizes the first letter of every word.
+ * 
+ * @param {string} str - The input string to be converted to title case.
+ * @returns {string} The input string converted to title case.
+ */
 export const toTitleCase = (str: string) => {
     if (!str) return str;
 
@@ -195,10 +237,31 @@ export const toTitleCase = (str: string) => {
     return tempStr.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export const getClampedFileNameWithExtension = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + '.' + getFileExtension(filename))
+/**
+ * Returns a clamped file name with the extension.
+ *
+ * @param {string} filename - The original file name.
+ * @param {number} [limit=20] - The maximum number of characters allowed in the file name. Defaults to 20.
+ * @returns {string} The clamped file name with the extension.
+ */
+export const clampFilename = ((filename: string, limit: number = 20) => clampCharacters(sanitizeFileName(filename), limit) + '.' + getFileExtension(filename))
 
+/**
+ * Returns a clamped and title-cased string.
+ *
+ * @param {string} name - The original string.
+ * @param {number} [limit=10] - The maximum number of characters allowed in the string. Defaults to 10.
+ * @returns {string} The clamped and title-cased string.
+ */
 export const clampAndTitleCase = (name: string, limit: number = 10) => clampCharacters(toTitleCase(name), limit)
 
+/**
+ * Returns the file extension from a given filename.
+ * If the filename does not contain a dot (.) or starts with a dot (like .gitignore),
+ * an empty string is returned.
+ * @param {string} filename The filename to extract the extension from.
+ * @returns {string} The file extension (e.g., "pdf", "txt", etc.).
+ */
 export function getFileExtension(filename: string) {
     const lastDot = filename.lastIndexOf('.')
 
@@ -233,7 +296,14 @@ export function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export async function getPdfData(url: string): Promise<null | Blob> {
+/** 
+ * Fetches a PDF from a given URL and returns it as a Blob (binary data)
+ * If the fetch fails due to CORS or network error, it returns null
+ * @deprecated NOT USED AT THE MOMENT
+ * @param {string} url - The URL of the PDF to fetch
+ * @returns {Promise<null | Blob>} A promise that resolves to a Blob containing the PDF data, or null if the fetch failed
+ */
+export async function getPdfDataFromFromHttp(url: string): Promise<null | Blob> {
     try {
         const response = await fetch(url);
 

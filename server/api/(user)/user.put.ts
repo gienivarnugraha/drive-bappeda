@@ -7,12 +7,14 @@ import type { User } from '#shared/types';
 export default defineEventHandler(async (event) => {
     const { avatar, name } = await readBody<Pick<User, 'avatar' | 'name'>>(event);
 
+    const session = await getUserSession(event)
+
     const db = useDrizzle()
 
     try {
         const user = await db.update(tables.users).set({
             avatar, name
-        }).returning({
+        }).where(eq(tables.users.id, session?.user?.id as string)).returning({
             id: tables.users.id,
             email: tables.users.email,
             name: tables.users.name,

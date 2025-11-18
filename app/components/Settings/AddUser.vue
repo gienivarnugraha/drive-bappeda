@@ -8,8 +8,6 @@ const toast = useToast()
 
 const addView = ref(false)
 
-const { user } = useUserSession()
-
 // --- 1. Zod Schema ---
 const schema = z.object({
   email: z.string().email('Invalid email'),
