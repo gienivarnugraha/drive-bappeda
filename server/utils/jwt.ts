@@ -11,7 +11,7 @@ export const getAccessToken = async (payload: User) => {
         ...payload,
         exp: Math.floor(Date.now() / 1000) + (6 * (60 * 60)), // +2h
     },
-        config.session.password as string
+        process.env.NUXT_SESSION_PASSWORD as string
     )
 }
 
@@ -21,14 +21,14 @@ export const getRefreshToken = async () => {
     return await sign({
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
     },
-        `${config.session.password}-secret` as string
+        `${process.env.NUXT_SESSION_PASSWORD}-secret` as string
     )
 }
 
 export const verifyToken = async (token: string) => {
     const config = useRuntimeConfig()
     // Verify token
-    const verifiedToken = await verify(token, config.session.password as string)
+    const verifiedToken = await verify(token, process.env.NUXT_SESSION_PASSWORD as string)
 
     // Abort if token isn't valid
     if (!verifiedToken)
@@ -52,7 +52,7 @@ export const refreshToken = async (event: H3Event) => {
         })
     }
 
-    if (!await verify(session.jwt.refreshToken, `${config.session.password!}-secret`)) {
+    if (!await verify(session.jwt.refreshToken, `${process.env.NUXT_SESSION_PASSWORD!}-secret`)) {
         throw createError({
             statusCode: 401,
             message: 'refresh token is invalid',
@@ -64,7 +64,7 @@ export const refreshToken = async (event: H3Event) => {
             ...session.user,
             exp: Math.floor(Date.now() / 1000) + (6 * (60 * 60)), // +2h
         },
-        config.session.password!,
+        process.env.NUXT_SESSION_PASSWORD!,
     )
 
     await setUserSession(event, {
@@ -82,7 +82,7 @@ export const refreshToken = async (event: H3Event) => {
             const { name, value } = parseSetCookie(setCookie)
             if (name === config.session.name) {
 
-                console.error('updating headers.cookie to', value)
+                console.info('updating headers.cookie to', value)
 
                 const cookies = parse(event.headers.get('cookie') || '')
                 // set or overwrite existing cookie

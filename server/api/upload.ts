@@ -1,7 +1,6 @@
 import { sseSend } from '~~/server/utils/sse'
 import { clampFilename, sanitizeFileName } from '#shared/utils'
-
-const allowedTypes = ['application/pdf', 'text/plain', 'image/png']
+import { ALLOWED_MIME_TYPES } from '#shared/utils'
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
@@ -13,24 +12,26 @@ export default eventHandler(async (event) => {
   const filenames: string[] = []
 
   for (const file of formData) {
-    if (!file.type || !allowedTypes.includes(file.type)) {
+    if (!file.type || !ALLOWED_MIME_TYPES('documents').includes(file.type)) {
       throw createError({
         statusCode: 400,
         message:
           `File type ${file.type || 'unknown'} not allowed. 
-              Allowed types: ${allowedTypes.join(', ')}`
+              Allowed types: ${ALLOWED_MIME_TYPES('documents').join(', ')}`
       })
     }
 
-    const filename = file.filename as string
 
-    const storage = useStorage('public')
+    const filename = sanitizeFileName(file.filename as string, false)
+    const dirname = sanitizeFileName(file.filename as string)
+
+    const storage = useStorage(process.env.STORAGE_KEY)
 
     if (file.name === 'file') {
       filenames.push(filename)
     }
 
-    const filepath = `documents:${sanitizeFileName(filename, true)}:${filename}`
+    const filepath = `documents:${dirname}:${filename}`
 
     if (await storage.hasItem(filepath)) {
       sseSend('push:notif', { message: `${clampFilename(filename)} exists in storage... `, status: 'info' })

@@ -1,14 +1,14 @@
 import { tables, useDrizzle } from '~~/server/utils/drizzle';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from "drizzle-orm/node-postgres";
-//@ts-ignore
+// @ts-ignore
 import bcrypt from 'bcrypt';
 import { Pool } from 'pg';
-import { convertToMarkdown } from './convert';
+import { convertToMarkdown } from './utils/convert';
 
 async function run() {
 
-    console.error('⏳ Starting migrations...');
+    console.info('⏳ Starting migrations...');
 
     const pool = new Pool({
         connectionString: process.env.PG_DB,
@@ -21,14 +21,14 @@ async function run() {
     try {
         await migrate(db, { migrationsFolder: './drizzle' });
 
-        console.error('Running DB seed task...')
+        console.info('Running DB seed task...')
 
 
         const saltRounds = 2;
 
         const password = await bcrypt.hash('password123', saltRounds);
 
-        console.error(password)
+        console.info(password)
         const users = [
             {
                 name: 'John Doe',
@@ -95,7 +95,7 @@ async function run() {
         return { result: 'success' }
 
     } catch (error) {
-        console.error('Script terminated due to error.', error);
+        console.info('Script terminated due to error.', error);
         process.exit(1);
     } finally {
         await pool.end(); // Always close the pool when done
@@ -103,10 +103,10 @@ async function run() {
 }
 
 // async function convert() {
-//     await convertToMarkdown('github-git-cheat-sheet.pdf')
+//     await convertToMarkdown('164805-ID-strategi-investasi-di-bursa-saham.pdf')
 
 // }
-// convert().then((result) => console.error(result)).catch(err => console.error(err))
+// convert().then((result) => console.info(result)).catch(err => console.info(err))
 
 run().then((result) => console.error(result))
 

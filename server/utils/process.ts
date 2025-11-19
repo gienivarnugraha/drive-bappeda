@@ -1,12 +1,7 @@
 // import 'dotenv/config'
-import { join, resolve, extname, basename } from 'node:path'
-import { readdir, readFile, statSync, writeFile, existsSync, readFileSync } from 'node:fs'
-import { PDFLoader } from '~~/server/utils/scripts/pdfLoader'
-// import postgres from 'postgres';
-import { MultiFileLoader } from 'langchain/document_loaders/fs/multi_file'
+import { extname } from 'node:path'
 import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { Document, type DocumentInput } from '@langchain/core/documents'
-import { getModel, getVectorStore } from '~~/server/utils/ai'
 // import { generateAnswerFromDocument } from '~~/server/utils./server/utils/rag';
 import { ChatPromptTemplate, MessagesPlaceholder, PromptTemplate } from '@langchain/core/prompts'
 import { RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables'
@@ -18,51 +13,25 @@ import { inspect } from 'node:util'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { formatDocumentsAsString } from 'langchain/util/document'
 import { ChatMessageHistory } from 'langchain/stores/message/in_memory'
-import { generateAnswerFromDocument, getRetriever } from './rag'
-import { spawn } from 'node:child_process'
 import { TextLoader } from 'langchain/document_loaders/fs/text'
-import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio'
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
-import type { DocumentMetadata, StorageMeta } from '#shared/types'
-import { DOCUMENT_ALLOWED_TYPES, sanitizeFileName } from '#shared/utils'
-import { modifyRelation } from '~~/server/utils/db'
-import { sseSend } from '~~/server/utils/sse'
-import { clampFilename } from '#shared/utils'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { ilike } from 'drizzle-orm'
-import { H3Event } from 'h3';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
+import { ilike } from 'drizzle-orm'
 import { ChatOpenAI } from '@langchain/openai'
 
+import { PDFLoader } from '~~/server/utils/scripts/pdfLoader'
+import { getModel, getVectorStore } from '~~/server/utils/ai'
+import type { DocumentMetadata } from '#shared/types'
+import { clampFilename, sanitizeFileName } from '#shared/utils'
+import { modifyRelation } from '~~/server/utils/db'
+import { sseSend } from '~~/server/utils/sse'
+import { resolveStoragePath } from '~~/server/utils/file';
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { convertToMarkdown } from '~~/server/utils/convert'
+
 const idKey = 'doc_id'
-
-const listDocuments = (folderPath: string): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    readdir(folderPath, (err, files) => {
-      const result: string[] = []
-
-      if (err) {
-        console.error('Error reading directory:', err)
-        return
-      }
-
-      files
-        .filter(file =>
-          DOCUMENT_ALLOWED_TYPES.includes(extname(file).toLowerCase())
-        )
-        .map(file => join(folderPath, file))
-        .forEach(file => result.push(file))
-
-      console.warn('list files found...', result)
-
-      resolve(result)
-    })
-  })
-}
-
-
 /**
  * Loads a document from storage and returns a promise that resolves to an array of Document instances.
  * @param filename The name of the file to be loaded.
@@ -76,46 +45,30 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
 
   const extension = extname(filename)
 
-  const storage = useStorage('public')
+  switch (extension) {
+    case '.pdf':
+      loader = new PDFLoader(filename, {
+        parsedItemSeparator: ' '
+      })
+      break
+    case '.md':
+      loader = new TextLoader(filename)
+      break
+    case '.txt':
+      loader = new TextLoader(filename)
+      break
+    case '.csv':
+      loader = new CSVLoader(filename)
+      break
+    case '.doc':
+      loader = new DocxLoader(filename) // DocxLoader doesn't have a 'type' option. It auto-detects.
+      break
+    case '.docx':
+      loader = new DocxLoader(filename)
+      break
+    default:
 
-  const filepath = `documents/${sanitizeFileName(filename, true)}/${filename}`
-
-  if (await storage.hasItem(filepath)) {
-
-    const documentBuffer = await storage.getItemRaw<Buffer>(filepath);
-    const documentBlob = new Blob([documentBuffer as BlobPart], { type: 'application/octet-stream' });
-
-    switch (extension) {
-      case '.pdf':
-        loader = new PDFLoader(documentBlob, {
-          parsedItemSeparator: ' '
-        })
-        break
-      case '.md':
-        loader = new TextLoader(documentBlob)
-        break
-      case '.txt':
-        loader = new TextLoader(documentBlob)
-        break
-      case '.csv':
-        loader = new CSVLoader(documentBlob)
-        break
-      case '.doc':
-        loader = new DocxLoader(documentBlob) // DocxLoader doesn't have a 'type' option. It auto-detects.
-        break
-      case '.docx':
-        loader = new DocxLoader(documentBlob)
-        break
-      default:
-        throw new Error(`Unsupported file extension: ${extension}`)
-    }
-  } else {
-    sseSend('push:notif', { message: `File not found... ${clampFilename(filename)}`, status: 'error' })
-    throw createError({
-      status: 400,
-      message: 'File not found'
-    })
-
+      throw new Error(`Unsupported file extension: ${extension}`)
   }
 
   return await loader.load()
@@ -149,6 +102,15 @@ export const documentSplitter = (file: string) => {
   return splitter
 }
 
+/**
+ * Generates summaries for the given documents and stores them in the storage.
+ * If the summary file for the given filename already exists, it will be retrieved.
+ * If the document length is different from the existing summary, it will be rewritten.
+ * @param docs The documents to generate summaries for.
+ * @param ids The metadata for the documents, including the fileId, filename, and docIds.
+ * @param filename The sanitized filename to store the summaries under.
+ * @returns A promise that resolves with the generated summaries.
+ */
 const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filename: string) => {
 
   const model = getModel('openai')
@@ -158,7 +120,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   let summaries: Document[] | undefined
 
-  const storage = useStorage('public')
+  const storage = useStorage(process.env.STORAGE_KEY)
 
   const filepath = `documents:${sanitizeFileName(filename, true)}`
 
@@ -172,7 +134,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
     if (docs.length !== json.length) {
       sseSend('push:notif', { message: `file json exists but document length is different... ${clampFilename(fileSummary)}`, status: 'info' })
-      summaries = await getDocumentSummary(model, docs, ids)
+      summaries = await summarize(model, docs, ids)
 
       const summariesContent = JSON.stringify(summaries)
 
@@ -187,7 +149,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
     }
   } else {
     sseSend('push:notif', { message: `file doesnt exists... ${clampFilename(fileSummary)}`, status: 'info' })
-    summaries = await getDocumentSummary(model, docs, ids)
+    summaries = await summarize(model, docs, ids)
 
     const content = JSON.stringify(summaries)
 
@@ -206,7 +168,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
  * @param documents - A slice of array from Document instances.
  * @returns A promise that resolves to an object with the following properties: title, summary, context, and source.
  */
-export const getDocumentSummary = async (model: ChatGoogleGenerativeAI | ChatOpenAI, docs: Document[], ids: { fileId: string, docIds: string[] }) => {
+const summarize = async (model: ChatGoogleGenerativeAI | ChatOpenAI, docs: Document[], ids: { fileId: string, docIds: string[] }) => {
 
   sseSend('push:notif', { message: 'getting documents summary...', status: 'info' })
 
@@ -319,37 +281,6 @@ export const getDocumentSummary = async (model: ChatGoogleGenerativeAI | ChatOpe
   }
 }
 
-const addToVectorStore = async (docs: Document[], filename: string, documentData: DocumentData) => {
-  const vectorstore = await getVectorStore()
-
-
-  sseSend("push:notif", { message: `adding data to vector store... ${clampFilename(filename)}`, status: 'info' })
-
-  const ids = {
-    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
-    fileId: `${uuid()}_${filename}`
-  }
-
-  const fileMetadata = {
-    ...ids,
-    ...documentData,
-    filename
-  }
-
-  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
-
-  await storeToDB(slicedDocuments, fileMetadata)
-
-  const summaries = await generateSummaries(docs, ids, filename)
-
-  if (summaries) {
-
-    await vectorstore.addDocuments(summaries);
-
-    sseSend('push:notif', { message: `success adding to vector store... ${clampFilename(filename)}`, status: 'success' })
-
-  }
-}
 
 /**
  * Stores the given documents to the database with the given metadata.
@@ -358,7 +289,7 @@ const addToVectorStore = async (docs: Document[], filename: string, documentData
  * @returns A promise that resolves when the data has been successfully stored to the database.
  */
 
-const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
+const storeToDatabase = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'> & { category_id: number[], division_id: number[] }) => {
   const queryOutput = z.object({
     title: z.string().describe('Title of the document'),
     summary: z.string().describe('Summary of the document'),
@@ -416,28 +347,53 @@ const storeToDB = async (doc: Document[], data: Omit<DocumentMetadata, 'summary'
 }
 
 
-type DocumentData = {
-  category_id: number[],
-  division_id: number[]
-} & StorageMeta
+const storeToVectorStore = async (docs: Document[], filename: string, documentMetaData: DocumentMetadata) => {
+  const vectorstore = await getVectorStore()
+
+  sseSend("push:notif", { message: `adding data to vector store... ${clampFilename(filename)}`, status: 'info' })
+
+  const ids = {
+    docIds: docs.map((_, i) => `doc_id_${filename}_${i}`),
+    fileId: `${uuid()}_${filename}`
+  }
+
+  const fileMetadata = {
+    ...ids,
+    ...documentMetaData,
+    filename
+  }
+
+  const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
+
+  await storeToDatabase(slicedDocuments, fileMetadata)
+
+  const summaries = await generateSummaries(docs, ids, filename)
+
+  if (summaries) {
+
+    await vectorstore.addDocuments(summaries);
+
+    sseSend('push:notif', { message: `success adding to vector store... ${clampFilename(filename)}`, status: 'success' })
+
+  }
+}
+
 /**
- * Sets the vector store with the given file.
- * If the file exists in the database, it will use the existing data.
- * If the file does not exist in the database, it will create new data and add it to the vector store.
- * @param {string} file - The file path with extension
- * @returns {Promise<SupabaseVectorStore>} - A promise that resolves to a SupabaseVectorStore instance
+ * Process a document and add it to the database and vector store.
+ * @param filename Sanitized name of the file (already kebab cased) to be processed.
+ * @param documentMetaData The metadata of the document, including the fileId, filename, and docIds.
+ * @returns A promise that resolves when the document has been successfully processed.
+ * @throws If the file extension is unsupported or the file is not found.
  */
-export const processDocument = async (filepath: string, documentData: DocumentData) => {
+export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  const documents = await loadDocument(filepath)
+  const markdownPath = await convertToMarkdown(filename)
 
-  const splitter = documentSplitter(filepath)
+  const documents = await loadDocument(markdownPath)
+
+  const splitter = documentSplitter(markdownPath)
 
   const docs = await splitter.splitDocuments(documents)
-
-  const extension = extname(filepath)
-
-  const filename = basename(filepath, extension)
 
   const db = useDrizzle()
 
@@ -449,6 +405,7 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
       .from(tables.documents)
       .where(ilike(tables.documents.filename, `%${filename}%`))
 
+    // IF File exists in the storage 
     if (filenameExists?.length) {
       sseSend('push:notif', { message: `file exists in database... ${clampFilename(filename)}`, status: 'info' })
 
@@ -458,30 +415,33 @@ export const processDocument = async (filepath: string, documentData: DocumentDa
           .from(tables.documentsSummary)
           .where(sql`${tables.documentsSummary.metadata} ->> 'source_id' LIKE ${`%${filename}%`}`)
 
+        // If vector of the file exists in the database
         if (vectorStoreExists?.length) {
           sseSend('push:notif', { message: `vector store exists in database... ${clampFilename(filename)}`, status: 'success' })
 
           return
         }
 
-        await addToVectorStore(docs, filepath, documentData)
+        // else add to vector store
+        // await storeToVectorStore(docs, filename, documentMetaData)
 
       } catch (error: any) {
         console.error('error fetching vector store', error)
         sseSend('push:notif', { message: `error fetching vector store... ${clampFilename(filename)}`, status: 'error' })
-
+        return
       }
     } else {
-
+      // else add to database and vector store
       sseSend('push:notif', { message: `file not exists in database... ${clampFilename(filename)}`, status: 'info' })
 
-      await addToVectorStore(docs, filepath, documentData)
+      await storeToVectorStore(docs, filename, documentMetaData)
 
     }
 
   } catch (error) {
     console.error('Failed to get documents from database', error)
     sseSend('push:notif', { message: `error getting ids from database... ${clampFilename(filename)}`, status: 'error' })
+    return
   }
 
 

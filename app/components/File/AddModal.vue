@@ -4,7 +4,7 @@ import type { FormSubmitEvent, StepperItem } from '#ui/types'
 import type { Category, Division } from '#shared/types'
 import { sanitizeFileName, getFileExtension, toTitleCase } from '#shared/utils'
 import { generateThumbnail } from '~/utils/pdf'
-import { v4 as uuid } from 'uuid'
+import { ALLOWED_EXTENSION_TYPES } from '#shared/utils'
 
 import { useItems } from '~/composables/useItems'
 
@@ -52,7 +52,7 @@ async function upload(files: File[]) {
 
     if (thumbnails.value.length > 0) {
       // @ts-ignore
-      formData.append('thumbnail', thumbnails.value[index].blob, `${sanitizeFileName(file.name)}.png`)
+      formData.append('thumbnail', thumbnails.value[index].blob, thumbnails.value[index].filename)
     }
 
   })
@@ -97,7 +97,7 @@ const onChange = () => {
 
         thumbnail?.toBlob(function (blob) {
           thumbnails.value.push({
-            filename: sanitizeFileName(file.name),
+            filename: `${sanitizeFileName(file.name)}.png`,
             // @ts-ignore
             blob
           })
@@ -111,6 +111,7 @@ const onChange = () => {
 let eventSource: EventSource | null = null
 
 const isEventSourceClosed = computed(() => eventSource?.readyState !== 2)
+
 onUnmounted(() => {
   console.log('add modal unmounted')
   //   if (eventSource) {
@@ -183,16 +184,11 @@ const stream = async () => {
 
       if (allSuccess.value) {
 
-        if (eventSource) {
-          eventSource.close()
-        }
-        isProcessing.value = false
-
-        isSubmitting.value = false
-
         stepActive.value = 2
 
         addModalOpen.value = false
+
+        clearProcess(true)
 
         toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
 
@@ -208,14 +204,26 @@ const stream = async () => {
 
   // Log connection error
   eventSource.onerror = function (event) {
-    isProcessing.value = false
-
-    if (eventSource) {
-      eventSource.close()
-    }
+    clearProcess()
 
     toast.add({ title: 'Error', description: `${event} `, color: 'error' })
   }
+}
+
+const clearProcess = (isSuccess = false) => {
+  isProcessing.value = false
+
+  isSubmitting.value = false
+
+  if (isSuccess) {
+    processSteps.value = []
+  }
+
+  if (eventSource) {
+    console.log('event source closed')
+    eventSource.close()
+  }
+
 }
 
 const backFromProcess = () => {
@@ -277,8 +285,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField>
           <UFileUpload v-model="state.files" icon="i-lucide-files" reset label="Drop file anda disini"
-            description="PDF, DOCX, CSV, TXT, MD file" layout="list" multiple class="w-full min-h-48"
-            @change="onChange">
+            :description="`Hanya file ${ALLOWED_EXTENSION_TYPES('documents').join(', ')}`" layout="list" multiple
+            class="w-full min-h-48" @change="onChange">
 
             <template #actions="{ open }">
               <UButton label="Pilih File" icon="i-lucide-upload" color="neutral" variant="outline" @click="open()" />

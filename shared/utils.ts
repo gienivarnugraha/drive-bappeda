@@ -1,28 +1,27 @@
-export const DOCUMENT_ALLOWED_TYPES = ['.md', 'doc', '.docx', '.csv', '.txt', '.pdf']
 
 export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
-export function randomInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export function randomFrom<T>(array: T[]): T {
-    return array[Math.floor(Math.random() * array.length)]!
-}
-
-/**
- * Converts a date string to a localized date string.
- * If the date string is null, returns an empty string.
- * @param {string | null} date - The date string to convert.
- * @returns {string} - The localized date string.
- */
-export function dateToLocale(date: string | null) {
-    if (date) {
-        return new Date(date).toLocaleDateString()
-    } else {
-        return ''
+const ALLOWED_TYPES = {
+    'avatars': {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'webp': 'image/webp',
+    },
+    'documents': {
+        'png': 'image/png', //thumbnails
+        'txt': 'txt/plain',
+        'pdf': 'application/pdf',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
 }
+
+export const ALLOWED_EXTENSION_TYPES = (type: 'avatars' | 'documents') => Object.keys(ALLOWED_TYPES[type])
+
+export const ALLOWED_MIME_TYPES = (type: 'avatars' | 'documents') => Object.values(ALLOWED_TYPES[type])
 
 /**
  * Simple helper function to determine MIME type based on file extension.
@@ -43,6 +42,29 @@ export function getMimeType(filename: string): string {
         case 'xls': return 'application/vnd.ms-excel';
         case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         default: return 'application/octet-stream';
+    }
+}
+
+
+export function randomInt(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+export function randomFrom<T>(array: T[]): T {
+    return array[Math.floor(Math.random() * array.length)]!
+}
+
+/**
+ * Converts a date string to a localized date string.
+ * If the date string is null, returns an empty string.
+ * @param {string | null} date - The date string to convert.
+ * @returns {string} - The localized date string.
+ */
+export function dateToLocale(date: string | null) {
+    if (date) {
+        return new Date(date).toLocaleDateString()
+    } else {
+        return ''
     }
 }
 
@@ -116,18 +138,25 @@ export function clampCharacters(text: string, limit: number = 25) {
     return text.substring(0, limit) + '...';
 }
 
+
 /**
- * Sanitizes a filename by removing whitespace and replacing with hyphens (-),
- * and removes the file extension.
- * 
- * @param {string} file - The file name to sanitize, e.g. "file object.pdf"
- * @param {booleam} removeExtension - should extension removed? 
- * @returns {string} The sanitized filename, e.g. "file-object"
+ * Sanitizes a filename by removing whitespace and other non-alphanumeric characters, replacing
+ * them with hyphens (-), and removing leading and trailing hyphens. If removeExtension is true (default),
+ * the file extension is also removed.
+ * @param {string} file The filename to sanitize.
+ * @param {boolean} [removeExtension=true] default TRUE, If true, the file extension is also removed.
+ * @returns {string} The sanitized filename.
  */
 export function sanitizeFileName(file: string, removeExtension: boolean = true): string {
-    file.toLowerCase()
+    file
+        // Remove leading and trailing whitespace
+        .trim()
+        // Remove whitespace and other non-alphanumeric characters
+        .toLowerCase()
         // Replace whitespace and other non-alphanumeric characters with hyphens (-)
         .replace(/[^a-z0-9-_]+/g, '-')
+        // replace multiple hyphens with a single hyphen
+        .replace(/--+/g, '-')
         // Remove leading and trailing hyphens
         .replace(/^-+|-+$/g, '')
 

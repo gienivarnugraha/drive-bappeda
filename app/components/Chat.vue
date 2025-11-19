@@ -2,6 +2,7 @@
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import { markdownToHtml } from '~/utils/markdown'
 import { v4 as uuid } from 'uuid'
+import type { UIMessage } from '#shared/types/chat'
 
 defineProps<{
   collapsed?: boolean
@@ -10,19 +11,10 @@ defineProps<{
 const { user } = useUserSession()
 
 const question = ref<string>('')
-const threadId = uuid()
 const status = ref<'ready' | 'error' | 'submitted' | 'streaming'>('ready')
 
-type ChatMessage = {
-  id: string
-  role: 'user' | 'assistant'
-  parts: {
-    type: string
-    text: string
-  }[]
-}
 
-const messages = ref<ChatMessage[]>([])
+const messages = ref<UIMessage[]>([])
 
 onMounted(() => {
 
@@ -47,18 +39,20 @@ const handleSubmit = async () => {
   // Create new controller for this request
   controller = new AbortController()
 
-  messages.value.push({
+  let data = {
     id: uuid(),
-    role: 'user',
-    parts: [{ type: 'text', text: question.value }]
-  })
+    role: "user",
+    parts: [{ type: "text", text: question.value }]
+  } as UIMessage
+
+  messages.value.push(data)
 
   try {
     const { type, text } = await $fetch<{ type: string, text: string }>('/api/chat', {
       method: 'post',
       body: {
         question: question.value,
-        uuid: threadId
+        uuid: user.value?.id
       },
       signal: controller.signal
     })
@@ -72,7 +66,7 @@ const handleSubmit = async () => {
     const lastMessageIndex = messages.value.length - 1
 
     messages.value[lastMessageIndex]?.parts.push({
-      type,
+      type: 'text',
       text: await markdownToHtml(text)
     })
 
@@ -136,19 +130,19 @@ onUnmounted(() => {
 <template>
   <div v-if="!collapsed" class="flex flex-col justify-between">
     <UChatMessages :messages="messages" :status="status" should-auto-scroll :assistant="{
-    side: 'left',
-    variant: 'outline',
-    avatar: {
-      icon: 'i-lucide-bot'
-    },
-  }" :user="{
-    side: 'left',
-    variant: 'solid',
-    avatar: {
-      src: `avatars/${user?.avatar}`,
-      alt: user?.name
-    }
-  }">
+      side: 'left',
+      variant: 'outline',
+      avatar: {
+        icon: 'i-lucide-bot'
+      },
+    }" :user="{
+      side: 'left',
+      variant: 'solid',
+      avatar: {
+        src: `/file?filename=avatars/${encodeURIComponent(user?.avatar as string)}`,
+        alt: user?.name
+      }
+    }">
       <template #content="{ message }">
         <div class="markdown" v-html="getTextFromMessage(message)" />
       </template>

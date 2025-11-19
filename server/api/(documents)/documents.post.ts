@@ -1,5 +1,5 @@
 import { sseSend } from '~~/server/utils/sse'
-import { processDocument } from '~~/server/utils/init'
+import { processDocument } from '~~/server/utils/process'
 import type { DocumentMetadata } from '#shared/types'
 import { sanitizeFileName } from '#shared/utils'
 import { extname } from 'node:path'
@@ -35,31 +35,31 @@ export default defineEventHandler(async (event) => {
             processFiles.push(...difference)
         }
 
-        console.error('processFiles', processFiles)
-
         if (processFiles.length === 0) {
             sseSend('push:notif', { message: `${filenames.join(', ')} already processed...`, status: 'success' })
             sseSend('close')
         }
 
-        for (const filename of processFiles) {
+        console.log('process Files', processFiles)
 
-            const storage = useStorage('public')
+        for (const file of processFiles) {
 
-            const filepath = `documents/${sanitizeFileName(filename, true)}`
+            const storage = useStorage(process.env.STORAGE_KEY)
 
-            const meta = await storage.getMeta(filepath)
-            console.error('document meta:', meta)
+            const filename = sanitizeFileName(file as string, false)
+            const dirname = sanitizeFileName(file as string)
+
+            const meta = await storage.getMeta(`documents:${dirname}:${filename}`)
 
             const metadata = {
                 category_id: categories,
                 division_id: divisions,
                 filename,
-                filepath: `${filepath}/${filename}`,
+                filepath: `documents:${dirname}/${filename}`,
                 fileSize: meta.size as number,
                 // contentType: meta.contentType as string,
                 extension: extname(filename),
-                thumbnailSrc: `${filepath}/${sanitizeFileName(filename, true)}.png`,
+                thumbnailSrc: `documents:${dirname}/${dirname}.png`,
             } as DocumentMetadata
 
             await processDocument(filename, metadata)

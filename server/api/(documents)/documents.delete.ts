@@ -20,13 +20,13 @@ export default defineEventHandler(async (event) => {
 
         const document = await db.delete(tables.documents).where(eq(tables.documents.id, parseInt(documentId))).returning()
 
-        const storage = useStorage('public')
+        // const storage = useStorage(process.env.STORAGE_KEY)
 
-        const filepath = `documents:${sanitizeFileName(document[0]?.filename as string, true)}`
+        // const filepath = `documents:${sanitizeFileName(document[0]?.filename as string, true)}`
 
-        await storage.remove(`${filepath}:${document[0]?.filename as string}`)
+        // await storage.remove(`${filepath}:${document[0]?.filename as string}`)
 
-        await storage.remove(`${filepath}:${sanitizeFileName(document[0]?.filename as string)}.png`)
+        // await storage.remove(`${filepath}:${sanitizeFileName(document[0]?.filename as string)}.png`)
 
         try {
             await db

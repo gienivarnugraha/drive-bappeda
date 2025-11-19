@@ -1,10 +1,8 @@
 import { inspect } from 'node:util';
 import { getFileExtension } from '~~/shared/utils';
 import { v4 as uuid } from 'uuid'
-
+import { ALLOWED_MIME_TYPES } from '~~/shared/utils';
 // Define expected query types
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
-
 export default eventHandler(async (event) => {
   // Input Retrieval and Validation
   const formData = await readMultipartFormData(event);
@@ -17,10 +15,10 @@ export default eventHandler(async (event) => {
 
   const avatarFile = formData?.[0];
 
-  if (!ALLOWED_TYPES.includes(avatarFile?.type as string)) {
+  if (!ALLOWED_MIME_TYPES('avatars').includes(avatarFile?.type as string)) {
     throw createError({
       statusCode: 400,
-      message: `Only ${ALLOWED_TYPES.join(', ')} files are allowed.`,
+      message: `Only ${ALLOWED_MIME_TYPES('avatars').join(', ')} files are allowed.`,
     });
   }
 
@@ -31,7 +29,7 @@ export default eventHandler(async (event) => {
     });
   }
 
-  const storage = useStorage('public')
+  const storage = useStorage(process.env.STORAGE_KEY)
 
   try {
     let filename: string

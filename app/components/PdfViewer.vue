@@ -473,8 +473,8 @@ const unwatch = watch(showThumbnails, async (newValue) => {
 
 <template>
     <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="default" v-model:open="showThumbnails" collapsible class="bg-elevated/25 min-h-full "
-            :collapsed-size="0" :default-size="5" :ui="{
+        <UDashboardSidebar id="pdf-thumbnail" v-model:open="showThumbnails" collapsible
+            class="bg-elevated/25 min-h-full " :collapsed-size="0" :modal="false" :default-size="5" :ui="{
                 header: 'lg:border-b lg:border-default h-auto',
                 footer: 'lg:border-t lg:border-default'
             }">
@@ -610,9 +610,8 @@ const unwatch = watch(showThumbnails, async (newValue) => {
                         <div v-if="numPages === 0 && !loadingError" class="text-center text-gray-500 p-8">
                             Loading PDF...
                         </div>
-                        <div v-if="loadingError" class="text-center text-red-600 p-8 font-semibold">
-                            Error loading PDF: {{ loadingError }}
-                        </div>
+                        <UAlert v-if="loadingError" icon="i-lucide-alert-triangle" color="error" variant="subtle"
+                            title="Error loading PDF" :description="` ${loadingError}`" />
                     </div>
                 </div>
             </template>

@@ -140,7 +140,7 @@ async function PDFLoaderImports() {
     const { getDocument } = mod
     return { getDocument }
   } catch (e) {
-    console.error(e)
+    console.error('Error importing pdf-parse', e)
     throw new Error(
       'Failed to load pdf-parse. Please install it with eg. `npm install pdf-parse`.'
     )

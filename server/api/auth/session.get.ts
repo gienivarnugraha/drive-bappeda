@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
     }
 
     try {
-        return await verify(session.jwt.accessToken, config.session.password!, {
+        return await verify(session.jwt.accessToken, process.env.NUXT_SESSION_PASSWORD!, {
             throwError: true,
         })
     }

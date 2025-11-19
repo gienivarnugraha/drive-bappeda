@@ -9,7 +9,7 @@ type Query = {
 export default defineEventHandler(async (event) => {
   const { filename } = getQuery<Query>(event)
 
-  const storage = useStorage('public');
+  const storage = useStorage(process.env.STORAGE_KEY);
 
   const storageKey = `${filename}`;
 
