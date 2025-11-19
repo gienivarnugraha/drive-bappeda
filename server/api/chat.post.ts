@@ -2,7 +2,7 @@ import { getAnswerChain } from '~~/server/utils/rag'
 import { InMemoryChatMessageHistory } from '@langchain/core/chat_history'
 import { RunnableWithMessageHistory } from '@langchain/core/runnables'
 import { AIMessage } from '@langchain/core/messages';
-import { UIMessagePart } from '~~/shared/types/chat';
+import { type UIMessagePart } from '~~/shared/types/chat';
 
 const messageHistories: { [sessionId: string]: InMemoryChatMessageHistory } = {} as { [sessionId: string]: InMemoryChatMessageHistory };
 

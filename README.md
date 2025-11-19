@@ -27,19 +27,16 @@ OPENAI_API_KEY =
 SITE_URL=
 
 # for storage url, config in nuxt.config.ts -> storage 
-# default storage are ./public/
-# so storage url will be ./public/{STORAGE_URL}/../../../
-STORAGE_URL=
+# default storage key are ./public/
+STORAGE_KEY=
+# default storage path './storage' ./public/
+STORAGE_PATH=
 
 # generate session password using 32-characters
 NUXT_SESSION_PASSWORD=
 
 # database config
-DB_HOST=
-DB_USER=
-DB_NAME=
-DB_PASSWORD=
-DB_PORT=
+PG_DB='postgresql://USER:PASSWORD@HOST:PORT/DB';
 
 ```
 
@@ -74,9 +71,15 @@ pnpm preview
 
 ## TODO
 - [x] migrate to drizzle
+- [x] convert pdfs to markdown to let ai ease to use
+- [x] add backup summary to reuse in case document deleted
+- [x] validate password change
+- [x] chat history
+- [x] fix storage path, calling pythong script
+- [x] authentication using nuxt-auth-utils
+- [ ] fix UI 
+- refresh token is not set
 - enable text selection on pdf viewer
 - generate thumbnail on pdf viewer not showing
 - optimize pdf viewer
-- convert pdfs to markdown to let ai ease to use
-- validate password change
 - dirty user update only
