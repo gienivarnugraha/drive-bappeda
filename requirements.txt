@@ -1,5 +1,4 @@
 markitdown[pptx, docx, xlsx, xls, pdf]
 openai
 pymupdf4llm
-pymupdf_layout
-flask
+pymupdf

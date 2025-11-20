@@ -28,6 +28,10 @@ export default defineNuxtConfig({
         driver: 'fs-lite',
         base: process.env.STORAGE_PATH
       },
+      'blobs': {
+        driver: 'vercel-blob',
+        access: 'public'
+      }
     }
   },
   css: ['~/assets/css/main.css'],
