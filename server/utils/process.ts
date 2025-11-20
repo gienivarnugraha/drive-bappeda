@@ -387,13 +387,7 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  // SELFT HOST SERVER
-  // const markdownPath = await convertToMarkdown(filename)
-
-  // VERCEL
-  const _filename = sanitizeFileName(filename as string, false)
-  const dirname = sanitizeFileName(filename as string)
-  const filepath = resolveStoragePath(`documents:${dirname}:${_filename}`)
+  const filepath = await convertToMarkdown(filename)
 
   const documents = await loadDocument(filepath)
 
