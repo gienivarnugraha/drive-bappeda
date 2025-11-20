@@ -45,6 +45,18 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
 
   const extension = extname(filename)
 
+  // const storage = useStorage(process.env.STORAGE_KEY)
+
+  // if (!await storage.has(filename)) {
+  //   throw createError({
+  //     statusCode: 404,
+  //     message: `File **${filename}** not found`,
+  //   })
+  // }
+
+  // const file = await storage.getItemRaw<Buffer>(filename)
+  // const blob = new Blob([file as BlobPart], { type: 'application/pdf' })
+
   switch (extension) {
     case '.pdf':
       loader = new PDFLoader(filename, {
@@ -387,7 +399,13 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
+  // SELFT HOST SERVER
   const filepath = await convertToMarkdown(filename)
+
+  // VERCEL
+  // const _filename = sanitizeFileName(filename as string, false)
+  // const dirname = sanitizeFileName(filename as string)
+  // const filepath = `documents:${dirname}:${_filename}`
 
   const documents = await loadDocument(filepath)
 
