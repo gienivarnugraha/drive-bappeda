@@ -36,7 +36,7 @@ export default eventHandler(async (event) => {
 
     if (avatar) {
       // existing user
-      filename = `${avatar}.${getFileExtension(avatarFile.filename as string)}`
+      filename = avatar
 
       // avatar is already has extension
       const exists = await storage.hasItem(`avatars:${avatar}`)

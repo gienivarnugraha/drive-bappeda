@@ -88,6 +88,10 @@ async function uploadFile() {
             })
 
             clear()
+            
+            await nextTick()
+
+            await fetchUser()
 
         } catch (error: any) {
             console.error('error uploading files', error)

@@ -1,5 +1,4 @@
 import { useStorage } from '#imports';
-import { defineEventHandler } from 'h3';
 import { getMimeType } from '#shared/utils';
 
 type Query = {
@@ -11,9 +10,9 @@ export default defineEventHandler(async (event) => {
 
   const storage = useStorage(process.env.STORAGE_KEY);
 
-  const storageKey = `${filename}`;
+  const exists = await storage.has(filename);
 
-  const exists = await storage.has(storageKey);
+  console.log('find: ', filename, 'exists:', exists)
 
   if (!exists) {
     return createError({
@@ -23,7 +22,7 @@ export default defineEventHandler(async (event) => {
   }
   // 3. Get the file content (as a Buffer)
   // We use getItem() or getRaw() to retrieve the binary content.
-  const fileContent = await storage.getItemRaw<Buffer>(storageKey);
+  const fileContent = await storage.getItemRaw<Buffer>(filename);
 
   // 4. Determine and Set the Content-Type header
   // This is crucial for the browser to correctly interpret the response as an image.
