@@ -4,7 +4,7 @@ import { type DocumentMetadata } from '#shared/types'
 // --- categories Table ---
 export const categories = pgTable('categories', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   name: text('name').unique().notNull(),
   metadata: jsonb('metadata')
 }, (table) => [
@@ -14,7 +14,7 @@ export const categories = pgTable('categories', {
 // --- divisions Table ---
 export const divisions = pgTable('divisions', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   name: varchar('name').unique().notNull(),
   metadata: jsonb('metadata')
 }, (table) => [
@@ -28,7 +28,7 @@ export const documents = pgTable('documents', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   metadata: jsonb('metadata').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   uuid: text('uuid').notNull()
 }, (table) => [
   uniqueIndex("filename_idx").on(table.filename)
@@ -37,7 +37,7 @@ export const documents = pgTable('documents', {
 // --- categories_documents_divisions Table (Junction Table) ---
 export const categoriesDocumentsDivisions = pgTable('categories_documents_divisions', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   categoryId: integer('category_id').references(() => categories.id),
   documentId: integer('document_id').references(() => documents.id),
   divisionId: integer('division_id').references(() => divisions.id)
@@ -62,7 +62,7 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
   avatar: text('avatar'),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
   uniqueIndex("email_idx").on(table.email)
 ])

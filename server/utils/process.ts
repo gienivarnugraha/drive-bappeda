@@ -387,11 +387,17 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  const markdownPath = await convertToMarkdown(filename)
+  // SELFT HOST SERVER
+  // const markdownPath = await convertToMarkdown(filename)
 
-  const documents = await loadDocument(markdownPath)
+  // VERCEL
+  const _filename = sanitizeFileName(filename as string, false)
+  const dirname = sanitizeFileName(filename as string)
+  const filepath = resolveStoragePath(`documents:${dirname}:${_filename}`)
 
-  const splitter = documentSplitter(markdownPath)
+  const documents = await loadDocument(filepath)
+
+  const splitter = documentSplitter(filepath)
 
   const docs = await splitter.splitDocuments(documents)
 

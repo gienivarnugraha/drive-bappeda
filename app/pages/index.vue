@@ -1,5 +1,5 @@
-import { useTailwindBreakpoints } from '../composables/useTailwindBreakpoints';
 <script setup lang="ts">
+
 const { loggedIn } = useUserSession()
 
 const features = [
@@ -121,12 +121,11 @@ const testimonials = [
 ]
 
 const logos = [
-  'i-simple-icons-github',
-  'i-simple-icons-discord',
-  'i-simple-icons-x',
-  'i-simple-icons-instagram',
-  'i-simple-icons-linkedin',
-  'i-simple-icons-facebook'
+  { src: 'logos_1.png', alt: 'Kota Semarang' },
+  { src: 'logos_2.png', alt: 'Badan Pembangungan Daerah Kota Semarang' },
+  { src: 'logos_3.webp', alt: 'Sistem Informasi Pemerintah Daerah' },
+  { src: 'logos_4.png', alt: 'Sistem Informasi Kerjasama Antar Lembaga' },
+  { src: 'logos_5.png', alt: 'Lapor SEMAR' },
 ]
 
 const links = [
@@ -140,7 +139,7 @@ const links = [
     to: '#how-it-works',
     color: 'neutral',
     variant: 'subtle',
-    trailingIcon: 'i-lucide-monitor-play'
+    trailingIcon: 'i-lucide-arrow-right'
   }
 ]
 const { smAndLarger } = useTailwindBreakpoints()
@@ -189,10 +188,14 @@ const { smAndLarger } = useTailwindBreakpoints()
           headline="BADAN PERENCANAAN PEMBANGUNAN DAERAH" :links="links">
           <UCard class="mt-16 relative aspect-video md:aspect-2/1 overflow-hidden"
             :ui="{ body: 'p-0', base: 'ring-0 shadow-2xl' }">
-            <img src="/hero.png" class="w-full h-full object-cover" alt="Tampilan antarmuka Chatbot AI" />
+            <!-- <img src="/hero.png" class="w-full h-full object-cover" alt="Tampilan antarmuka Chatbot AI" /> -->
+            <UColorModeImage light="hero_light.png" dark="hero_dark.png" class="w-full h-full object-cover"
+              alt="Tampilan antarmuka Chatbot AI" />
           </UCard>
         </UPageHero>
-        <UPageLogos title="Dipercaya oleh Tim Analis Data Terbaik" marquee :items="logos" />
+        <UPageLogos title="Bagian dari kami" :marquee="{ pauseOnHover: true }">
+          <img v-for="( logo, index ) in  logos " :key="index" :src="logo.src" class="h-12 w-auto" />
+        </UPageLogos>
       </UContainer>
 
       <UContainer id="features">
@@ -212,8 +215,7 @@ const { smAndLarger } = useTailwindBreakpoints()
           headline="PROSES 4 LANGKAH SEDERHANA" icon="i-lucide-loader" />
 
         <div class="grid grid-cols-1 gap-y-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-x-12">
-          <div v-for="( step, index ) in  steps " :key="index"
-            class="relative flex flex-col items-center text-center">
+          <div v-for="( step, index ) in  steps " :key="index" class="relative flex flex-col items-center text-center">
 
             <div v-if="index < steps.length - 1"
               class="hidden lg:block absolute top-7 right-0 w-3/4 h-0.5 bg-primary-500/50 transform translate-x-5/8 z-0">
@@ -241,8 +243,7 @@ const { smAndLarger } = useTailwindBreakpoints()
         <UPageSection title="Efisiensi yang Terbukti di Lapangan" description="Apa Kata Pengguna BAPPEDA"
           icon="i-lucide-users">
           <UPageColumns>
-            <UPageCard v-for="( testimonial, index ) in  testimonials " :key="index"
-              :description="testimonial.quote"
+            <UPageCard v-for="( testimonial, index ) in  testimonials " :key="index" :description="testimonial.quote"
               :ui="{ description: 'text-lg italic before:content-[open-quote] after:content-[close-quote] text-gray-700 dark:text-gray-300' }">
               <template #footer>
                 <div class="flex items-center">

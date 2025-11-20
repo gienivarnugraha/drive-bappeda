@@ -142,8 +142,8 @@ function isEmpty(obj: Object) {
       <UButton v-if="!isEmpty(document)" variant="solid" class="fixed bottom-10 right-10"
         :icon="isFileDetailsSlideoverOpen ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
         :label="isFileDetailsSlideoverOpen ? 'Tutup File' : 'Buka File'" :ui="{
-          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-        }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
     </UTooltip>
 
     <template #header>
@@ -154,8 +154,8 @@ function isEmpty(obj: Object) {
       <div class="flex justify-between items-center space-x-1">
         <UButton color="neutral" variant="ghost" :icon="isEditing ? 'i-lucide-arrow-left' : 'i-lucide-pencil'"
           @click="isEditing = !isEditing" :ui="{
-            trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-          }" />
+    trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+  }" />
         <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isFileDetailsSlideoverOpen = false" />
       </div>
 
@@ -198,7 +198,7 @@ function isEmpty(obj: Object) {
             <li class="text-xs">
               <strong>Nama File:</strong>
             </li>
-            <li> {{ document.metadata.filename }} </li>
+            <li> {{ document.filename }} </li>
             <li class="text-xs">
               <strong>Ukuran File:</strong>
             </li>
@@ -210,7 +210,7 @@ function isEmpty(obj: Object) {
             <li class="text-xs">
               <strong>Tanggal Unggah:</strong>
             </li>
-            <li> {{ dateToLocale(document.createdAt) }} </li>
+            <li> {{ dateToLocale(document.created_at) }} </li>
           </ul>
         </UForm>
       </div>

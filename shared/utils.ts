@@ -1,4 +1,3 @@
-
 export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
 const ALLOWED_TYPES = {
@@ -148,26 +147,22 @@ export function clampCharacters(text: string, limit: number = 25) {
  * @returns {string} The sanitized filename.
  */
 export function sanitizeFileName(file: string, removeExtension: boolean = true): string {
-    file
+    const extension = getFileExtension(file)
+
+    const sanitized = file
         // Remove leading and trailing whitespace
         .trim()
-        // Remove whitespace and other non-alphanumeric characters
+        // Change to lowercase
         .toLowerCase()
+        // Remove extension from filename
+        .replace(/\.[^/.]+$/, '')
         // Replace whitespace and other non-alphanumeric characters with hyphens (-)
         .replace(/[^a-z0-9-_]+/g, '-')
-        // replace multiple hyphens with a single hyphen
-        .replace(/--+/g, '-')
         // Remove leading and trailing hyphens
         .replace(/^-+|-+$/g, '')
 
-    if (removeExtension) {
-        return file
-            // Remove file extension
-            .replace(/\.[^/.]+$/, '')
-
-    } else {
-        return file
-    }
+    // Remove extension from filename
+    return removeExtension ? sanitized : `${sanitized}.${extension}`
 }
 
 /**

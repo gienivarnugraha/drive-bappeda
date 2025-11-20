@@ -33,6 +33,8 @@ export default eventHandler(async (event) => {
 
     const filepath = `documents:${dirname}:${filename}`
 
+    console.log(filepath)
+
     if (await storage.hasItem(filepath)) {
       sseSend('push:notif', { message: `${clampFilename(filename)} exists in storage... `, status: 'info' })
 

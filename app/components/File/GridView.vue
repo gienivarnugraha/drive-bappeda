@@ -62,7 +62,6 @@ const selectDocument = (data: Results) => {
         </div>
       </template>
 
-      <!-- <img :src="item.metadata.thumbnailSrc" class="w-full h-24 sm:h-30 object-cover rounded" /> -->
       <img :src="`/file?filename=${encodeURIComponent(item.metadata.thumbnailSrc)}`"
         class="w-full h-24 sm:h-30 object-cover rounded" />
 

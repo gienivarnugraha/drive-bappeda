@@ -24,7 +24,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     storage: {
-      [process.env.STORAGE_KEY as string]: {
+      'storage': {
         driver: 'fs-lite',
         base: process.env.STORAGE_PATH
       },
