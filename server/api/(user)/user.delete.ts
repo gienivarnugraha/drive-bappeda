@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm';
 import type { User } from '#shared/types';
 
 const deleteAvatar = async (avatar: string) => {
-    const storage = useStorage(process.env.STORAGE_KEY)
+    const config = useRuntimeConfig()
+    const storage = useStorage(config.STORAGE_KEY)
 
     try {
         await storage.removeItem(`avatars:${avatar}` as string)

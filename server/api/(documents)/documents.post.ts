@@ -42,9 +42,11 @@ export default defineEventHandler(async (event) => {
 
         console.log('process Files', processFiles)
 
+        const config = useRuntimeConfig()
+
         for (const file of processFiles) {
 
-            const storage = useStorage(process.env.STORAGE_KEY)
+            const storage = useStorage(config.STORAGE_KEY)
 
             const filename = sanitizeFileName(file as string, false)
             const dirname = sanitizeFileName(file as string)

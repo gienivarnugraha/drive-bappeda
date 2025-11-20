@@ -9,9 +9,10 @@ import * as schema from '../database/schema'
 export const tables = schema
 
 export function useDrizzle() {
+    const config = useRuntimeConfig()
     // Create the pg Pool (same configuration as above)
     const pool = new Pool({
-        connectionString: process.env.PG_DB,
+        connectionString: config.PG_DB,
         max: 20, // Max number of clients in the pool (default is 10)
         idleTimeoutMillis: 30000, // How long a client is allowed to remain idle
     });

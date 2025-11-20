@@ -18,15 +18,22 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    PG_DB: process.env.PG_DB,
+    STORAGE_KEY: process.env.STORAGE_KEY,
+    STORAGE_PATH: process.env.STORAGE_PATH,
     public: {
       SITE_URL: process.env.SITE_URL
     },
+    session: {
+      password: process.env.NUXT_SESSION_PASSWORD as string
+    }
   },
   nitro: {
     storage: {
       'storage': {
         driver: 'fs-lite',
-        base: process.env.STORAGE_PATH
+        base: './storage/'
       },
       'blobs': {
         driver: 'vercel-blob',

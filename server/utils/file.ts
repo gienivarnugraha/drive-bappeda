@@ -8,6 +8,7 @@ import { join, resolve } from 'path'
  * @example resolveStoragePath('documents:folder:file.ext') // returns E://path/to/storage/documents/folder/file.ext
  */
 export function resolveStoragePath(key: string): string {
-    const base = resolve(process.env.STORAGE_PATH as string);
+    const config = useRuntimeConfig()
+    const base = resolve(config.STORAGE_PATH);
     return join(base, key.replace(/:/g, "/"));
 }

@@ -45,7 +45,9 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
 
   const extension = extname(filename)
 
-  // const storage = useStorage(process.env.STORAGE_KEY)
+  // VERCEL
+  // const config = useRuntimeConfig()
+  // const storage = useStorage(config.STORAGE_KEY)
 
   // if (!await storage.has(filename)) {
   //   throw createError({
@@ -124,7 +126,7 @@ export const documentSplitter = (file: string) => {
  * @returns A promise that resolves with the generated summaries.
  */
 const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds: string[] }, filename: string) => {
-
+  const config = useRuntimeConfig()
   const model = getModel('openai')
 
   const fileSummary = `${sanitizeFileName(filename)}_summary.json`
@@ -132,7 +134,7 @@ const generateSummaries = async (docs: Document[], ids: { fileId: string, docIds
 
   let summaries: Document[] | undefined
 
-  const storage = useStorage(process.env.STORAGE_KEY)
+  const storage = useStorage(config.STORAGE_KEY)
 
   const filepath = `documents:${sanitizeFileName(filename, true)}`
 

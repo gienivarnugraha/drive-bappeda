@@ -6,33 +6,38 @@ import { CacheBackedEmbeddings } from 'langchain/embeddings/cache_backed'
 import { useDrizzle } from '~~/server/utils/drizzle'
 
 export function getModel(model: 'google' | 'openai') {
+  const config = useRuntimeConfig()
   switch (model) {
     case 'google':
       return new ChatGoogleGenerativeAI({
         temperature: 0,
         model: 'gemini-2.0-flash',
         streaming: true,
+        apiKey: config.OPENAI_API_KEY
       })
     case 'openai':
       return new ChatOpenAI({
         temperature: 0.5,
         model: 'gpt-4o-mini',
+        apiKey: config.OPENAI_API_KEY
         // streaming: true
       })
   }
 }
 
 export function getEmbedding(model: 'google' | 'openai') {
-
+  const config = useRuntimeConfig()
   switch (model) {
     case 'google':
       return new GoogleGenerativeAIEmbeddings({
         model: 'embedding-001',
+        apiKey: config.OPENAI_API_KEY
       })
 
     case 'openai':
       return new OpenAIEmbeddings({
         model: 'text-embedding-ada-002',
+        apiKey: config.OPENAI_API_KEY
       })
   }
 }

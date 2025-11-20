@@ -7,8 +7,8 @@ type Query = {
 
 export default defineEventHandler(async (event) => {
   const { filename } = getQuery<Query>(event)
-
-  const storage = useStorage(process.env.STORAGE_KEY);
+  const config = useRuntimeConfig()
+  const storage = useStorage(config.STORAGE_KEY);
 
   const exists = await storage.has(filename);
 

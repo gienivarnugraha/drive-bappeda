@@ -18,7 +18,7 @@ function runPythonConversion(input: string, output: string): Promise<string> {
         // Spawn the Python process
         const pythonProcess = spawn(pythonExecutable, [PYTHON_SCRIPT, input, output], {
             // Pass the API key to the Python environment
-            env: { OPENAI_API_KEY: process.env.OPENAI_API_KEY, ...process.env },
+            env: { OPENAI_API_KEY: config.OPENAI_API_KEY, ...process.env },
             // Set cwd to the server directory so python can find the script
             cwd: 'server',
         });
@@ -64,13 +64,13 @@ export async function convertToMarkdown(filename: string): Promise<string> {
 
     sseSend('push:notif', { message: `converting ${clampFilename(filename)} to markdown..`, status: 'info' })
 
-    const openAiKey = process.env.OPENAI_API_KEY;
+    const openAiKey = config.OPENAI_API_KEY;
 
     if (!openAiKey) {
         throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY is not configured on the server.' });
     }
 
-    const storage = useStorage(process.env.STORAGE_KEY)
+    const storage = useStorage(config.STORAGE_KEY)
 
     const sanitizedName = sanitizeFileName(filename as string, false)
     const dirname = sanitizeFileName(filename as string)

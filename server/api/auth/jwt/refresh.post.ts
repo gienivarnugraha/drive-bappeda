@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
         })
     }
 
-    if (!await jwt.verify(session.jwt.refreshToken, `${process.env.NUXT_SESSION_PASSWORD!}-secret`)) {
+    if (!await jwt.verify(session.jwt.refreshToken, `${config.session.password!}-secret`)) {
         throw createError({
             statusCode: 401,
             message: 'refresh token is invalid',
@@ -24,7 +24,7 @@ export default eventHandler(async (event) => {
             hello: 'world',
             exp: Math.floor(Date.now() / 1000) + 30, // 30 seconds
         },
-        process.env.NUXT_SESSION_PASSWORD!,
+        config.session.password!,
     )
 
     await setUserSession(event, {

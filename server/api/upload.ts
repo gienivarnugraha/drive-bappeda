@@ -25,7 +25,8 @@ export default eventHandler(async (event) => {
     const filename = sanitizeFileName(file.filename as string, false)
     const dirname = sanitizeFileName(file.filename as string)
 
-    const storage = useStorage(process.env.STORAGE_KEY)
+    const config = useRuntimeConfig()
+    const storage = useStorage(config.STORAGE_KEY)
 
     if (file.name === 'file') {
       filenames.push(filename)

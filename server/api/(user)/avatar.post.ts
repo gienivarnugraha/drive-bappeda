@@ -29,7 +29,8 @@ export default eventHandler(async (event) => {
     });
   }
 
-  const storage = useStorage(process.env.STORAGE_KEY)
+  const config = useRuntimeConfig()
+  const storage = useStorage(config.STORAGE_KEY)
 
   try {
     let filename: string
