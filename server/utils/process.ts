@@ -404,9 +404,9 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  // markdown file
-  const _filename = sanitizeFileName(filename as string)
-  const filepath = `documents:${_filename}:${_filename}.md`
+  const _filename = sanitizeFileName(filename as string, false)
+  const dirname = sanitizeFileName(filename as string)
+  const filepath = `documents:${dirname}:${_filename}`
 
   const documents = await loadDocument(filepath)
 
