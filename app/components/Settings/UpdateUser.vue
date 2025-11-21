@@ -87,11 +87,12 @@ async function uploadFile() {
                 color: 'success'
             })
 
-            clear()
-            
+
             await nextTick()
 
             await fetchUser()
+
+            clear()
 
         } catch (error: any) {
             console.error('error uploading files', error)
@@ -127,17 +128,14 @@ async function profileUpdate(event: FormSubmitEvent<ProfileSchema>) {
 
         await fetchUser()
 
+        clear()
+
         toast.add({
             title: 'Success',
             description: 'Your settings have been updated.',
             icon: 'i-lucide-check',
             color: 'success'
         })
-
-        if (previousObjectUrl.value) {
-            URL.revokeObjectURL(previousObjectUrl.value);
-            previousObjectUrl.value = undefined;
-        }
     } catch (error: any) {
         console.error('error updating user', error)
 

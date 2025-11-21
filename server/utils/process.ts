@@ -24,7 +24,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { PDFLoader } from '~~/server/utils/scripts/pdfLoader'
 import { getModel, getVectorStore } from '~~/server/utils/ai'
 import type { DocumentMetadata } from '#shared/types'
-import { clampFilename, sanitizeFileName } from '#shared/utils'
+import { ALLOWED_TYPES, clampFilename, sanitizeFileName } from '#shared/utils'
 import { modifyRelation } from '~~/server/utils/db'
 import { sseSend } from '~~/server/utils/sse'
 import { resolveStoragePath } from '~~/server/utils/file';
@@ -56,29 +56,32 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
     })
   }
 
+  const type = ALLOWED_TYPES['documents'] as { [key in keyof typeof ALLOWED_TYPES['documents']]: string };
+  const typeForExtension = type['.' + extension as keyof typeof type];
+
   const file = await storage.getItemRaw<Buffer>(filename)
-  const blob = new Blob([file as BlobPart], { type: 'application/pdf' })
+  const blob = new Blob([file as BlobPart], { type: typeForExtension || 'application/octet-stream' })
 
   switch (extension) {
     case '.pdf':
-      loader = new PDFLoader(filename, {
+      loader = new PDFLoader(blob, {
         parsedItemSeparator: ' '
       })
       break
     case '.md':
-      loader = new TextLoader(filename)
+      loader = new TextLoader(blob)
       break
     case '.txt':
-      loader = new TextLoader(filename)
+      loader = new TextLoader(blob)
       break
     case '.csv':
-      loader = new CSVLoader(filename)
+      loader = new CSVLoader(blob)
       break
     case '.doc':
-      loader = new DocxLoader(filename) // DocxLoader doesn't have a 'type' option. It auto-detects.
+      loader = new DocxLoader(blob) // DocxLoader doesn't have a 'type' option. It auto-detects.
       break
     case '.docx':
-      loader = new DocxLoader(filename)
+      loader = new DocxLoader(blob)
       break
     default:
 
@@ -401,13 +404,9 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  // SELFT HOST SERVER
-  // const filepath = await convertToMarkdown(filename)
-
-  // VERCEL
-  const _filename = sanitizeFileName(filename as string, false)
-  const dirname = sanitizeFileName(filename as string)
-  const filepath = `documents:${dirname}:${_filename}`
+  // markdown file
+  const _filename = sanitizeFileName(filename as string)
+  const filepath = `documents:${_filename}:${_filename}.md`
 
   const documents = await loadDocument(filepath)
 

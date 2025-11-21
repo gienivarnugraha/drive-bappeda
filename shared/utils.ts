@@ -1,6 +1,6 @@
 export const deepClone = (object: any) => object && JSON.parse(JSON.stringify(object))
 
-const ALLOWED_TYPES = {
+export const ALLOWED_TYPES = {
     'avatars': {
         'png': 'image/png',
         'jpg': 'image/jpeg',
@@ -13,6 +13,7 @@ const ALLOWED_TYPES = {
         'pdf': 'application/pdf',
         'doc': 'application/msword',
         'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'csv': 'text/csv',
         'xls': 'application/vnd.ms-excel',
         'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
