@@ -38,6 +38,10 @@ export default defineNuxtConfig({
       'blobs': {
         driver: 'vercel-blob',
         access: 'public'
+      },
+      'http': {
+        driver: 'http',
+        base: process.env.STORAGE_URL
       }
     }
   },
