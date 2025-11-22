@@ -53,6 +53,8 @@ export default defineEventHandler(async (event) => {
 
             const meta = await storage.getMeta(`documents:${dirname}:${filename}`)
 
+            console.log('meta:', filename, meta)
+
             const metadata = {
                 category_id: categories,
                 division_id: divisions,

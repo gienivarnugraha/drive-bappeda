@@ -22,11 +22,13 @@ export default defineEventHandler(async (event) => {
   }
   // 3. Get the file content (as a Buffer)
   // We use getItem() or getRaw() to retrieve the binary content.
-  const fileContent = await storage.getItemRaw<Buffer>(filename);
+  const fileContent = await storage.getItemRaw<Buffer>(filename.replace(/:/g, "/"));
 
   // 4. Determine and Set the Content-Type header
   // This is crucial for the browser to correctly interpret the response as an image.
   setHeader(event, 'Content-Type', getMimeType(filename));
+
+  console.log('serving file: %s, mime-type: %s', filename, getMimeType(filename));
 
   // Optional: Set caching headers for better performance
   setHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable');
