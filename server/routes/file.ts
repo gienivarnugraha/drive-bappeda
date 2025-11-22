@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const storage = useStorage(config.STORAGE_KEY);
 
-  const exists = await storage.has(filename);
+  const exists = await storage.has(filename.replace(/:/g, "/"));
 
   console.log('find: ', filename, 'exists:', exists)
 

@@ -60,7 +60,7 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
   const typeForExtension = type['.' + extension as keyof typeof type];
 
   const file = await storage.getItemRaw<Buffer>(filename)
-  const blob = new Blob([file as BlobPart], { type: typeForExtension || 'application/octet-stream' })
+  const blob = new Blob([file as BlobPart], { type: typeForExtension })
 
   switch (extension) {
     case '.pdf':

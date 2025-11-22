@@ -167,12 +167,19 @@ const loadPDF = async () => {
     searchResults.value = [];
     currentSearchResultIndex.value = 0;
 
+    const pdfUrl = await fetch(props.pdfUrl).then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.blob();
+    });
+
     // Clear previous content in containers
     // if (pagesContainer.value) pagesContainer.value.innerHTML = '';
 
 
     try {
-        const loadingTask = pdfjsLib.getDocument(props.pdfUrl);
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
 
         pdfDocument = pdf;
