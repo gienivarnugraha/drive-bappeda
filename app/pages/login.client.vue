@@ -6,15 +6,14 @@ const toast = useToast()
 
 const { fetch, loggedIn } = useUserSession()
 
-onMounted(() => {
-  // const loggedIn = useSupabaseSession()
+const isSubmitting = ref(false)
 
-  console.error('loggedIn: ', loggedIn.value)
 
-  if (loggedIn.value) {
-    navigateTo('/home')
-  }
-})
+console.error('loggedIn: ', loggedIn.value)
+
+if (loggedIn.value) {
+  navigateTo('/home')
+}
 
 const fields: AuthFormField[] = [{
   name: 'email',
@@ -39,6 +38,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
+  isSubmitting.value = true
   const { email, password, } = payload.data
 
   try {
@@ -64,6 +64,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       color: 'error'
     });
 
+    isSubmitting.value = false
   }
 
 }
@@ -73,7 +74,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   <div class="flex flex-row h-screen items-center justify-center gap-4 p-4">
     <LazyStars />
     <UPageCard class="w-full max-w-md">
-      <UAuthForm :schema="schema" :fields="fields" title="Welcome back!" icon="i-lucide-lock" @submit="onSubmit">
+      <UAuthForm :schema="schema" :fields="fields" :loading="isSubmitting" title="Welcome back!" icon="i-lucide-lock"
+        @submit="onSubmit">
         <template #description>
           Don't have an account? <ULink to="#" class="text-primary font-medium">Sign up</ULink>.
         </template>

@@ -74,7 +74,7 @@ export async function convertToMarkdown(filename: string): Promise<string> {
 
     const sanitizedName = sanitizeFileName(filename as string, false)
     const dirname = sanitizeFileName(filename as string)
-    const documentPath = `documents/${dirname}/${sanitizedName}`
+    const documentPath = `documents:${dirname}:${sanitizedName}`
 
     if (!await storage.has(documentPath)) {
         sseSend('push:notif', { message: `${clampFilename(filename)} doesnt exists..`, status: 'error' })

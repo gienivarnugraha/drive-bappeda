@@ -10,13 +10,9 @@ const props = defineProps({
   }
 })
 
-const state: Ref<Results[]> = ref([])
+// const state: Ref<Results[]> = ref([])
 
-onMounted(async () => {
-  if (props.document) {
-    state.value = props.document
-  }
-})
+const state = computed(() => props.document)
 
 const thumbnail = ref('')
 
@@ -62,9 +58,10 @@ const selectDocument = (data: Results) => {
         </div>
       </template>
 
-      <img :src="`/file?filename=${encodeURIComponent(item.metadata.thumbnailSrc)}`"
+      <img :src="`/file?filename=${item.metadata.thumbnailSrc}`" :id="`documents-thumbnail-${item.id}`"
         class="w-full h-24 sm:h-30 object-cover rounded" />
 
+      {{ `/file?filename=${item.metadata.thumbnailSrc}` }}
       <template #footer>
         <div class="grid gap-2">
           <p class="text-primary text-xs font-bold line-clamp-1">

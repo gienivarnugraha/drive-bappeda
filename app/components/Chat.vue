@@ -139,7 +139,7 @@ onUnmounted(() => {
       side: 'left',
       variant: 'solid',
       avatar: {
-        src: `/file?filename=avatars/${encodeURIComponent(user?.avatar as string)}`,
+        src: `/file?filename=avatars/${user?.avatar as string}`,
         alt: user?.name
       }
     }">

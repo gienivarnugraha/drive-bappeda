@@ -165,7 +165,7 @@ function isEmpty(obj: Object) {
       <div class="flex flex-col px-2 overflow-y-auto  max-w-full  lg:max-w-84">
         <UForm :schema="schema" :state="state" class="space-y-4 " @submit="onSubmit">
           <img loading="lazy" decoding="auto"
-            :src="`/file?filename=${encodeURIComponent(document.metadata.thumbnailSrc)}`"
+            :src="`/file?filename=${document.metadata.thumbnailSrc}`"
             class="w-full lg:w-60 h-48 lg:h-32 object-cover rounded" alt="File Thumbnail" />
 
           <UFormField v-if="isEditing" label="Judul File" name="title">

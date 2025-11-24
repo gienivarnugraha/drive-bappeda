@@ -18,7 +18,7 @@ const { user: profile, clear } = useUserSession()
 
 const setData = async (data: User) => {
   user.value.name = data.name || ''
-  user.value.avatar.src = `/file?filename=avatars/${encodeURIComponent(data.avatar as string)}`
+  user.value.avatar.src = `/file?filename=avatars/${data.avatar as string}`
   user.value.avatar.alt = data.name || ''
 }
 

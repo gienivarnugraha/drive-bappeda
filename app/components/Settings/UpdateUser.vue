@@ -15,7 +15,7 @@ const profile = reactive<ProfileSchema>({
 
 onMounted(() => {
     profile.name = user.value?.name
-    profile.avatar = `/file?filename=avatars/${encodeURIComponent(user.value?.avatar as string)}`
+    profile.avatar = `/file?filename=avatars/${user.value?.avatar as string}`
 })
 
 onUnmounted(() => {
@@ -154,7 +154,7 @@ const clear = () => {
         previousObjectUrl.value = undefined;
     }
     avatarFile.value = undefined;
-    profile.avatar = `/file?filename=avatars/${encodeURIComponent(user.value?.avatar as string)}`
+    profile.avatar = `/file?filename=avatars:${user.value?.avatar as string}`
 }
 
 </script>

@@ -9,7 +9,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.vers
 // --- Props Definition ---
 const props = defineProps({
     pdfUrl: {
-        type: String,
+        type: [String, Object],
         required: true,
     },
     page: {
@@ -30,10 +30,10 @@ const thumbnailCurrentPage = ref(1); // Separate state for thumbnail highlight
 
 let pdfDocument = undefined;
 const pageCache = new Map();
-const renderedThumbnails = new Set();
+const thumbnailCache = new Map();
 
 const numPages = ref(0);
-const loadingError = ref(null);
+const errorMessage = ref(null);
 
 // Zoom State
 const currentScale = ref('1.0');
@@ -74,8 +74,12 @@ const zoom = (type) => {
 };
 
 // Thumbnail State
-const showThumbnails = ref(false);
+const isCollapsed = ref(false)
 const thumbnailScale = 0.2; // Smaller scale for thumbnails
+
+defineShortcuts({
+    c: () => isCollapsed.value = !isCollapsed.value
+})
 
 // Search State
 const searchTerm = ref('');
@@ -98,11 +102,19 @@ const getCachedPage = async (pageNum) => {
 const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
     if (!pdfDocument) return;
 
-    const page = await getCachedPage(pageNum);
-    const viewport = page.getViewport({ scale: parseFloat(scale) });
 
     const pageWrapper = document.getElementById(containerId);
     if (!pageWrapper) return;
+
+    if (isThumbnail && thumbnailCache.has(pageNum)) {
+        const canvas = thumbnailCache.get(pageNum);
+        pageWrapper.appendChild(canvas);
+        return
+    }
+
+    let page = await getCachedPage(pageNum);
+
+    const viewport = page.getViewport({ scale: parseFloat(scale) });
 
     // Clear previous content but preserve page label for main pages
     if (!isThumbnail) {
@@ -122,6 +134,11 @@ const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
     const renderContext = { canvasContext: context, viewport: viewport };
 
     await page.render(renderContext).promise;
+
+    if (isThumbnail) {
+        thumbnailCache.set(pageNum, canvas);
+    }
+
     pageWrapper.appendChild(canvas);
 
     // --- Text Layer for Main Pages (Required for Search) ---
@@ -136,50 +153,46 @@ const renderPage = async (pageNum, containerId, scale, isThumbnail = false) => {
 
         pageWrapper.appendChild(textLayerDiv);
 
-        const textLayer = new TextLayerBuilder({ textContentSource: textContent, page: page });
+        const textLayer = new TextLayerBuilder({
+            pdfPage: page,
+        });
+
         textLayer.render({
-            viewport
+            viewport,
+            // textContentParams: textContent
         });
     }
+
 };
 
 const renderAllPages = async () => {
     if (pdfDocument) {
         for (let i = 1; i <= numPages.value; i++) {
+            // render page
             await renderPage(i, `page-${i}`, currentScale.value, false);
-            if (!renderedThumbnails.has(i)) {
-                await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
-                renderedThumbnails.add(i);
-            }
+            // render thumbnails
+            await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
         }
     }
 };
 
 const loadPDF = async () => {
-    loadingError.value = null;
+    errorMessage.value = null;
     pdfDocument = null;
     numPages.value = 0;
     pageCache.clear();
-    renderedThumbnails.clear();
+    thumbnailCache.clear();
 
     currentPage.value = 1;
     thumbnailCurrentPage.value = 1;
     searchResults.value = [];
     currentSearchResultIndex.value = 0;
 
-    const pdfUrl = await fetch(props.pdfUrl).then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.blob();
-    });
-
     // Clear previous content in containers
     // if (pagesContainer.value) pagesContainer.value.innerHTML = '';
 
-
     try {
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const loadingTask = pdfjsLib.getDocument({ data: props.pdfUrl });
         const pdf = await loadingTask.promise;
 
         pdfDocument = pdf;
@@ -194,7 +207,7 @@ const loadPDF = async () => {
 
     } catch (error) {
         console.error('Error loading or rendering PDF:', error);
-        loadingError.value = error.message || 'Could not load the PDF document.';
+        errorMessage.value = error.message || 'Could not load the PDF document.';
     }
 };
 
@@ -207,7 +220,7 @@ const scrollToPage = (pageNum, behavior = 'smooth') => {
     const container = pagesContainer.value;
 
     if (pageElement && container) {
-        const scrollPosition = pageElement.offsetTop - container.offsetTop;
+        const scrollPosition = pageElement.offsetTop
 
         container.scrollTo({
             top: scrollPosition,
@@ -230,6 +243,12 @@ const goToPrevPage = () => {
     }
 };
 
+/**
+ * Updates the zoom level of the PDF viewer by re-rendering all pages.
+ * If the `pdfDocument` is not available, this function will do nothing.
+ * After re-rendering all pages, the viewer will be scrolled to the current page with an instant behavior.
+ * @returns {Promise<void>} A promise that resolves when the zoom level has been updated.
+ */
 const updateZoom = async () => {
     if (!pdfDocument) return;
     for (let i = 1; i <= numPages.value; i++) {
@@ -371,7 +390,6 @@ const navigateSearchResult = (direction) => {
 
 
 // --- Lifecycle and Watchers ---
-
 onMounted(() => {
     loadPDF();
 });
@@ -379,23 +397,21 @@ onMounted(() => {
 onUnmounted(() => {
     console.log('pdf viewer unmounted')
     pageCache.clear();
-    renderedThumbnails.clear();
-    unwatch()
+    thumbnailCache.clear();
+    watcher()
 });
 
-// Re-render thumbnails if showThumbnails changes (only applies if PDF is already loaded)
-const unwatch = watch(showThumbnails, async (newValue) => {
-    if (newValue && pdfDocument && numPages.value > 0) {
+// Re-render thumbnails if isCollapsed changes (only applies if PDF is already loaded)
+const watcher = watch(isCollapsed, async (newValue) => {
+    if (!newValue && pdfDocument && numPages.value > 0) {
         await nextTick(); // Ensure the thumbnail divs are in the DOM
-        console.log('thumbnails rendered thru watch')
+
         for (let i = 1; i <= numPages.value; i++) {
-            // await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
-            if (!renderedThumbnails.has(i)) {
-                await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
-                renderedThumbnails.add(i);
-            }
+            await renderPage(i, `thumbnail-canvas-${i}`, thumbnailScale, true);
         }
+
     }
+
 });
 </script>
 
@@ -480,23 +496,25 @@ const unwatch = watch(showThumbnails, async (newValue) => {
 
 <template>
     <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="pdf-thumbnail" v-model:open="showThumbnails" collapsible
-            class="bg-elevated/25 min-h-full " :collapsed-size="0" :modal="false" :default-size="5" :ui="{
-                header: 'lg:border-b lg:border-default h-auto',
-                footer: 'lg:border-t lg:border-default'
-            }">
+        <UDashboardSidebar id="pdf-thumbnail" v-model:collapsed="isCollapsed" collapsible
+            class="bg-elevated/25 min-h-full " :collapsed-size="0" :modal="false" :default-size="15" :ui="{
+            header: 'lg:border-b lg:border-default h-auto',
+            footer: 'lg:border-t lg:border-default',
+            body: 'overflow-y-auto overflow-x-hidden'
+        }">
             <template #header="{ collapsed }">
                 <Logo :collapsed="collapsed" />
             </template>
 
             <template #default="{ collapsed }">
-                <div v-if="!collapsed" class="w-48 bg-white shadow-lg rounded-lg p-3 mr-4 overflow-y-auto shrink-0"
+                <div v-if="!collapsed && !errorMessage"
+                    class="w-48 bg-white shadow-lg rounded-lg p-3 mr-4  overflow-hidden shrink-0"
                     :class="{ 'border-r border-gray-200': !collapsed }">
                     <h3 class="font-bold text-lg text-gray-800 mb-3">Thumbnails</h3>
                     <div v-for="n in numPages" :key="`thumb-${n}`" :class="[
-                        'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
-                        { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
-                    ]" @click="scrollToPage(n)">
+            'thumbnail-wrapper p-2 mb-3 cursor-pointer rounded-md transition-all duration-200 ease-in-out',
+            { 'bg-blue-100 ring-2 ring-blue-500': thumbnailCurrentPage === n, 'hover:bg-gray-50': thumbnailCurrentPage !== n }
+        ]" @click="scrollToPage(n)">
                         <p class="text-xs text-gray-500 mb-1">Page {{ n }}</p>
                         <div :id="`thumbnail-canvas-${n}`"
                             class="thumbnail-canvas-container flex justify-center items-center">
@@ -505,13 +523,13 @@ const unwatch = watch(showThumbnails, async (newValue) => {
                 </div>
 
                 <div v-else class=" flex flex-col justify-center gap-2">
-                    <UDashboardSidebarCollapse icon="i-lucide-list" />
+                    <UButton color="neutral" variant="ghost" icon="i-lucide-list" @click="isCollapsed.value = true" />
                 </div>
 
             </template>
 
             <template #footer="{ collapsed }">
-                <span class="text-xs text-center">{{ collapsed ? '©' : 'copyright' }} 2024</span>
+                <span class="text-xs text-center">{{ collapsed ? '©' : 'Copyright' }} 2025</span>
             </template>
         </UDashboardSidebar>
 
@@ -519,7 +537,8 @@ const unwatch = watch(showThumbnails, async (newValue) => {
             <template #header>
                 <UDashboardNavbar>
                     <template #leading>
-                        <UDashboardSidebarCollapse icon="i-lucide-list" />
+                        <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isCollapsed = false" />
+
 
                         <UTooltip text="Kembali">
                             <UButton v-if="!isHome" variant="ghost" color="neutral" icon="i-lucide-chevron-left"
@@ -604,7 +623,7 @@ const unwatch = watch(showThumbnails, async (newValue) => {
             </template>
 
             <template #body>
-                <div class="flex w-full max-w-6xl max-h-[85vh]">
+                <div class="flex w-full max-w-6xl max-h-[80vh]">
 
 
                     <div ref="pages-container"
@@ -614,11 +633,11 @@ const unwatch = watch(showThumbnails, async (newValue) => {
                             class="pdf-page-wrapper mb-6 pb-2 border-b border-gray-300 last:border-b-0 text-center relative">
                             <p class="text-sm text-gray-500 mb-2">Page {{ n }}</p>
                         </div>
-                        <div v-if="numPages === 0 && !loadingError" class="text-center text-gray-500 p-8">
+                        <div v-if="numPages === 0 && !errorMessage" class="text-center text-gray-500 p-8">
                             Loading PDF...
                         </div>
-                        <UAlert v-if="loadingError" icon="i-lucide-alert-triangle" color="error" variant="subtle"
-                            title="Error loading PDF" :description="` ${loadingError}`" />
+                        <UAlert v-if="errorMessage" icon="i-lucide-alert-triangle" color="error" variant="subtle"
+                            title="Error loading PDF" :description="` ${errorMessage}`" />
                     </div>
                 </div>
             </template>

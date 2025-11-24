@@ -59,11 +59,11 @@ export default defineEventHandler(async (event) => {
                 category_id: categories,
                 division_id: divisions,
                 filename,
-                filepath: `documents:${dirname}/${filename}`,
+                filepath: `documents:${dirname}:${filename}`,
                 fileSize: meta.size as number,
                 // contentType: meta.contentType as string,
                 extension: extname(filename),
-                thumbnailSrc: `documents:${dirname}/${dirname}.png`,
+                thumbnailSrc: `documents:${dirname}:${dirname}.png`,
             } as DocumentMetadata
 
             await processDocument(filename, metadata)
