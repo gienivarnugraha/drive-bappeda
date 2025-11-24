@@ -12,6 +12,7 @@ export const ALLOWED_TYPES = {
         'txt': 'txt/plain',
         'pdf': 'application/pdf',
         'doc': 'application/msword',
+        'md': 'text/markdown',
         'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'csv': 'text/csv',
         'xls': 'application/vnd.ms-excel',

@@ -48,7 +48,9 @@ export interface DocumentMetadata extends StorageMeta {
   filename: string
   summary: string
   fileId: string
+  createdAt: Date
   docIds: string[]
+  contentType: string
   category_id: number[]
   division_id: number[]
 }
@@ -60,6 +62,14 @@ export interface Notification {
   body: string
   date: string
 }
+
+export type FileMeta = {
+  createdAt: number
+  size: number
+  type: string
+  name: string
+}
+
 
 export type Period = 'daily' | 'weekly' | 'monthly'
 

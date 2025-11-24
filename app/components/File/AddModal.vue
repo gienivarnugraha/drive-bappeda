@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, StepperItem } from '#ui/types'
-import type { Category, Division } from '#shared/types'
+import type { FileMeta } from '#shared/types'
 import { sanitizeFileName, getFileExtension, toTitleCase } from '#shared/utils'
 import { generateThumbnail } from '~/utils/pdf'
 import { ALLOWED_EXTENSION_TYPES } from '#shared/utils'
@@ -12,11 +12,7 @@ const addModalOpen: Ref<boolean> = ref(false)
 
 const { divisions: availableDivisions, categories: availableCategories } = await useItems()
 
-const fileUploading = ref(false)
-
-const disabled = ref(false)
-
-const isSubmitting = ref(false)
+const toast = useToast()
 
 const isProcessing = ref(false)
 
@@ -25,7 +21,6 @@ const schema = z.object({
   categories: z.number().array(),
   divisions: z.number().array()
 })
-
 
 const thumbnails: Ref<{ filename: string, blob: Blob }[]> = ref([])
 
@@ -39,22 +34,19 @@ const state = reactive<Partial<Schema>>({
 
 const successCount = ref(0)
 
-const allSuccess = computed(() => state.files?.length === successCount.value)
+const filesCount = computed(() => state.files?.length ?? 0)
 
 
 async function upload(files: File[]) {
-  fileUploading.value = true
-
   const formData = new FormData()
 
   files.forEach((file, index) => {
-    formData.append('file', file, `${sanitizeFileName(file.name)}.${getFileExtension(file.name)}`)
+    formData.append('file', file, `${sanitizeFileName(file.name, false)}`)
 
     if (thumbnails.value.length > 0) {
       // @ts-ignore
       formData.append('thumbnail', thumbnails.value[index].blob, thumbnails.value[index].filename)
     }
-
   })
 
   try {
@@ -67,14 +59,11 @@ async function upload(files: File[]) {
   } catch (error: any) {
     console.error(error)
     toast.add({ title: 'Error', description: `${error.statusMessage}`, color: 'error' })
-  } finally {
-    fileUploading.value = false
   }
 }
 
-async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | undefined }) {
-  isSubmitting.value = true
 
+async function submit(data: Omit<Schema, 'files'> & { filesmeta: FileMeta[] | undefined }) {
   try {
     await $fetch('/api/documents', {
       method: 'post',
@@ -83,6 +72,7 @@ async function submit(data: Omit<Schema, 'files'> & { filenames: string[] | unde
 
   } catch (error) {
     console.error(error)
+    toast.add({ title: 'Error', description: 'Something went wrong', color: 'error' })
   }
 }
 
@@ -92,7 +82,6 @@ const onChange = () => {
   state.files?.forEach((file) => {
     if (shouldGenerateThumbnails.includes(file.type)) {
       file.arrayBuffer().then(async (buff) => {
-        // const thumbnail = await generateThumbnail(new Uint8Array(buff))
         const thumbnail = await generateThumbnail(new Uint8Array(buff))
 
         thumbnail?.toBlob(function (blob) {
@@ -108,179 +97,47 @@ const onChange = () => {
   })
 }
 
-let eventSource: EventSource | null = null
-
-const isEventSourceClosed = computed(() => eventSource?.readyState !== 2)
-
-onUnmounted(() => {
-  console.log('add modal unmounted')
-  //   if (eventSource) {
-  //     eventSource.close()
-  //   }
-  //   isProcessing.value = false
-})
-
-const stepperItems = ref<StepperItem[]>([
-  {
-    slot: 'upload' as const,
-    title: 'Upload',
-    description: 'Uploading your files',
-    icon: 'i-lucide-upload'
-  },
-  {
-    slot: 'process' as const,
-    title: 'Process',
-    description: 'Processing your files',
-    icon: 'i-lucide-truck'
-  },
-  {
-    slot: 'done' as const,
-    title: 'Done',
-    description: 'Use chatbot to ask questions about your documents',
-    icon: 'i-lucide-check'
-  }
-])
-
-const processSteps: Ref<{ message: string, status: string }[]> = ref([])
-
-const processStepsStyle = (index: number, data: any) => {
-  if (index === processSteps.value.length - 1 && data.status === 'info') {
-    return {
-      icon: 'i-lucide-loader',
-      class: 'animate-spin'
-    }
-  }
-
-  if (data.status === 'error') {
-    return {
-      icon: 'i-lucide-circle-x',
-      class: 'text-error'
-    }
-  }
-
-  if (data.status === 'success') {
-    return {
-      icon: 'i-lucide-circle-check',
-      class: 'text-primary'
-    }
-  }
-
-  return {
-    icon: 'i-lucide-info',
-    class: 'text-primary'
-  }
-}
-const stepActive = ref(0)
-
-const stream = async () => {
-  eventSource = new EventSource('/api/push-notif')
-
-  // Listen for messages from the server
-  eventSource.onmessage = function (event) {
-    const data = JSON.parse(event.data)
-
-    if (data.status === 'success') {
-      successCount.value += 1
-
-      if (allSuccess.value) {
-
-        stepActive.value = 2
-
-        addModalOpen.value = false
-
-        clearProcess(true)
-
-        toast.add({ title: 'Success', description: `Sucess adding file to datalake `, color: 'success' })
-
-      }
-    }
-
-    stepActive.value = 1
-
-    if (!processSteps.value.includes(data)) {
-      processSteps.value.push(data)
-    }
-  }
-
-  // Log connection error
-  eventSource.onerror = function (event) {
-    clearProcess()
-
-    toast.add({ title: 'Error', description: `${event} `, color: 'error' })
-  }
-}
-
-const clearProcess = (isSuccess = false) => {
-  isProcessing.value = false
-
-  isSubmitting.value = false
-
-  if (isSuccess) {
-    processSteps.value = []
-  }
-
-  if (eventSource) {
-    console.log('event source closed')
-    eventSource.close()
-  }
-
-}
-
-const backFromProcess = () => {
-  isProcessing.value = false
-  stepActive.value = 0
-  processSteps.value = []
-}
-
-const toast = useToast()
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { files, ...data } = event.data
 
   isProcessing.value = true
 
-  await stream()
+  try {
+    await upload(files)
 
-  const filenames = await upload(files)
-
-  if (filenames && filenames.length > 0) {
-    await submit({
-      filenames,
-      ...data
+    const filesmeta = state.files?.map((file: File) => {
+      return {
+        createdAt: file.lastModified,
+        size: file.size,
+        type: file.type,
+        name: sanitizeFileName(file.name, false)
+      }
     })
+
+    if (files && files.length > 0) {
+      await submit({
+        filesmeta,
+        ...data
+      })
+    }
+
+    // isProcessing.value = false
+  } catch (error) {
+    console.error('error uploading files', error)
+    isProcessing.value = false
   }
 
   return
 }
 </script>
-
 <template>
   <UModal v-model:open="addModalOpen" title="Tambah Dokumen" description="Tambah dokumen ke data lake">
     <UButton color="neutral" variant="ghost" square icon="i-lucide-plus" />
 
     <template #body>
-      <div v-if="isEventSourceClosed" class="flex mb-4 justify-between items-center">
-        <p> Progress </p>
-
-        <UButton icon="i-lucide-arrow-left" label="Back" @click="backFromProcess" />
-      </div>
-
-      <UStepper v-if="isProcessing" v-model="stepActive" disabled orientation="vertical" :items="stepperItems"
-        class="w-full">
-        <template #process>
-          <div class="w-full h-48 flex flex-col items-center justify-start pb-4">
-            <div v-for="(step, index) in processSteps" :key="index"
-              class="my-4 w-full flex flex-row items-center justify-start space-x-4">
-              <UIcon :name="processStepsStyle(index, step).icon" :class="processStepsStyle(index, step).class"
-                class="h-4 w-4 flex-none" color=" primary" />
-              <p :class="index === processSteps.length - 1 ? 'font-bold' : 'text-slate-500'"
-                class="flex-1 text-left text-xs">
-                {{ step.message }}
-              </p>
-            </div>
-          </div>
-        </template>
-      </UStepper>
+      <LazyFileProcess v-if="isProcessing" :is-processing="isProcessing" v-model="successCount"
+        :files-count="filesCount" @close="isProcessing = false" />
 
       <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <UFormField>
@@ -304,8 +161,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </UFileUpload>
         </UFormField>
 
-        <UFormField name="divisions" label="Bidang"
-          description="Your unique division for logging in and your profile URL.">
+        <UFormField name="divisions" :label="`Bidang (Terpilih ${state.divisions?.length ?? 0})`"
+          description="Bidang yang terkait dengan dokumen ini">
           <UCheckboxGroup v-if="availableDivisions" v-model="state.divisions" indicator="hidden" size="sm"
             variant="card" :items="availableDivisions" value-key="id" label-key="name" name="divisions"
             :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
@@ -319,8 +176,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </UFormField>
 
-        <UFormField name="categories" label="Kategori"
-          description="Your unique division for logging in and your profile URL.">
+        <UFormField name="categories" :label="`Kategori (Terpilih ${state.categories?.length ?? 0})`"
+          description="Kategori yang terkait dengan dokumen ini">
           <UCheckboxGroup v-if="availableCategories" v-model="state.categories" indicator="hidden" size="sm"
             variant="card" :items="availableCategories" value-key="id" label-key="name" name="categories"
             :ui="{ fieldset: 'flex flex-row flex-wrap gap-x-2' }">
@@ -334,10 +191,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </UFormField>
 
-        <p v-if="disabled" class="text-xs text-slate-500">generating thumbnails...</p>
         <div class="flex justify-end gap-2">
           <UButton label="Cancel" color="neutral" variant="subtle" @click="addModalOpen = false" />
-          <UButton label="Create" color="primary" variant="solid" type="submit" :disabled="disabled" />
+          <UButton label="Create" color="primary" variant="solid" type="submit" />
         </div>
       </UForm>
     </template>

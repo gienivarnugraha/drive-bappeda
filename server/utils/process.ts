@@ -43,52 +43,84 @@ export const loadDocument = async (filename: string): Promise<Document[]> => {
 
   sseSend('push:notif', { message: `loading document... ${clampFilename(filename)}`, status: 'info' })
 
-  const extension = extname(filename)
+  const _filename = sanitizeFileName(filename as string, false)
+
+  // or dirname
+  const basename = sanitizeFileName(filename as string)
+
+  const filepath = `documents:${basename}`
+
+  let extension = extname(filename)
 
   // VERCEL
   const config = useRuntimeConfig()
   const storage = useStorage(config.STORAGE_KEY)
 
-  if (!await storage.has(filename)) {
+  try {
+
+    if (!await storage.has(`${filepath}:${_filename}`)) {
+      throw createError({
+        statusCode: 404,
+        message: `File **${_filename}** not found`,
+      })
+    }
+
+    let file: Buffer | null
+
+    if (!await storage.hasItem(`${filepath}:${basename}.md`)) {
+      sseSend('push:notif', { message: `markdown file not found, use default type... ${clampFilename(filename)}`, status: 'info' })
+      file = await storage.getItemRaw<Buffer>(`${filepath}:${_filename}`)
+    } else {
+      file = await storage.getItemRaw<Buffer>(`${filepath}:${basename}.md`)
+      extension = '.md'
+    }
+
+    const type = ALLOWED_TYPES['documents'] as { [key in keyof typeof ALLOWED_TYPES['documents']]: string };
+    const typeForExtension = type['.' + extension as keyof typeof type];
+
+    const blob = new Blob([file as BlobPart], { type: typeForExtension })
+
+    switch (extension) {
+      case '.pdf':
+        loader = new PDFLoader(blob, {
+          parsedItemSeparator: ' '
+        })
+        break
+      case '.md':
+        loader = new TextLoader(blob)
+        break
+      case '.txt':
+        loader = new TextLoader(blob)
+        break
+      case '.csv':
+        loader = new CSVLoader(blob)
+        break
+      case '.doc':
+        loader = new DocxLoader(blob) // DocxLoader doesn't have a 'type' option. It auto-detects.
+        break
+      case '.docx':
+        loader = new DocxLoader(blob)
+        break
+      default:
+
+        throw new Error(`Unsupported file extension: ${extension}`)
+    }
+
+    const documents = await loader.load()
+
+    const splitter = documentSplitter(filepath)
+
+    return await splitter.splitDocuments(documents)
+
+  } catch (error) {
+    console.error(`error loading documents:`, error)
+    sseSend('push:notif', { message: `error loading document... ${clampFilename(filename)}`, status: 'error' })
     throw createError({
       statusCode: 404,
-      message: `File **${filename}** not found`,
+      message: `File **${_filename}** not found`,
     })
   }
 
-  const type = ALLOWED_TYPES['documents'] as { [key in keyof typeof ALLOWED_TYPES['documents']]: string };
-  const typeForExtension = type['.' + extension as keyof typeof type];
-
-  const file = await storage.getItemRaw<Buffer>(filename)
-  const blob = new Blob([file as BlobPart], { type: typeForExtension })
-
-  switch (extension) {
-    case '.pdf':
-      loader = new PDFLoader(blob, {
-        parsedItemSeparator: ' '
-      })
-      break
-    case '.md':
-      loader = new TextLoader(blob)
-      break
-    case '.txt':
-      loader = new TextLoader(blob)
-      break
-    case '.csv':
-      loader = new CSVLoader(blob)
-      break
-    case '.doc':
-      loader = new DocxLoader(blob) // DocxLoader doesn't have a 'type' option. It auto-detects.
-      break
-    case '.docx':
-      loader = new DocxLoader(blob)
-      break
-    default:
-
-      throw new Error(`Unsupported file extension: ${extension}`)
-  }
-
-  return await loader.load()
 }
 
 /**
@@ -382,6 +414,8 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
 
   const slicedDocuments = docs.slice(0, docs.length > 5 ? 5 : docs.length)
 
+  // console.log('fileMetadata: ', fileMetadata)
+
   await storeToDatabase(slicedDocuments, fileMetadata)
 
   const summaries = await generateSummaries(docs, ids, filename)
@@ -404,15 +438,7 @@ const storeToVectorStore = async (docs: Document[], filename: string, documentMe
  */
 export const processDocument = async (filename: string, documentMetaData: DocumentMetadata) => {
 
-  const _filename = sanitizeFileName(filename as string, false)
-  const dirname = sanitizeFileName(filename as string)
-  const filepath = `documents:${dirname}:${_filename}`
-
-  const documents = await loadDocument(filepath)
-
-  const splitter = documentSplitter(filepath)
-
-  const docs = await splitter.splitDocuments(documents)
+  const docs = await loadDocument(filename)
 
   const db = useDrizzle()
 
@@ -442,7 +468,7 @@ export const processDocument = async (filename: string, documentMetaData: Docume
         }
 
         // else add to vector store
-        // await storeToVectorStore(docs, filename, documentMetaData)
+        await storeToVectorStore(docs, filename, documentMetaData)
 
       } catch (error: any) {
         console.error('error fetching vector store', error)
